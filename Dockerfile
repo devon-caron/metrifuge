@@ -21,7 +21,7 @@ RUN ls -laR cmd/api/
 
 # Build the application
 # Corrected: specify input package and output file separately
-RUN go build -o ./main ./cmd/api
+RUN go build -o ./main .
 
 # Expose the port the app runs on
 EXPOSE 8000
