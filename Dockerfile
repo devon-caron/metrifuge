@@ -16,9 +16,6 @@ RUN go mod download
 # Copy the source code into the container
 COPY . .
 
-# List contents of cmd/api for debugging (optional)
-RUN ls -laR cmd/api/
-
 # Build the application
 # Corrected: specify input package and output file separately
 RUN go build -o ./main .
