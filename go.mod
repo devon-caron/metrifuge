@@ -1,4 +1,4 @@
-module github.com/devon-caron/goapi
+module github.com/devon-caron/metrifuge
 
 go 1.23.0
 
