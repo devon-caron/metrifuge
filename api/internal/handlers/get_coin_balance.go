@@ -2,24 +2,25 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/devon-caron/metrifuge/api/errhandler"
 	"net/http"
 
-	"github.com/devon-caron/goapi/api"
-	"github.com/devon-caron/goapi/internal/tools"
+	"github.com/devon-caron/metrifuge/api/internal/tools"
+	api "github.com/devon-caron/metrifuge/api/types"
 	"github.com/gorilla/schema"
 	log "github.com/sirupsen/logrus"
 )
 
 func GetCoinBalance(w http.ResponseWriter, r *http.Request) {
 	var params = api.CoinBalanceParams{}
-	var decoder *schema.Decoder = schema.NewDecoder()
+	var decoder = schema.NewDecoder()
 	var err error
 
 	err = decoder.Decode(&params, r.URL.Query())
 
 	if err != nil {
 		log.Error(err)
-		api.InternalErrorHandler(w)
+		errhandler.InternalErrorHandler(w)
 		return
 	}
 
@@ -28,7 +29,7 @@ func GetCoinBalance(w http.ResponseWriter, r *http.Request) {
 	var database *tools.DatabaseInterface
 	database, err = tools.NewDatabase()
 	if err != nil {
-		api.InternalErrorHandler(w)
+		errhandler.InternalErrorHandler(w)
 		return
 	}
 
@@ -37,7 +38,7 @@ func GetCoinBalance(w http.ResponseWriter, r *http.Request) {
 	var tokenDetails *tools.CoinDetails = (*database).GetUserCoins(params.Username)
 	if tokenDetails == nil {
 		log.Error(err)
-		api.InternalErrorHandler(w)
+		errhandler.InternalErrorHandler(w)
 		return
 	}
 
@@ -50,7 +51,7 @@ func GetCoinBalance(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
 		log.Error(err)
-		api.InternalErrorHandler(w)
+		errhandler.InternalErrorHandler(w)
 		return
 	}
 

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/devon-caron/goapi/api"
-	"github.com/devon-caron/goapi/internal/tools"
+	"github.com/devon-caron/metrifuge/api/errhandler"
+	"github.com/devon-caron/metrifuge/api/internal/tools"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -25,14 +25,14 @@ func Authorization(next http.Handler) http.Handler {
 
 		if username == "" || token == "" {
 			log.Error(ErrUnauthorized)
-			api.RequestErrorHandler(w, ErrUnauthorized)
+			errhandler.RequestErrorHandler(w, ErrUnauthorized)
 			return
 		}
 
 		var database *tools.DatabaseInterface
 		database, err = tools.NewDatabase()
 		if err != nil {
-			api.InternalErrorHandler(w)
+			errhandler.InternalErrorHandler(w)
 			return
 		}
 
@@ -40,7 +40,7 @@ func Authorization(next http.Handler) http.Handler {
 
 		if loginDetails == nil || (token != (*loginDetails).AuthToken) {
 			log.Error(ErrUnauthorized)
-			api.RequestErrorHandler(w, ErrUnauthorized)
+			errhandler.RequestErrorHandler(w, ErrUnauthorized)
 			return
 		}
 

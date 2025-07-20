@@ -1,4 +1,4 @@
-package api
+package types
 
 // Coin Balance Params
 type CoinBalanceParams struct {
@@ -12,13 +12,4 @@ type CoinBalanceResponse struct {
 
 	// Account Balance
 	Balance int64
-}
-
-// Error Response
-type ErrorResponse struct {
-	// HTTP Status Code
-	Code int
-
-	// Error msg
-	Message string
 }

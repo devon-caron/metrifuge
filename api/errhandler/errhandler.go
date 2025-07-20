@@ -1,9 +1,18 @@
-package api
+package errhandler
 
 import (
 	"encoding/json"
 	"net/http"
 )
+
+// Error Response
+type ErrorResponse struct {
+	// HTTP Status Code
+	Code int
+
+	// Error msg
+	Message string
+}
 
 func writeError(w http.ResponseWriter, message string, code int) {
 	response := ErrorResponse{

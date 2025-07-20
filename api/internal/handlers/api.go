@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/devon-caron/goapi/internal/middleware"
+	"github.com/devon-caron/metrifuge/api/internal/middleware"
 	"github.com/go-chi/chi"
 	chimiddle "github.com/go-chi/chi/middleware"
 )

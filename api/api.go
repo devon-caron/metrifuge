@@ -1,17 +1,17 @@
-package main
+package api
 
 import (
 	"fmt"
 	"github.com/go-chi/cors"
 	"net/http"
 
-	"github.com/devon-caron/goapi/internal/handlers"
+	"github.com/devon-caron/metrifuge/api/internal/handlers"
 	"github.com/go-chi/chi"
 	_ "github.com/go-chi/cors"
 	log "github.com/sirupsen/logrus"
 )
 
-func main() {
+func StartApi() {
 	log.SetReportCaller(true)
 	var r *chi.Mux = chi.NewRouter()
 
