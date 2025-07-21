@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"github.com/go-chi/cors"
 	"net/http"
 
@@ -25,21 +24,9 @@ func StartApi() {
 		MaxAge:           300,
 	}))
 
-	fmt.Println(r)
-	handlers.Handler(r)
+	handlers.RouterHandler(r)
 
-	fmt.Println("Starting go API service...")
-	fmt.Println(`
-  ▄████  ▒█████   ██▓    ▄▄▄       ███▄    █   ▄████     ▄▄▄       ██▓███   ██▓
- ██▒ ▀█▒▒██▒  ██▒▓██▒   ▒████▄     ██ ▀█   █  ██▒ ▀█▒   ▒████▄    ▓██░  ██▒▓██▒
-▒██░▄▄▄░▒██░  ██▒▒██░   ▒██  ▀█▄  ▓██  ▀█ ██▒▒██░▄▄▄░   ▒██  ▀█▄  ▓██░ ██▓▒▒██▒
-░▓█  ██▓▒██   ██░▒██░   ░██▄▄▄▄██ ▓██▒  ▐▌██▒░▓█  ██▓   ░██▄▄▄▄██ ▒██▄█▓▒ ▒░██░
-░▒▓███▀▒░ ████▓▒░░██████▒▓█   ▓██▒▒██░   ▓██░░▒▓███▀▒    ▓█   ▓██▒▒██▒ ░  ░░██░
- ░▒   ▒ ░ ▒░▒░▒░ ░ ▒░▓  ░▒▒   ▓▒█░░ ▒░   ▒ ▒  ░▒   ▒     ▒▒   ▓▒█░▒▓▒░ ░  ░░▓  
-  ░   ░   ░ ▒ ▒░ ░ ░ ▒  ░ ▒   ▒▒ ░░ ░░   ░ ▒░  ░   ░      ▒   ▒▒ ░░▒ ░      ▒ ░
-░ ░   ░ ░ ░ ░ ▒    ░ ░    ░   ▒      ░   ░ ░ ░ ░   ░      ░   ▒   ░░        ▒ ░
-      ░     ░ ░      ░  ░     ░  ░         ░       ░          ░  ░          ░  `)
-
+	log.Info("API initialized, starting server...")
 	err := http.ListenAndServe("0.0.0.0:8000", r)
 	if err != nil {
 		log.Error(err)
