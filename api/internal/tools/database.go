@@ -1,7 +1,7 @@
 package tools
 
 import (
-	log "github.com/sirupsen/logrus"
+	"github.com/devon-caron/metrifuge/logger"
 )
 
 // Database Collections
@@ -23,6 +23,7 @@ type DatabaseInterface interface {
 }
 
 func NewDatabase() (*DatabaseInterface, error) {
+	log := logger.Get()
 	var database DatabaseInterface = &mockDB{}
 
 	var err error = database.SetupDatabase()

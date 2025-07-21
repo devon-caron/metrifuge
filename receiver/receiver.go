@@ -4,7 +4,8 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	"github.com/devon-caron/metrifuge/logger"
+	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"sync"
@@ -20,10 +21,12 @@ type LogReceiver struct {
 var (
 	receiver *LogReceiver
 	once     sync.Once
+	log      *logrus.Logger
 )
 
 func GetLogReceiver() *LogReceiver {
 	once.Do(func() {
+		log = logger.Get()
 		receiver = &LogReceiver{
 			clients: make(map[string]chan LogEntry),
 			logs:    make([]LogEntry, 0),

@@ -2,11 +2,11 @@ package middleware
 
 import (
 	"errors"
+	"github.com/devon-caron/metrifuge/logger"
 	"net/http"
 
 	"github.com/devon-caron/metrifuge/api/errhandler"
 	"github.com/devon-caron/metrifuge/api/internal/tools"
-	log "github.com/sirupsen/logrus"
 )
 
 var ErrUnauthorized = errors.New("invalid username or token")
@@ -18,6 +18,7 @@ func OAuth(next http.Handler) http.Handler {
 }
 
 func Authorization(next http.Handler) http.Handler {
+	log := logger.Get()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var username string = r.URL.Query().Get("username")
 		var token = r.Header.Get("Authorization")

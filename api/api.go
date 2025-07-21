@@ -1,17 +1,20 @@
 package api
 
 import (
+	"github.com/devon-caron/metrifuge/logger"
 	"github.com/go-chi/cors"
 	"net/http"
 
 	"github.com/devon-caron/metrifuge/api/internal/handlers"
 	"github.com/go-chi/chi"
 	_ "github.com/go-chi/cors"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
+var log *logrus.Logger
+
 func StartApi() {
-	log.SetReportCaller(true)
+	log = logger.Get()
 	var r *chi.Mux = chi.NewRouter()
 
 	// CORS middleware with debug settings
