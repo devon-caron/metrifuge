@@ -15,10 +15,10 @@ var log *logrus.Logger
 
 func StartApi() {
 	log = logger.Get()
-	var r *chi.Mux = chi.NewRouter()
+	var router = chi.NewRouter()
 
 	// CORS middleware with debug settings
-	r.Use(cors.Handler(cors.Options{
+	router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"}, // Allow all origins for debugging
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"*"}, // Allow all headers for debugging
@@ -27,10 +27,10 @@ func StartApi() {
 		MaxAge:           300,
 	}))
 
-	handlers.RouterHandler(r)
+	handlers.RouterHandler(router)
 
 	log.Info("API initialized, starting server...")
-	err := http.ListenAndServe("0.0.0.0:8000", r)
+	err := http.ListenAndServe("0.0.0.0:8000", router)
 	if err != nil {
 		log.Error(err)
 	}

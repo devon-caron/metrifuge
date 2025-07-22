@@ -6,14 +6,14 @@ import (
 	chimiddle "github.com/go-chi/chi/middleware"
 )
 
-func RouterHandler(r *chi.Mux) {
+func RouterHandler(router *chi.Mux) {
 	// Global Log Receiver
 	lr := receiver.GetLogReceiver()
 
 	// Global middleware
-	r.Use(chimiddle.StripSlashes)
+	router.Use(chimiddle.StripSlashes)
 
-	r.Route("/api", func(router chi.Router) {
+	router.Route("/api", func(router chi.Router) {
 		router.Get("/health", lr.HealthHandler)
 		router.Post("/ingest", lr.ReceiveLogsHandler)
 	})
