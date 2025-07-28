@@ -5,7 +5,6 @@ metadata:
   labels:
     app: springboot-logs
 spec:
-  replicas: 3
   selector:
     matchLabels:
       app: springboot-logs
@@ -22,7 +21,7 @@ spec:
           operator: LessThan # | Equals | DoesNotEqual| Exists | DoesNotExist | GreaterThan | GreaterThanOrEqualTo | ...
           field2:
             type: Int64
-            value: 700
+            manualValue: 700
           actionTrue: analyze
           actionFalse: discard # Could also be 'conditional' or the others
         metrics:
@@ -31,7 +30,7 @@ spec:
             value:
               grokKey: "grok-word" # or, a manual value can be added shown below
             # manualValue: 1
-            # type: Number # if manual value provided, type must also be provided
+              type: Int64 
             attributes:
               - name: important-number
                 value:
