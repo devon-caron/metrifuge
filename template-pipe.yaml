@@ -1,0 +1,15 @@
+apiVersion: metrifuge.com/k8s/v1
+kind: Pipe
+metadata:
+  name: mfpipe-name
+  labels:
+    pipe: springboot-logs
+spec:
+  name: sample-name
+  selector:
+    matchLabels:
+      app: springboot-logs
+  rules:
+    - name: sample-rule
+      
+  

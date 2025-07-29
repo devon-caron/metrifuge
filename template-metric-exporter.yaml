@@ -1,0 +1,19 @@
+apiVersion: metrifuge.com/k8s/v1
+kind: MetricExporter
+metadata:
+  name: mfmetricexporter-name
+  labels:
+    app: springboot-logs
+spec:
+  name: sample-name
+  selector:
+    matchLabels:
+      pipe: springboot-logs
+  refreshInterval: 10s
+  destination:
+    type: honeycomb
+    honeycomb:
+      apiKey: abc123
+      dataset: springboot-logs
+    
+  

@@ -1,0 +1,41 @@
+apiVersion: metrifuge.com/k8s/v1
+kind: MFRuleSet
+metadata:
+  name: mfruleset-name
+  labels:
+    app: springboot-logs
+spec:
+  selector:
+    matchLabels:
+      app: springboot-logs
+  rules:
+    - name: sample-name
+      # kind: grok # or regex; right now, only grok rules allowed
+      spec:
+        pattern: "%{WORD:grok-word} %{NUMBER:num1} - %{NUMBER:num2}"
+        action: conditional # | forward | discard | analyze
+        conditional:
+          field1:
+            type: Int64 # | Float64 | String
+            grokKey: "num1" # run with best effort ParseInt, meaning a string value "abc" will return 0 and value "9w832" will return 9
+          operator: LessThan # | Equals | DoesNotEqual| Exists | DoesNotExist | GreaterThan | GreaterThanOrEqualTo | ...
+          field2:
+            type: Int64
+            manualValue: 700
+          actionTrue: analyze
+          actionFalse: discard # Could also be 'conditional' or the others
+        metrics:
+          - name: "myMetrics.MetricName" # will be checked against program metric set
+            kind: Int64Counter # | <insert other metric types here>...
+            value:
+              grokKey: "grok-word" # or, a manual value can be added shown below
+            # manualValue: 1
+              type: Int64 
+            attributes:
+              - name: important-number
+                value:
+                  grokKey: "num2"
+
+
+
+
