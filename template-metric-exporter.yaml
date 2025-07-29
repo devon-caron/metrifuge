@@ -14,6 +14,6 @@ spec:
     type: honeycomb
     honeycomb:
       apiKey: abc123
-      dataset: springboot-logs
+      dataset: springboot-logs 
     
   
