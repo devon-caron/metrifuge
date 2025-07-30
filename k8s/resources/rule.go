@@ -1,4 +1,4 @@
-package resource
+package resources
 
 // Rule represents a single processing rule
 type Rule struct {
