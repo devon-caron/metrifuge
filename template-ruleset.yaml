@@ -1,3 +1,4 @@
+# not in use right now
 apiVersion: metrifuge.com/k8s/v1
 kind: MFRuleSet
 metadata:
