@@ -16,4 +16,39 @@ spec:
       apiKey: abc123
       dataset: springboot-logs 
     
-  
+---
+apiVersion: metrifuge.com/k8s/v1
+kind: MetricExporter
+metadata:
+  name: mfmetricexporter-name
+  labels:
+    app: springboot-logs
+spec:
+  name: sample-name
+  selector:
+    matchLabels:
+      pipe: springboot-logs
+  refreshInterval: 10s
+  destination:
+    type: prometheus
+    prometheus:
+      endpoint: http://prometheus:9090
+
+---
+apiVersion: metrifuge.com/k8s/v1
+kind: MetricExporter
+metadata:
+  name: mfmetricexporter-name
+  labels:
+    app: springboot-logs
+spec:
+  name: sample-name
+  selector:
+    matchLabels:
+      pipe: springboot-logs
+  refreshInterval: 10s
+  destination:
+    type: datadog
+    datadog:
+      apiKey: abc123
+      dataset: springboot-logs
