@@ -39,3 +39,14 @@ func ParseLogExporter(data []byte) (*crd.LogExporter, error) {
 
 	return &logExporter, nil
 }
+
+func ParseMetricExporter(data []byte) (*crd.MetricExporter, error) {
+	var metricExporter crd.MetricExporter
+
+	// Use sigs.k8s.io/yaml which handles both YAML and JSON
+	if err := yaml.Unmarshal(data, &metricExporter); err != nil {
+		return nil, fmt.Errorf("failed to parse metric exporter document: %w", err)
+	}
+
+	return &metricExporter, nil
+}
