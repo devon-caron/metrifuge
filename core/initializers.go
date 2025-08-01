@@ -4,30 +4,30 @@ import (
 	"os"
 
 	"github.com/devon-caron/metrifuge/k8s"
-	"github.com/devon-caron/metrifuge/resources"
 	le "github.com/devon-caron/metrifuge/resources/log_exporter"
 	me "github.com/devon-caron/metrifuge/resources/metric_exporter"
+	"github.com/devon-caron/metrifuge/resources/pipe"
 	"github.com/devon-caron/metrifuge/resources/rule"
 )
 
-func initPipes(isK8s bool) []*resources.Pipe {
+func initPipes(isK8s bool) []*pipe.Pipe {
 	if !isK8s {
 		pipeFilePath := os.Getenv("MF_PIPES_FILEPATH")
 		data, err := os.ReadFile(pipeFilePath)
 		if err != nil {
 			log.Errorf("failed to read pipe file: %v", err)
-			return []*resources.Pipe{}
+			return []*pipe.Pipe{}
 		}
 
 		pipes, err := k8s.ParsePipes(data)
 		if err != nil {
 			log.Errorf("failed to parse pipe file: %v", err)
-			return []*resources.Pipe{}
+			return []*pipe.Pipe{}
 		}
 		return pipes
 	}
 
-	return []*resources.Pipe{}
+	return []*pipe.Pipe{}
 }
 
 func initRules(isK8s bool) []*rule.Rule {

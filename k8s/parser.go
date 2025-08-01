@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/devon-caron/metrifuge/resources"
 	le "github.com/devon-caron/metrifuge/resources/log_exporter"
 	me "github.com/devon-caron/metrifuge/resources/metric_exporter"
+	"github.com/devon-caron/metrifuge/resources/pipe"
 	"github.com/devon-caron/metrifuge/resources/rule"
 	"gopkg.in/yaml.v3"
 )
@@ -59,16 +59,16 @@ func ParseRules(data []byte) ([]*rule.Rule, error) {
 	return rules, nil
 }
 
-func ParsePipes(data []byte) ([]*resources.Pipe, error) {
+func ParsePipes(data []byte) ([]*pipe.Pipe, error) {
 	documents, err := parseDocuments(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse YAML documents: %w", err)
 	}
 
-	pipes := make([]*resources.Pipe, 0, len(documents))
+	pipes := make([]*pipe.Pipe, 0, len(documents))
 
 	for i, doc := range documents {
-		var pipe resources.Pipe
+		var pipe pipe.Pipe
 		if err := yaml.Unmarshal(doc, &pipe); err != nil {
 			return nil, fmt.Errorf("failed to parse pipe document %d: %w", i+1, err)
 		}

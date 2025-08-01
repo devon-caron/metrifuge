@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/devon-caron/metrifuge/resources"
 	le "github.com/devon-caron/metrifuge/resources/log_exporter"
 	me "github.com/devon-caron/metrifuge/resources/metric_exporter"
+	"github.com/devon-caron/metrifuge/resources/pipe"
 	"github.com/devon-caron/metrifuge/resources/rule"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -108,13 +108,13 @@ func TestParsePipes(t *testing.T) {
 	tests := []struct {
 		name     string
 		filename string
-		validate func(t *testing.T, pipes []*resources.Pipe)
+		validate func(t *testing.T, pipes []*pipe.Pipe)
 		err      bool
 	}{
 		{
 			name:     "valid pipe",
 			filename: "valid_pipe.yaml",
-			validate: func(t *testing.T, pipes []*resources.Pipe) {
+			validate: func(t *testing.T, pipes []*pipe.Pipe) {
 				require.Len(t, pipes, 1)
 				pipe := pipes[0]
 				assert.Equal(t, "mfpipe-name", pipe.Metadata.Name)
