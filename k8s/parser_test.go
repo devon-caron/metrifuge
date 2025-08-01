@@ -75,21 +75,9 @@ func TestParseRules(t *testing.T) {
 				require.Len(t, rules, 1)
 				rule := rules[0]
 				assert.Equal(t, "mfrule-name", rule.Metadata.Name)
-				assert.Equal(t, "sample-name", rule.Spec.Name)
 				assert.Equal(t, "%{WORD:grok-word} %{NUMBER:num1} - %{NUMBER:num2}", rule.Spec.Pattern)
 				assert.Equal(t, "conditional", rule.Spec.Action)
 				assert.NotNil(t, rule.Spec.Conditional)
-			},
-			err: false,
-		},
-		// The current parser doesn't validate rule content, so invalid rules will still parse
-		// but might fail later during processing
-		{
-			name:     "empty rule name",
-			filename: "invalid_rule.yaml",
-			validate: func(t *testing.T, rules []*crd.Rule) {
-				require.Len(t, rules, 1)
-				assert.Equal(t, "", rules[0].Spec.Name)
 			},
 			err: false,
 		},

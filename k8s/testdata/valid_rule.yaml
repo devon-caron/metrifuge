@@ -5,7 +5,6 @@ metadata:
   labels:
     app: springboot-logs
 spec:
-  name: sample-name
   selector:
     matchLabels:
       app: springboot-logs

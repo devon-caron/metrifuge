@@ -4,5 +4,4 @@ metadata:
   name: invalid-rule
 spec:
   # Missing required fields
-  name: ""
   action: invalid-action

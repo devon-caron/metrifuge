@@ -16,7 +16,6 @@ type Metadata struct {
 
 // RuleSpec contains the rule configuration
 type RuleSpec struct {
-	Name        string       `json:"name" yaml:"name"`
 	Selector    *Selector    `json:"selector,omitempty" yaml:"selector,omitempty"`
 	Pattern     string       `json:"pattern" yaml:"pattern"`
 	Action      string       `json:"action" yaml:"action"` // forward, discard, analyze, conditional
