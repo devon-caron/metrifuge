@@ -1,4 +1,4 @@
-package crd
+package resources
 
 // Pipe represents a configuration for collecting and processing logs from a specific source
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -15,6 +15,12 @@ type PipeSpec struct {
 	Selector *Selector `json:"selector,omitempty" yaml:"selector,omitempty"`
 	Source   *Source   `json:"source" yaml:"source"`
 	RuleRefs []RuleRef `json:"ruleRefs,omitempty" yaml:"ruleRefs,omitempty"`
+}
+
+// RuleRef contains data required for referencing rules by Pipes
+type RuleRef struct {
+	Name      string `json:"name" yaml:"name"`
+	Namespace string `json:"namespace" yaml:"namespace"`
 }
 
 // Source defines the log source configuration

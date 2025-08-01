@@ -1,4 +1,4 @@
-package crd
+package resources
 
 // HoneycombConfig contains configuration for Honeycomb destination
 type HoneycombConfig struct {
@@ -14,4 +14,15 @@ type DatadogConfig struct {
 	Source  string `json:"source,omitempty" yaml:"source,omitempty"`
 	AppKey  string `json:"appKey,omitempty" yaml:"appKey,omitempty"`
 	Site    string `json:"site,omitempty" yaml:"site,omitempty"`
+}
+
+// Metadata contains the metadata for a resource definition
+type Metadata struct {
+	Name   string            `json:"name" yaml:"name"`
+	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
+}
+
+// Selector defines how to select resources
+type Selector struct {
+	MatchLabels map[string]string `json:"matchLabels,omitempty" yaml:"matchLabels,omitempty"`
 }

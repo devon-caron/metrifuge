@@ -1,37 +1,22 @@
-package crd
+package rule
+
+import "github.com/devon-caron/metrifuge/resources"
 
 // Rule represents a single processing rule
 type Rule struct {
-	APIVersion string   `json:"apiVersion" yaml:"apiVersion"`
-	Kind       string   `json:"kind" yaml:"kind"`
-	Metadata   Metadata `json:"metadata" yaml:"metadata"`
-	Spec       RuleSpec `json:"spec" yaml:"spec"`
-}
-
-// Metadata contains the metadata for a rule
-type Metadata struct {
-	Name   string            `json:"name" yaml:"name"`
-	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
+	APIVersion string             `json:"apiVersion" yaml:"apiVersion"`
+	Kind       string             `json:"kind" yaml:"kind"`
+	Metadata   resources.Metadata `json:"metadata" yaml:"metadata"`
+	Spec       RuleSpec           `json:"spec" yaml:"spec"`
 }
 
 // RuleSpec contains the rule configuration
 type RuleSpec struct {
-	Selector    *Selector    `json:"selector,omitempty" yaml:"selector,omitempty"`
-	Pattern     string       `json:"pattern" yaml:"pattern"`
-	Action      string       `json:"action" yaml:"action"` // forward, discard, analyze, conditional
-	Conditional *Conditional `json:"conditional,omitempty" yaml:"conditional,omitempty"`
-	Metrics     []Metric     `json:"metrics,omitempty" yaml:"metrics,omitempty"`
-}
-
-// RuleRef contains data required for referencing rules by Pipes
-type RuleRef struct {
-	Name      string `json:"name" yaml:"name"`
-	Namespace string `json:"namespace" yaml:"namespace"`
-}
-
-// Selector defines how to select resources
-type Selector struct {
-	MatchLabels map[string]string `json:"matchLabels,omitempty" yaml:"matchLabels,omitempty"`
+	Selector    *resources.Selector `json:"selector,omitempty" yaml:"selector,omitempty"`
+	Pattern     string              `json:"pattern" yaml:"pattern"`
+	Action      string              `json:"action" yaml:"action"` // forward, discard, analyze, conditional
+	Conditional *Conditional        `json:"conditional,omitempty" yaml:"conditional,omitempty"`
+	Metrics     []Metric            `json:"metrics,omitempty" yaml:"metrics,omitempty"`
 }
 
 // Conditional defines a condition for rule evaluation

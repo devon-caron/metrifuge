@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/devon-caron/metrifuge/k8s/crd"
+	"github.com/devon-caron/metrifuge/resources"
+	le "github.com/devon-caron/metrifuge/resources/log_exporter"
+	"github.com/devon-caron/metrifuge/resources/rule"
 	"gopkg.in/yaml.v3"
 )
 
@@ -37,16 +39,16 @@ func parseDocuments(data []byte) ([][]byte, error) {
 	return documents, nil
 }
 
-func ParseRules(data []byte) ([]*crd.Rule, error) {
+func ParseRules(data []byte) ([]*rule.Rule, error) {
 	documents, err := parseDocuments(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse YAML documents: %w", err)
 	}
 
-	rules := make([]*crd.Rule, 0, len(documents))
+	rules := make([]*rule.Rule, 0, len(documents))
 
 	for i, doc := range documents {
-		var rule crd.Rule
+		var rule rule.Rule
 		if err := yaml.Unmarshal(doc, &rule); err != nil {
 			return nil, fmt.Errorf("failed to parse rule document %d: %w", i+1, err)
 		}
@@ -56,16 +58,16 @@ func ParseRules(data []byte) ([]*crd.Rule, error) {
 	return rules, nil
 }
 
-func ParsePipes(data []byte) ([]*crd.Pipe, error) {
+func ParsePipes(data []byte) ([]*resources.Pipe, error) {
 	documents, err := parseDocuments(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse YAML documents: %w", err)
 	}
 
-	pipes := make([]*crd.Pipe, 0, len(documents))
+	pipes := make([]*resources.Pipe, 0, len(documents))
 
 	for i, doc := range documents {
-		var pipe crd.Pipe
+		var pipe resources.Pipe
 		if err := yaml.Unmarshal(doc, &pipe); err != nil {
 			return nil, fmt.Errorf("failed to parse pipe document %d: %w", i+1, err)
 		}
@@ -75,16 +77,16 @@ func ParsePipes(data []byte) ([]*crd.Pipe, error) {
 	return pipes, nil
 }
 
-func ParseLogExporters(data []byte) ([]*crd.LogExporter, error) {
+func ParseLogExporters(data []byte) ([]*le.LogExporter, error) {
 	documents, err := parseDocuments(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse YAML documents: %w", err)
 	}
 
-	exporters := make([]*crd.LogExporter, 0, len(documents))
+	exporters := make([]*le.LogExporter, 0, len(documents))
 
 	for i, doc := range documents {
-		var exporter crd.LogExporter
+		var exporter le.LogExporter
 		if err := yaml.Unmarshal(doc, &exporter); err != nil {
 			return nil, fmt.Errorf("failed to parse log exporter document %d: %w", i+1, err)
 		}
@@ -94,16 +96,16 @@ func ParseLogExporters(data []byte) ([]*crd.LogExporter, error) {
 	return exporters, nil
 }
 
-func ParseMetricExporters(data []byte) ([]*crd.MetricExporter, error) {
+func ParseMetricExporters(data []byte) ([]*resources.MetricExporter, error) {
 	documents, err := parseDocuments(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse YAML documents: %w", err)
 	}
 
-	exporters := make([]*crd.MetricExporter, 0, len(documents))
+	exporters := make([]*resources.MetricExporter, 0, len(documents))
 
 	for i, doc := range documents {
-		var exporter crd.MetricExporter
+		var exporter resources.MetricExporter
 		if err := yaml.Unmarshal(doc, &exporter); err != nil {
 			return nil, fmt.Errorf("failed to parse metric exporter document %d: %w", i+1, err)
 		}

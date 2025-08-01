@@ -5,7 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/devon-caron/metrifuge/k8s/crd"
+	"github.com/devon-caron/metrifuge/resources"
+	le "github.com/devon-caron/metrifuge/resources/log_exporter"
+	"github.com/devon-caron/metrifuge/resources/rule"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -65,13 +67,13 @@ func TestParseRules(t *testing.T) {
 	tests := []struct {
 		name     string
 		filename string
-		validate func(t *testing.T, rules []*crd.Rule)
+		validate func(t *testing.T, rules []*rule.Rule)
 		err      bool
 	}{
 		{
 			name:     "valid rule",
 			filename: "valid_rule.yaml",
-			validate: func(t *testing.T, rules []*crd.Rule) {
+			validate: func(t *testing.T, rules []*rule.Rule) {
 				require.Len(t, rules, 1)
 				rule := rules[0]
 				assert.Equal(t, "mfrule-name", rule.Metadata.Name)
@@ -105,13 +107,13 @@ func TestParsePipes(t *testing.T) {
 	tests := []struct {
 		name     string
 		filename string
-		validate func(t *testing.T, pipes []*crd.Pipe)
+		validate func(t *testing.T, pipes []*resources.Pipe)
 		err      bool
 	}{
 		{
 			name:     "valid pipe",
 			filename: "valid_pipe.yaml",
-			validate: func(t *testing.T, pipes []*crd.Pipe) {
+			validate: func(t *testing.T, pipes []*resources.Pipe) {
 				require.Len(t, pipes, 1)
 				pipe := pipes[0]
 				assert.Equal(t, "mfpipe-name", pipe.Metadata.Name)
@@ -149,13 +151,13 @@ func TestParseLogExporters(t *testing.T) {
 	tests := []struct {
 		name     string
 		filename string
-		validate func(t *testing.T, exporters []*crd.LogExporter)
+		validate func(t *testing.T, exporters []*le.LogExporter)
 		err      bool
 	}{
 		{
 			name:     "elasticsearch exporter",
 			filename: "log_exporter_es.yaml",
-			validate: func(t *testing.T, exporters []*crd.LogExporter) {
+			validate: func(t *testing.T, exporters []*le.LogExporter) {
 				require.Len(t, exporters, 1)
 				exporter := exporters[0]
 				assert.Equal(t, "mflogexporter-name", exporter.Metadata.Name)
@@ -170,7 +172,7 @@ func TestParseLogExporters(t *testing.T) {
 		{
 			name:     "splunk exporter",
 			filename: "log_exporter_splunk.yaml",
-			validate: func(t *testing.T, exporters []*crd.LogExporter) {
+			validate: func(t *testing.T, exporters []*le.LogExporter) {
 				require.Len(t, exporters, 1)
 				exporter := exporters[0]
 				assert.Equal(t, "splunk", exporter.Spec.Destination.Type)
@@ -204,13 +206,13 @@ func TestParseMetricExporters(t *testing.T) {
 	tests := []struct {
 		name     string
 		filename string
-		validate func(t *testing.T, exporters []*crd.MetricExporter)
+		validate func(t *testing.T, exporters []*resources.MetricExporter)
 		err      bool
 	}{
 		{
 			name:     "honeycomb exporter",
 			filename: "metric_exporter_honeycomb.yaml",
-			validate: func(t *testing.T, exporters []*crd.MetricExporter) {
+			validate: func(t *testing.T, exporters []*resources.MetricExporter) {
 				require.Len(t, exporters, 1)
 				exporter := exporters[0]
 				assert.Equal(t, "honeycomb", exporter.Spec.Destination.Type)
@@ -223,7 +225,7 @@ func TestParseMetricExporters(t *testing.T) {
 		{
 			name:     "prometheus exporter",
 			filename: "metric_exporter_prometheus.yaml",
-			validate: func(t *testing.T, exporters []*crd.MetricExporter) {
+			validate: func(t *testing.T, exporters []*resources.MetricExporter) {
 				require.Len(t, exporters, 1)
 				exporter := exporters[0]
 				assert.Equal(t, "prometheus", exporter.Spec.Destination.Type)
