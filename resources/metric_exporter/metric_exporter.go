@@ -25,13 +25,8 @@ type MetricExporterSpec struct {
 
 // MetricExporterDestination defines the destination configuration for metric exporting
 type MetricExporterDestination struct {
-	Type       string                     `json:"type" yaml:"type"` // honeycomb, prometheus, datadog, etc.
-	Honeycomb  *resources.HoneycombConfig `json:"honeycomb,omitempty" yaml:"honeycomb,omitempty"`
-	Prometheus *PrometheusConfig          `json:"prometheus,omitempty" yaml:"prometheus,omitempty"`
-	Datadog    *resources.DatadogConfig   `json:"datadog,omitempty" yaml:"datadog,omitempty"`
-}
-
-// PrometheusConfig contains configuration for Prometheus destination
-type PrometheusConfig struct {
-	Endpoint string `json:"endpoint" yaml:"endpoint"`
+	Type       string                      `json:"type" yaml:"type"` // honeycomb, prometheus, datadog, etc.
+	Honeycomb  *resources.HoneycombConfig  `json:"honeycomb,omitempty" yaml:"honeycomb,omitempty"`
+	Prometheus *resources.PrometheusConfig `json:"prometheus,omitempty" yaml:"prometheus,omitempty"`
+	Datadog    *resources.DatadogConfig    `json:"datadog,omitempty" yaml:"datadog,omitempty"`
 }
