@@ -5,8 +5,6 @@ metadata:
   labels:
     app: springboot-logs
 spec:
-  name: sample-name
-# kind: grok # or regex; right now, only grok rules allowed
   selector:
     matchLabels:
       app: springboot-logs
@@ -41,8 +39,6 @@ metadata:
   labels:
     app: springboot-logs
 spec:
-  name: sample-name
-# kind: grok # or regex; right now, only grok rules allowed
   selector:
     matchLabels:
       app: springboot-logs
