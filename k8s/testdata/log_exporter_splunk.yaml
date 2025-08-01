@@ -1,0 +1,19 @@
+apiVersion: metrifuge.com/k8s/v1
+kind: LogExporter
+metadata:
+  name: mflogexporter-splunk
+  labels:
+    app: springboot-logs
+spec:
+  name: springboot-splunk
+  selector:
+    matchLabels:
+      pipe: springboot-logs
+  destination:
+    type: splunk
+    splunk:
+      url: https://splunk.company.com:8088/services/collector
+      token: "your-hec-token"
+      index: springboot-logs
+      source: kubernetes
+      sourceType: springboot

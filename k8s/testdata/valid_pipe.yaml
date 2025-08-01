@@ -1,0 +1,17 @@
+apiVersion: metrifuge.com/k8s/v1
+kind: Pipe
+metadata:
+  name: mfpipe-name
+  labels:
+    app: springboot-logs
+spec:
+  name: sample-name
+  selector:
+    matchLabels:
+      app: springboot-logs
+  source:
+    namespace: default
+    pod: app-deployment-2983a99a7be2-8bd
+    container: app-container
+  rules:
+    - name: sample-rule

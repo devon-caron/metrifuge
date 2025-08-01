@@ -1,0 +1,23 @@
+apiVersion: metrifuge.com/k8s/v1
+kind: Rule
+metadata:
+  name: mfrule-name
+  labels:
+    app: springboot-logs
+spec:
+  name: sample-name
+  selector:
+    matchLabels:
+      app: springboot-logs
+  pattern: "%{WORD:grok-word} %{NUMBER:num1} - %{NUMBER:num2}"
+  action: conditional
+  conditional:
+    field1:
+      type: Int64
+      grokKey: "num1"
+    operator: LessThan
+    field2:
+      type: Int64
+      manualValue: "700"
+    actionTrue: analyze
+    actionFalse: discard

@@ -1,0 +1,19 @@
+apiVersion: metrifuge.com/k8s/v1
+kind: LogExporter
+metadata:
+  name: mflogexporter-name
+  labels:
+    app: springboot-logs
+spec:
+  name: sample-name
+  selector:
+    matchLabels:
+      pipe: springboot-logs
+  destination:
+    type: elasticsearch
+    elasticsearch:
+      url: http://elasticsearch:9200
+      index: springboot-logs
+      username: myUsername
+      password: MyP4$$W0Rd
+      apiKey: 1337-API-KEY-420

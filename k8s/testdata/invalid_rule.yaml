@@ -1,0 +1,8 @@
+apiVersion: metrifuge.com/k8s/v1
+kind: Rule
+metadata:
+  name: invalid-rule
+spec:
+  # Missing required fields
+  name: ""
+  action: invalid-action
