@@ -6,6 +6,7 @@ import (
 	"github.com/devon-caron/metrifuge/k8s"
 	"github.com/devon-caron/metrifuge/resources"
 	le "github.com/devon-caron/metrifuge/resources/log_exporter"
+	me "github.com/devon-caron/metrifuge/resources/metric_exporter"
 	"github.com/devon-caron/metrifuge/resources/rule"
 )
 
@@ -49,24 +50,24 @@ func initRules(isK8s bool) []*rule.Rule {
 	return []*rule.Rule{}
 }
 
-func initMetricExporters(isK8s bool) []*resources.MetricExporter {
+func initMetricExporters(isK8s bool) []*me.MetricExporter {
 	if !isK8s {
 		metricExporterFilePath := os.Getenv("MF_METRIC_EXPORTERS_FILEPATH")
 		data, err := os.ReadFile(metricExporterFilePath)
 		if err != nil {
 			log.Errorf("failed to read metric exporters file: %v", err)
-			return []*resources.MetricExporter{}
+			return []*me.MetricExporter{}
 		}
 
 		exporters, err := k8s.ParseMetricExporters(data)
 		if err != nil {
 			log.Errorf("failed to parse metric exporters file: %v", err)
-			return []*resources.MetricExporter{}
+			return []*me.MetricExporter{}
 		}
 		return exporters
 	}
 
-	return []*resources.MetricExporter{}
+	return []*me.MetricExporter{}
 }
 
 func initLogExporters(isK8s bool) []*le.LogExporter {

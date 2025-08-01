@@ -6,6 +6,7 @@ import (
 
 	"github.com/devon-caron/metrifuge/resources"
 	le "github.com/devon-caron/metrifuge/resources/log_exporter"
+	me "github.com/devon-caron/metrifuge/resources/metric_exporter"
 	"github.com/devon-caron/metrifuge/resources/rule"
 	"gopkg.in/yaml.v3"
 )
@@ -96,16 +97,16 @@ func ParseLogExporters(data []byte) ([]*le.LogExporter, error) {
 	return exporters, nil
 }
 
-func ParseMetricExporters(data []byte) ([]*resources.MetricExporter, error) {
+func ParseMetricExporters(data []byte) ([]*me.MetricExporter, error) {
 	documents, err := parseDocuments(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse YAML documents: %w", err)
 	}
 
-	exporters := make([]*resources.MetricExporter, 0, len(documents))
+	exporters := make([]*me.MetricExporter, 0, len(documents))
 
 	for i, doc := range documents {
-		var exporter resources.MetricExporter
+		var exporter me.MetricExporter
 		if err := yaml.Unmarshal(doc, &exporter); err != nil {
 			return nil, fmt.Errorf("failed to parse metric exporter document %d: %w", i+1, err)
 		}

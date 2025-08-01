@@ -9,6 +9,7 @@ import (
 	"github.com/devon-caron/metrifuge/receiver"
 	"github.com/devon-caron/metrifuge/resources"
 	le "github.com/devon-caron/metrifuge/resources/log_exporter"
+	me "github.com/devon-caron/metrifuge/resources/metric_exporter"
 	"github.com/devon-caron/metrifuge/resources/rule"
 	"github.com/sirupsen/logrus"
 )
@@ -18,7 +19,7 @@ var (
 	log             *logrus.Logger
 	pipes           []*resources.Pipe
 	rules           []*rule.Rule
-	metricExporters []*resources.MetricExporter
+	metricExporters []*me.MetricExporter
 	logExporters    []*le.LogExporter
 )
 

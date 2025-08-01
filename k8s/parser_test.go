@@ -7,6 +7,7 @@ import (
 
 	"github.com/devon-caron/metrifuge/resources"
 	le "github.com/devon-caron/metrifuge/resources/log_exporter"
+	me "github.com/devon-caron/metrifuge/resources/metric_exporter"
 	"github.com/devon-caron/metrifuge/resources/rule"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -206,13 +207,13 @@ func TestParseMetricExporters(t *testing.T) {
 	tests := []struct {
 		name     string
 		filename string
-		validate func(t *testing.T, exporters []*resources.MetricExporter)
+		validate func(t *testing.T, exporters []*me.MetricExporter)
 		err      bool
 	}{
 		{
 			name:     "honeycomb exporter",
 			filename: "metric_exporter_honeycomb.yaml",
-			validate: func(t *testing.T, exporters []*resources.MetricExporter) {
+			validate: func(t *testing.T, exporters []*me.MetricExporter) {
 				require.Len(t, exporters, 1)
 				exporter := exporters[0]
 				assert.Equal(t, "honeycomb", exporter.Spec.Destination.Type)
@@ -225,7 +226,7 @@ func TestParseMetricExporters(t *testing.T) {
 		{
 			name:     "prometheus exporter",
 			filename: "metric_exporter_prometheus.yaml",
-			validate: func(t *testing.T, exporters []*resources.MetricExporter) {
+			validate: func(t *testing.T, exporters []*me.MetricExporter) {
 				require.Len(t, exporters, 1)
 				exporter := exporters[0]
 				assert.Equal(t, "prometheus", exporter.Spec.Destination.Type)
