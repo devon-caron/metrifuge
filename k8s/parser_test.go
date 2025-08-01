@@ -131,8 +131,9 @@ func TestParsePipes(t *testing.T) {
 				assert.Equal(t, "default", pipe.Spec.Source.Namespace)
 				assert.Equal(t, "app-deployment-2983a99a7be2-8bd", pipe.Spec.Source.Pod)
 				assert.Equal(t, "app-container", pipe.Spec.Source.Container)
-				assert.Len(t, pipe.Spec.Rules, 1)
-				assert.Equal(t, "sample-rule", pipe.Spec.Rules[0].Name)
+				assert.Len(t, pipe.Spec.RuleRefs, 1)
+				assert.Equal(t, "sample-rule", pipe.Spec.RuleRefs[0].Name)
+				assert.Equal(t, "default", pipe.Spec.RuleRefs[0].Namespace)
 			},
 			err: false,
 		},

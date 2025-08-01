@@ -11,10 +11,10 @@ type Pipe struct {
 
 // PipeSpec contains the pipe configuration
 type PipeSpec struct {
-	Name     string     `json:"name" yaml:"name"`
-	Selector *Selector  `json:"selector,omitempty" yaml:"selector,omitempty"`
-	Source   *Source    `json:"source" yaml:"source"`
-	Rules    []RuleSpec `json:"rules,omitempty" yaml:"rules,omitempty"`
+	Name     string    `json:"name" yaml:"name"`
+	Selector *Selector `json:"selector,omitempty" yaml:"selector,omitempty"`
+	Source   *Source   `json:"source" yaml:"source"`
+	RuleRefs []RuleRef `json:"ruleRefs,omitempty" yaml:"ruleRefs,omitempty"`
 }
 
 // Source defines the log source configuration

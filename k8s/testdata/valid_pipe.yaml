@@ -13,5 +13,6 @@ spec:
     namespace: default
     pod: app-deployment-2983a99a7be2-8bd
     container: app-container
-  rules:
+  ruleRefs:
     - name: sample-rule
+      namespace: default

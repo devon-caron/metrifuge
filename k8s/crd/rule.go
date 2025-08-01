@@ -24,6 +24,12 @@ type RuleSpec struct {
 	Metrics     []Metric     `json:"metrics,omitempty" yaml:"metrics,omitempty"`
 }
 
+// RuleRef contains data required for referencing rules by Pipes
+type RuleRef struct {
+	Name      string `json:"name" yaml:"name"`
+	Namespace string `json:"namespace" yaml:"namespace"`
+}
+
 // Selector defines how to select resources
 type Selector struct {
 	MatchLabels map[string]string `json:"matchLabels,omitempty" yaml:"matchLabels,omitempty"`

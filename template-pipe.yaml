@@ -14,8 +14,9 @@ spec:
     pod: app-deployment-2983a99a7be2-8bd
     container: app-container
   # logFilePath: /var/log/app.log # TODO optional path to log file for custom configurations
-  rules:
+  ruleRefs:
     - name: sample-rule
+      namespace: default
       
 ---
 
@@ -35,5 +36,6 @@ spec:
     pod: app-deployment-2983a99a7be2-8bd
     container: app-container
   # logFilePath: /var/log/app.log # TODO optional path to log file for custom configurations
-  rules:
+  ruleRefs:
     - name: sample-rule
+      namespace: default
