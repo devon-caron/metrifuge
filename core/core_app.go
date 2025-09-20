@@ -1,16 +1,16 @@
 package core
 
 import (
+	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
+	me "github.com/devon-caron/metrifuge/k8s/api/metric_exporter"
+	"github.com/devon-caron/metrifuge/k8s/api/pipe"
+	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
 	"os"
 	"strconv"
 
 	"github.com/devon-caron/metrifuge/api"
 	"github.com/devon-caron/metrifuge/logger"
 	"github.com/devon-caron/metrifuge/receiver"
-	le "github.com/devon-caron/metrifuge/resources/log_exporter"
-	me "github.com/devon-caron/metrifuge/resources/metric_exporter"
-	"github.com/devon-caron/metrifuge/resources/pipe"
-	"github.com/devon-caron/metrifuge/resources/rule"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,7 +18,7 @@ var (
 	lr              *receiver.LogReceiver
 	log             *logrus.Logger
 	pipes           []*pipe.Pipe
-	rules           []*rule.Rule
+	ruleSets        []*ruleset.RuleSet
 	metricExporters []*me.MetricExporter
 	logExporters    []*le.LogExporter
 )
@@ -36,7 +36,7 @@ func Start() {
 	}
 
 	pipes = initPipes(isK8s)
-	rules = initRules(isK8s)
+	ruleSets = initRuleSets(isK8s)
 	metricExporters = initMetricExporters(isK8s)
 	logExporters = initLogExporters(isK8s)
 }

@@ -1,14 +1,14 @@
 package k8s
 
 import (
+	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
+	me "github.com/devon-caron/metrifuge/k8s/api/metric_exporter"
+	"github.com/devon-caron/metrifuge/k8s/api/pipe"
+	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
 	"os"
 	"path/filepath"
 	"testing"
 
-	le "github.com/devon-caron/metrifuge/resources/log_exporter"
-	me "github.com/devon-caron/metrifuge/resources/metric_exporter"
-	"github.com/devon-caron/metrifuge/resources/pipe"
-	"github.com/devon-caron/metrifuge/resources/rule"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -68,19 +68,19 @@ func TestParseRules(t *testing.T) {
 	tests := []struct {
 		name     string
 		filename string
-		validate func(t *testing.T, rules []*rule.Rule)
+		validate func(t *testing.T, rules []*ruleset.RuleSet)
 		err      bool
 	}{
 		{
-			name:     "valid rule",
+			name:     "valid capturegroup",
 			filename: "valid_rule.yaml",
-			validate: func(t *testing.T, rules []*rule.Rule) {
+			validate: func(t *testing.T, rules []*ruleset.RuleSet) {
 				require.Len(t, rules, 1)
 				rule := rules[0]
 				assert.Equal(t, "mfrule-name", rule.Metadata.Name)
 				assert.Equal(t, "%{WORD:grok-word} %{NUMBER:num1} - %{NUMBER:num2}", rule.Spec.Pattern)
 				assert.Equal(t, "conditional", rule.Spec.Action)
-				assert.NotNil(t, rule.Spec.Conditional)
+				assert.NotNil(t, rule.Spec.)
 			},
 			err: false,
 		},
@@ -123,7 +123,7 @@ func TestParsePipes(t *testing.T) {
 				assert.Equal(t, "app-deployment-2983a99a7be2-8bd", pipe.Spec.Source.Pod)
 				assert.Equal(t, "app-container", pipe.Spec.Source.Container)
 				assert.Len(t, pipe.Spec.RuleRefs, 1)
-				assert.Equal(t, "sample-rule", pipe.Spec.RuleRefs[0].Name)
+				assert.Equal(t, "sample-capturegroup", pipe.Spec.RuleRefs[0].Name)
 				assert.Equal(t, "default", pipe.Spec.RuleRefs[0].Namespace)
 			},
 			err: false,

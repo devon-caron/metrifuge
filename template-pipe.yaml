@@ -15,7 +15,7 @@ spec:
     container: app-container
   # logFilePath: /var/log/app.log # TODO optional path to log file for custom configurations
   ruleRefs:
-    - name: sample-rule
+    - name: sample-ruleset
       namespace: default
       
 ---
@@ -37,5 +37,5 @@ spec:
     container: app-container
   # logFilePath: /var/log/app.log # TODO optional path to log file for custom configurations
   ruleRefs:
-    - name: sample-rule
+    - name: sample-ruleset
       namespace: default

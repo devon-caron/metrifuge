@@ -1,9 +1,8 @@
 package metric_exporter
 
 import (
+	"github.com/devon-caron/metrifuge/k8s/api"
 	"time"
-
-	"github.com/devon-caron/metrifuge/resources"
 )
 
 // MetricExporter represents a configuration for exporting metrics to various destinations
@@ -11,22 +10,26 @@ import (
 type MetricExporter struct {
 	APIVersion string             `json:"apiVersion" yaml:"apiVersion"`
 	Kind       string             `json:"kind" yaml:"kind"`
-	Metadata   resources.Metadata `json:"metadata" yaml:"metadata"`
+	Metadata   api.Metadata       `json:"metadata" yaml:"metadata"`
 	Spec       MetricExporterSpec `json:"spec" yaml:"spec"`
 }
 
 // MetricExporterSpec contains the metric exporter configuration
 type MetricExporterSpec struct {
 	Name            string                    `json:"name" yaml:"name"`
-	Selector        *resources.Selector       `json:"selector,omitempty" yaml:"selector,omitempty"`
+	Selector        *api.Selector             `json:"selector,omitempty" yaml:"selector,omitempty"`
 	RefreshInterval time.Duration             `json:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty"`
 	Destination     MetricExporterDestination `json:"destination" yaml:"destination"`
 }
 
 // MetricExporterDestination defines the destination configuration for metric exporting
 type MetricExporterDestination struct {
-	Type       string                      `json:"type" yaml:"type"` // honeycomb, prometheus, datadog, etc.
-	Honeycomb  *resources.HoneycombConfig  `json:"honeycomb,omitempty" yaml:"honeycomb,omitempty"`
-	Prometheus *resources.PrometheusConfig `json:"prometheus,omitempty" yaml:"prometheus,omitempty"`
-	Datadog    *resources.DatadogConfig    `json:"datadog,omitempty" yaml:"datadog,omitempty"`
+	Type       string                `json:"type" yaml:"type"` // honeycomb, prometheus, datadog, etc.
+	Honeycomb  *api.HoneycombConfig  `json:"honeycomb,omitempty" yaml:"honeycomb,omitempty"`
+	Prometheus *api.PrometheusConfig `json:"prometheus,omitempty" yaml:"prometheus,omitempty"`
+	Datadog    *api.DatadogConfig    `json:"datadog,omitempty" yaml:"datadog,omitempty"`
+}
+
+func (me MetricExporter) GetMetadata() api.Metadata {
+	return me.Metadata
 }

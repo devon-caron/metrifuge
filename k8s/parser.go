@@ -3,11 +3,11 @@ package k8s
 import (
 	"bytes"
 	"fmt"
+	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
+	me "github.com/devon-caron/metrifuge/k8s/api/metric_exporter"
+	"github.com/devon-caron/metrifuge/k8s/api/pipe"
+	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
 
-	le "github.com/devon-caron/metrifuge/resources/log_exporter"
-	me "github.com/devon-caron/metrifuge/resources/metric_exporter"
-	"github.com/devon-caron/metrifuge/resources/pipe"
-	"github.com/devon-caron/metrifuge/resources/rule"
 	"gopkg.in/yaml.v3"
 )
 
@@ -40,18 +40,18 @@ func parseDocuments(data []byte) ([][]byte, error) {
 	return documents, nil
 }
 
-func ParseRules(data []byte) ([]*rule.Rule, error) {
+func ParseRules(data []byte) ([]*ruleset.RuleSet, error) {
 	documents, err := parseDocuments(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse YAML documents: %w", err)
 	}
 
-	rules := make([]*rule.Rule, 0, len(documents))
+	rules := make([]*ruleset.RuleSet, 0, len(documents))
 
 	for i, doc := range documents {
-		var rule rule.Rule
+		var rule ruleset.RuleSet
 		if err := yaml.Unmarshal(doc, &rule); err != nil {
-			return nil, fmt.Errorf("failed to parse rule document %d: %w", i+1, err)
+			return nil, fmt.Errorf("failed to parse capturegroup document %d: %w", i+1, err)
 		}
 		rules = append(rules, &rule)
 	}

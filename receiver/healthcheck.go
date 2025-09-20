@@ -16,7 +16,7 @@ func (lr *LogReceiver) HealthHandler(w http.ResponseWriter, _ *http.Request) {
 	logCount := len(lr.logs)
 	lr.mu.RUnlock()
 
-	response := map[string]interface{}{
+	response := map[string]any{
 		"status":     "healthy",
 		"clients":    clientCount,
 		"total_logs": logCount,

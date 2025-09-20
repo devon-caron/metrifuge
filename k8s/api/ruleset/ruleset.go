@@ -1,25 +1,32 @@
-package rule
+package ruleset
 
-import "github.com/devon-caron/metrifuge/resources"
+import (
+	"github.com/devon-caron/metrifuge/k8s/api"
+)
 
-// Rule represents a single processing rule
+// Rule represents a single processing capturegroup
+type RuleSet struct {
+	APIVersion string         `json:"apiVersion" yaml:"apiVersion"`
+	Kind       string         `json:"kind" yaml:"kind"`
+	Metadata   api.Metadata   `json:"metadata" yaml:"metadata"`
+	Spec       Spec           `json:"spec" yaml:"spec"`
+	Status     map[string]any `json:"status,omitempty" yaml:"status,omitempty"`
+}
+
+// RuleSpec contains the capturegroup configuration
+type Spec struct {
+	Selector *api.Selector `json:"selector,omitempty" yaml:"selector,omitempty"`
+	Rules    []*Rule       `json:"rules" yaml:"rules"`
+}
+
 type Rule struct {
-	APIVersion string             `json:"apiVersion" yaml:"apiVersion"`
-	Kind       string             `json:"kind" yaml:"kind"`
-	Metadata   resources.Metadata `json:"metadata" yaml:"metadata"`
-	Spec       RuleSpec           `json:"spec" yaml:"spec"`
+	Pattern     string       `json:"pattern" yaml:"pattern"`
+	Action      string       `json:"action" yaml:"action"` // forward, discard, analyze, conditional
+	Conditional *Conditional `json:"conditional,omitempty" yaml:"conditional,omitempty"`
+	Metrics     []Metric     `json:"metrics,omitempty" yaml:"metrics,omitempty"`
 }
 
-// RuleSpec contains the rule configuration
-type RuleSpec struct {
-	Selector    *resources.Selector `json:"selector,omitempty" yaml:"selector,omitempty"`
-	Pattern     string              `json:"pattern" yaml:"pattern"`
-	Action      string              `json:"action" yaml:"action"` // forward, discard, analyze, conditional
-	Conditional *Conditional        `json:"conditional,omitempty" yaml:"conditional,omitempty"`
-	Metrics     []Metric            `json:"metrics,omitempty" yaml:"metrics,omitempty"`
-}
-
-// Conditional defines a condition for rule evaluation
+// Conditional defines a condition for capturegroup evaluation
 type Conditional struct {
 	Field1      FieldValue  `json:"field1" yaml:"field1"`
 	Operator    string      `json:"operator" yaml:"operator"` // LessThan, Equals, DoesNotEqual, Exists, DoesNotExist, GreaterThan, GreaterThanOrEqualTo, etc.
@@ -54,4 +61,8 @@ type MetricValue struct {
 type Attribute struct {
 	Name  string      `json:"name" yaml:"name"`
 	Value MetricValue `json:"value" yaml:"value"`
+}
+
+func (rs RuleSet) GetMetadata() api.Metadata {
+	return rs.Metadata
 }

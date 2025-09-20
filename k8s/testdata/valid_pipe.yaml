@@ -5,7 +5,6 @@ metadata:
   labels:
     app: springboot-logs
 spec:
-  name: sample-name
   selector:
     matchLabels:
       app: springboot-logs
@@ -14,5 +13,5 @@ spec:
     pod: app-deployment-2983a99a7be2-8bd
     container: app-container
   ruleRefs:
-    - name: sample-rule
+    - name: sample-ruleset
       namespace: default

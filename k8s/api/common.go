@@ -1,4 +1,8 @@
-package resources
+package api
+
+type MetrifugeK8sResource interface {
+	GetMetadata() Metadata
+}
 
 // HoneycombConfig contains configuration for Honeycomb destination
 type HoneycombConfig struct {
@@ -48,11 +52,12 @@ type LokiConfig struct {
 
 // Metadata contains the metadata for a resource definition
 type Metadata struct {
-	Name   string            `json:"name" yaml:"name"`
-	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
+	Name      string            `json:"name" yaml:"name"`
+	Namespace string            `json:"namespace" yaml:"namespace"`
+	Labels    map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 }
 
 // Selector defines how to select resources
 type Selector struct {
-	MatchLabels map[string]string `json:"matchLabels,omitempty" yaml:"matchLabels,omitempty"`
+	MatchLabels map[string]any `json:"matchLabels,omitempty" yaml:"matchLabels,omitempty"`
 }

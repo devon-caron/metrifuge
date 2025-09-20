@@ -1,13 +1,14 @@
 package core
 
 import (
+	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
+	me "github.com/devon-caron/metrifuge/k8s/api/metric_exporter"
+	"github.com/devon-caron/metrifuge/k8s/api/pipe"
+	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
+	"k8s.io/client-go/rest"
 	"os"
 
 	"github.com/devon-caron/metrifuge/k8s"
-	le "github.com/devon-caron/metrifuge/resources/log_exporter"
-	me "github.com/devon-caron/metrifuge/resources/metric_exporter"
-	"github.com/devon-caron/metrifuge/resources/pipe"
-	"github.com/devon-caron/metrifuge/resources/rule"
 )
 
 func initPipes(isK8s bool) []*pipe.Pipe {
@@ -19,35 +20,47 @@ func initPipes(isK8s bool) []*pipe.Pipe {
 			return []*pipe.Pipe{}
 		}
 
-		pipes, err := k8s.ParsePipes(data)
+		myPipes, err := k8s.ParsePipes(data)
 		if err != nil {
 			log.Errorf("failed to parse pipe file: %v", err)
 			return []*pipe.Pipe{}
 		}
-		return pipes
+		return myPipes
 	}
 
-	return []*pipe.Pipe{}
+	myPipes, err := k8s.GetK8sResources[pipe.Pipe](&rest.Config{}, "Pipe", "v1alpha1", "pipes")
+	if err != nil {
+		log.Errorf("failed to get k8s resources: %v", err)
+		return []*pipe.Pipe{}
+	}
+
+	return myPipes
 }
 
-func initRules(isK8s bool) []*rule.Rule {
+func initRuleSets(isK8s bool) []*ruleset.RuleSet {
 	if !isK8s {
 		ruleFilePath := os.Getenv("MF_RULES_FILEPATH")
 		data, err := os.ReadFile(ruleFilePath)
 		if err != nil {
-			log.Errorf("failed to read rules file: %v", err)
-			return []*rule.Rule{}
+			log.Errorf("failed to read myRuleSets file: %v", err)
+			return []*ruleset.RuleSet{}
 		}
 
-		rules, err := k8s.ParseRules(data)
+		myRuleSets, err := k8s.ParseRules(data)
 		if err != nil {
-			log.Errorf("failed to parse rules file: %v", err)
-			return []*rule.Rule{}
+			log.Errorf("failed to parse myRuleSets file: %v", err)
+			return []*ruleset.RuleSet{}
 		}
-		return rules
+		return myRuleSets
 	}
 
-	return []*rule.Rule{}
+	myRuleSets, err := k8s.GetK8sResources[ruleset.RuleSet](&rest.Config{}, "RuleSet", "v1alpha1", "rulesets")
+	if err != nil {
+		log.Errorf("failed to get k8s resources: %v", err)
+		return []*ruleset.RuleSet{}
+	}
+
+	return myRuleSets
 }
 
 func initMetricExporters(isK8s bool) []*me.MetricExporter {
@@ -55,19 +68,25 @@ func initMetricExporters(isK8s bool) []*me.MetricExporter {
 		metricExporterFilePath := os.Getenv("MF_METRIC_EXPORTERS_FILEPATH")
 		data, err := os.ReadFile(metricExporterFilePath)
 		if err != nil {
-			log.Errorf("failed to read metric exporters file: %v", err)
+			log.Errorf("failed to read metric myMetricExporters file: %v", err)
 			return []*me.MetricExporter{}
 		}
 
-		exporters, err := k8s.ParseMetricExporters(data)
+		myMetricExporters, err := k8s.ParseMetricExporters(data)
 		if err != nil {
-			log.Errorf("failed to parse metric exporters file: %v", err)
+			log.Errorf("failed to parse metric myMetricExporters file: %v", err)
 			return []*me.MetricExporter{}
 		}
-		return exporters
+		return myMetricExporters
 	}
 
-	return []*me.MetricExporter{}
+	myMetricExporters, err := k8s.GetK8sResources[me.MetricExporter](&rest.Config{}, "MetricExporter", "v1alpha1", "metricexporters")
+	if err != nil {
+		log.Errorf("failed to get k8s resources: %v", err)
+		return []*me.MetricExporter{}
+	}
+
+	return myMetricExporters
 }
 
 func initLogExporters(isK8s bool) []*le.LogExporter {
@@ -75,17 +94,23 @@ func initLogExporters(isK8s bool) []*le.LogExporter {
 		logExporterFilePath := os.Getenv("MF_LOG_EXPORTERS_FILEPATH")
 		data, err := os.ReadFile(logExporterFilePath)
 		if err != nil {
-			log.Errorf("failed to read log exporters file: %v", err)
+			log.Errorf("failed to read log myLogExporters file: %v", err)
 			return []*le.LogExporter{}
 		}
 
-		exporters, err := k8s.ParseLogExporters(data)
+		myLogExporters, err := k8s.ParseLogExporters(data)
 		if err != nil {
-			log.Errorf("failed to parse log exporters file: %v", err)
+			log.Errorf("failed to parse log myLogExporters file: %v", err)
 			return []*le.LogExporter{}
 		}
-		return exporters
+		return myLogExporters
 	}
 
-	return []*le.LogExporter{}
+	myLogExporters, err := k8s.GetK8sResources[le.LogExporter](&rest.Config{}, "LogExporter", "v1alpha1", "logexporters")
+	if err != nil {
+		log.Errorf("failed to get k8s resources: %v", err)
+		return []*le.LogExporter{}
+	}
+
+	return myLogExporters
 }
