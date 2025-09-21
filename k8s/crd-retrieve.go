@@ -101,18 +101,6 @@ func getLogExporter(crdLogExporter unstructured.Unstructured, spec map[string]an
 }
 
 func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) *ruleset.RuleSet {
-	var matchLabelsMap map[string]any
-	selectorMap, ok := spec["selector"].(map[string]any)
-	if !ok {
-		selectorMap = nil
-		log.Debugf("  No selector found\n")
-	} else {
-		matchLabelsMap, ok = selectorMap["matchLabels"].(map[string]any)
-		if !ok {
-			log.Debugf("  No selector matchLabels\n")
-		}
-	}
-
 	rulesMap := spec["rules"].(map[string]any)
 	myRules := getRules(rulesMap)
 
@@ -125,9 +113,6 @@ func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) *rule
 			Labels:    crdRuleSet.GetLabels(),
 		},
 		Spec: ruleset.Spec{
-			Selector: &api.Selector{
-				MatchLabels: matchLabelsMap,
-			},
 			Rules: myRules,
 		},
 	}

@@ -5,9 +5,6 @@ metadata:
   labels:
     app: springboot-logs
 spec:
-  selector:
-    matchLabels:
-      app: springboot-logs
   pattern: "%{WORD:grok-word} %{NUMBER:num1} - %{NUMBER:num2}"
   action: conditional # | forward | discard | analyze
   conditional:
@@ -54,6 +51,7 @@ spec:
       manualValue: 700
     actionTrue: analyze
     actionFalse: discard # Could also be 'conditional' or the others
+  createMetrics: true
   metrics:
     - name: "myMetrics.MetricName" # will be checked against program metric set
       kind: Int64Counter # | <insert other metric types here>...

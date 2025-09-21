@@ -5,10 +5,9 @@ metadata:
   labels:
     app: springboot-logs
 spec:
-  name: sample-name
   selector:
     matchLabels:
-      pipe: springboot-logs
+      app: springboot-logs
   destination:
     type: elasticsearch
     elasticsearch:

@@ -15,15 +15,15 @@ type RuleSet struct {
 
 // RuleSpec contains the capturegroup configuration
 type Spec struct {
-	Selector *api.Selector `json:"selector,omitempty" yaml:"selector,omitempty"`
-	Rules    []*Rule       `json:"rules" yaml:"rules"`
+	Rules []*Rule `json:"rules" yaml:"rules"`
 }
 
 type Rule struct {
-	Pattern     string       `json:"pattern" yaml:"pattern"`
-	Action      string       `json:"action" yaml:"action"` // forward, discard, analyze, conditional
-	Conditional *Conditional `json:"conditional,omitempty" yaml:"conditional,omitempty"`
-	Metrics     []Metric     `json:"metrics,omitempty" yaml:"metrics,omitempty"`
+	Pattern       string       `json:"pattern" yaml:"pattern"`
+	Action        string       `json:"action" yaml:"action"` // forward, discard, analyze, conditional
+	Conditional   *Conditional `json:"conditional,omitempty" yaml:"conditional,omitempty"`
+	CreateMetrics bool         `json:"create_metrics,omitempty" yaml:"create_metrics,omitempty"`
+	Metrics       []Metric     `json:"metrics,omitempty" yaml:"metrics,omitempty"`
 }
 
 // Conditional defines a condition for capturegroup evaluation

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -38,7 +39,7 @@ func Get() *logrus.Logger {
 }
 
 func initLogLevel(llStr string) logrus.Level {
-	switch llStr {
+	switch strings.ToLower(llStr) {
 	case "debug":
 		return logrus.DebugLevel
 	case "info":
