@@ -1,1 +1,1 @@
-docker run -p 8000:8000 goapi
+docker run -p 8080:8080 metrifuge:latest
