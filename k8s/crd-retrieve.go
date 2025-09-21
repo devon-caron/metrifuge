@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/devon-caron/metrifuge/k8s/api"
 	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
-	"github.com/devon-caron/metrifuge/k8s/api/pipe"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
 	"github.com/devon-caron/metrifuge/logger"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -62,15 +61,19 @@ func GetK8sResources[Resource api.MetrifugeK8sResource](restConfig *rest.Config,
 			continue
 		}
 
-		resource := getResource[Resource](crdResource, kind, spec)
+		resource, err := getResource[Resource](crdResource, kind, spec)
+		if err != nil {
+			log.Warnf("failed to get resource: %v", err)
+			continue
+		}
 
 		resources = append(resources, resource)
 	}
 	return resources, nil
 }
 
-func getResource[Resource api.MetrifugeK8sResource](crdResource unstructured.Unstructured, kind string, spec map[string]interface{}) *Resource {
-	var mfK8sCrdNames = []string{"RuleSet", "Pipe", "LogExporter", "MetricExporter"}
+func getResource[Resource api.MetrifugeK8sResource](crdResource unstructured.Unstructured, kind string, spec map[string]interface{}) (*Resource, error) {
+	var mfK8sCrdNames = []string{"RuleSet", "LogExporter", "MetricExporter"}
 
 	var resource any
 
@@ -78,14 +81,15 @@ func getResource[Resource api.MetrifugeK8sResource](crdResource unstructured.Uns
 	case mfK8sCrdNames[0]:
 		resource = getRuleSet(crdResource, spec)
 	case mfK8sCrdNames[1]:
-		resource = getPipe(crdResource, spec)
-	case mfK8sCrdNames[2]:
 		resource = getLogExporter(crdResource, spec)
-	case mfK8sCrdNames[3]:
+	case mfK8sCrdNames[2]:
 		resource = getMetricExporter(crdResource, spec)
 	}
-	r := resource.(Resource)
-	return &r
+	r, ok := resource.(Resource)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast resource: %v", resource)
+	}
+	return &r, nil
 }
 
 func getMetricExporter(crdLogExporter unstructured.Unstructured, spec map[string]any) *le.LogExporter {
@@ -95,128 +99,6 @@ func getMetricExporter(crdLogExporter unstructured.Unstructured, spec map[string
 func getLogExporter(crdLogExporter unstructured.Unstructured, spec map[string]any) *le.LogExporter {
 	panic("getLogExporter is not implemented yet")
 }
-
-//func GetPipes(restConfig *rest.Config) ([]*pipe.Pipe, error) {
-//	log.Infof("getting pipes from %s", restConfig.Host)
-//	if err := validateResources(restConfig); err != nil {
-//		log.Warnf("failed to validate CRDs in cluster: %v", err)
-//	}
-//
-//	dynamicClient, err := dynamic.NewForConfig(restConfig)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	gvr := schema.GroupVersionResource{
-//		Group:    "metrifuge.com/k8s",
-//		Version:  "v1alpha1",
-//		Resource: "pipes",
-//	}
-//
-//	crdPipeList, err := dynamicClient.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	var pipes []*pipe.Pipe
-//	for _, crdPipe := range crdPipeList.Items {
-//		// Extract spec as map[string]any
-//		spec, found, err := unstructured.NestedMap(crdPipe.Object, "spec")
-//		if err != nil {
-//			fmt.Printf("  Error getting spec: %v\n", err)
-//			continue
-//		}
-//		if !found {
-//			fmt.Printf("  No spec found\n")
-//			continue
-//		}
-//
-//		pipes = append(pipes, getPipe(crdPipe, spec))
-//	}
-//	return pipes, nil
-//}
-
-func getPipe(crdPipe unstructured.Unstructured, spec map[string]any) *pipe.Pipe {
-	var matchLabelsMap map[string]any
-	selectorMap, ok := spec["selector"].(map[string]any)
-	if !ok {
-		selectorMap = nil
-		log.Debugf("  No selector found\n")
-	} else {
-		matchLabelsMap, ok = selectorMap["matchLabels"].(map[string]any)
-		if !ok {
-			log.Debugf("  No selector matchLabels\n")
-		}
-	}
-
-	myPipe := &pipe.Pipe{
-		APIVersion: crdPipe.GetAPIVersion(),
-		Kind:       crdPipe.GetKind(),
-		Metadata: api.Metadata{
-			Name:      crdPipe.GetName(),
-			Namespace: crdPipe.GetNamespace(),
-			Labels:    crdPipe.GetLabels(),
-		},
-		Spec: pipe.PipeSpec{
-			Selector: &api.Selector{
-				MatchLabels: matchLabelsMap,
-			},
-			Source:   getSource(spec),
-			RuleRefs: getRuleRefs(spec),
-		},
-	}
-	return myPipe
-}
-
-func getRuleRefs( /*specMap*/ _ map[string]any) []pipe.RuleRef {
-	panic("getRuleRefs function not implemented")
-	return nil
-}
-
-func getSource( /*specMap*/ _ map[string]any) *pipe.Source {
-	panic("getSource function (possibly along with the pipe.Source struct) not implemented")
-	return nil
-}
-
-//func GetRuleSets(restConfig *rest.Config) ([]*ruleset.RuleSet, error) {
-//	log.Infof("getting rules from %s", restConfig.Host)
-//	if err := validateResources(restConfig); err != nil {
-//		log.Warnf("failed to validate CRDs in cluster: %v", err)
-//	}
-//
-//	dynamicClient, err := dynamic.NewForConfig(restConfig)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	gvr := schema.GroupVersionResource{
-//		Group:    "metrifuge.com/k8s",
-//		Version:  "v1alpha1",
-//		Resource: "rulesets",
-//	}
-//
-//	crdRuleList, err := dynamicClient.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	var ruleSets []*ruleset.RuleSet
-//	for _, crdRuleSet := range crdRuleList.Items {
-//		// Extract spec as map[string]any
-//		spec, found, err := unstructured.NestedMap(crdRuleSet.Object, "spec")
-//		if err != nil {
-//			fmt.Printf("  Error getting spec: %v\n", err)
-//			continue
-//		}
-//		if !found {
-//			fmt.Printf("  No spec found\n")
-//			continue
-//		}
-//
-//		ruleSets = append(ruleSets, getRuleSet(crdRuleSet, spec))
-//	}
-//	return ruleSets, nil
-//}
 
 func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) *ruleset.RuleSet {
 	var matchLabelsMap map[string]any
@@ -259,7 +141,7 @@ func getRules(_ map[string]any) []*ruleset.Rule {
 
 func validateResources(restConfig *rest.Config) error {
 
-	var requiredCrdNames = []string{"RuleSet", "Pipe", "LogExporter", "MetricExporter"}
+	var requiredCrdNames = []string{"RuleSet", "LogExporter", "MetricExporter"}
 
 	// 1. Create custom crdClientSet
 	// here restConfig is your .kube/config file
