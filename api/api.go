@@ -30,8 +30,10 @@ func StartApi() {
 	handlers.RouterHandler(router)
 
 	log.Info("API initialized, starting server...")
-	err := http.ListenAndServe("0.0.0.0:8000", router)
-	if err != nil {
-		log.Error(err)
-	}
+	go func() {
+		err := http.ListenAndServe("0.0.0.0:8080", router)
+		if err != nil {
+			log.Error(err)
+		}
+	}()
 }
