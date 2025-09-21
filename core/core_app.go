@@ -1,12 +1,15 @@
 package core
 
 import (
+	"fmt"
+	"github.com/devon-caron/metrifuge/k8s"
 	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
 	me "github.com/devon-caron/metrifuge/k8s/api/metric_exporter"
-	"github.com/devon-caron/metrifuge/k8s/api/pipe"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
+	"k8s.io/client-go/rest"
 	"os"
 	"strconv"
+	"sync"
 
 	"github.com/devon-caron/metrifuge/api"
 	"github.com/devon-caron/metrifuge/logger"
@@ -15,28 +18,72 @@ import (
 )
 
 var (
+	wg              sync.WaitGroup
 	lr              *receiver.LogReceiver
 	log             *logrus.Logger
-	pipes           []*pipe.Pipe
 	ruleSets        []*ruleset.RuleSet
 	metricExporters []*me.MetricExporter
 	logExporters    []*le.LogExporter
+	KubeConfig      *rest.Config
 )
 
 func Start() {
 	log = logger.Get()
 	log.Info("starting api")
 	api.StartApi()
-	lr = receiver.GetLogReceiver()
 
-	isK8s, err := strconv.ParseBool(os.Getenv("MF_RUNNING_IN_K8S"))
-	if err != nil {
-		log.Errorf("failed to parse environment variable MF_RUNNING_IN_K8S:%v", err)
+	if err := initResources(); err != nil {
+		log.Fatalf("failed to initialize program resources: %v", err)
 		os.Exit(1)
 	}
 
-	pipes = initPipes(isK8s)
-	ruleSets = initRuleSets(isK8s)
-	metricExporters = initMetricExporters(isK8s)
-	logExporters = initLogExporters(isK8s)
+	log.Info("ruleset, pipe, and exporter resources initialized")
+
+}
+
+func initResources() error {
+	var err error
+	wg.Add(4)
+
+	isK8s, err := strconv.ParseBool(os.Getenv("MF_RUNNING_IN_K8S"))
+	if err != nil {
+		return fmt.Errorf("failed to parse environment variable MF_RUNNING_IN_K8S:%v", err)
+	}
+
+	if isK8s {
+		if err = k8s.InitKubeConfig(); err != nil {
+			return fmt.Errorf("failed to initialize kubernetes config: %v", err)
+		}
+	}
+
+	go func() {
+		var myErr error
+		defer wg.Done()
+		if ruleSets, myErr = initRuleSets(isK8s); myErr != nil {
+			err = fmt.Errorf("%v{error initializing rulesets: %v}\n", err, myErr)
+		}
+	}()
+	go func() {
+		var myErr error
+		defer wg.Done()
+		if metricExporters, myErr = initMetricExporters(isK8s); myErr != nil {
+			err = fmt.Errorf("%v{error initializing metric exporters: %v}\n", err, myErr)
+		}
+	}()
+
+	go func() {
+		var myErr error
+		defer wg.Done()
+		if logExporters, myErr = initLogExporters(isK8s); myErr != nil {
+			err = fmt.Errorf("%v{error initializing log exporters: %v}\n", err, myErr)
+		}
+	}()
+
+	wg.Wait()
+
+	if err != nil {
+		err = fmt.Errorf("failed to initialize resources: \n%v", err)
+	}
+
+	return err
 }
