@@ -5,7 +5,6 @@ import (
 	"fmt"
 	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
 	me "github.com/devon-caron/metrifuge/k8s/api/metric_exporter"
-	"github.com/devon-caron/metrifuge/k8s/api/pipe"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
 
 	"gopkg.in/yaml.v3"
@@ -57,25 +56,6 @@ func ParseRules(data []byte) ([]*ruleset.RuleSet, error) {
 	}
 
 	return rules, nil
-}
-
-func ParsePipes(data []byte) ([]*pipe.Pipe, error) {
-	documents, err := parseDocuments(data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse YAML documents: %w", err)
-	}
-
-	pipes := make([]*pipe.Pipe, 0, len(documents))
-
-	for i, doc := range documents {
-		var pipe pipe.Pipe
-		if err := yaml.Unmarshal(doc, &pipe); err != nil {
-			return nil, fmt.Errorf("failed to parse pipe document %d: %w", i+1, err)
-		}
-		pipes = append(pipes, &pipe)
-	}
-
-	return pipes, nil
 }
 
 func ParseLogExporters(data []byte) ([]*le.LogExporter, error) {
