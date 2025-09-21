@@ -2,6 +2,7 @@ package logger
 
 import (
 	"github.com/sirupsen/logrus"
+	"log"
 	"os"
 	"strconv"
 	"sync"
@@ -27,7 +28,7 @@ func Get() *logrus.Logger {
 		var err error
 		MF_LOG_REPORTCALLER_STATUS, err = strconv.ParseBool(os.Getenv("MF_LOG_REPORTCALLER_STATUS"))
 		if err != nil {
-			panic(err)
+			log.Fatalf("Error parsing MF_LOG_REPORTCALLER_STATUS: %s", err)
 		}
 		logger.SetReportCaller(MF_LOG_REPORTCALLER_STATUS)
 
