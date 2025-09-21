@@ -1,14 +1,13 @@
 package api
 
 import (
-	"github.com/devon-caron/metrifuge/logger"
-	"github.com/go-chi/cors"
-	"net/http"
-
 	"github.com/devon-caron/metrifuge/api/internal/handlers"
+	"github.com/devon-caron/metrifuge/logger"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/cors"
 	_ "github.com/go-chi/cors"
 	"github.com/sirupsen/logrus"
+	"net/http"
 )
 
 var log *logrus.Logger
