@@ -37,7 +37,7 @@ func Start() {
 		os.Exit(1)
 	}
 
-	log.Info("ruleset, pipe, and exporter resources initialized")
+	log.Info("ruleset and exporter resources initialized")
 
 }
 
@@ -51,7 +51,7 @@ func initResources() error {
 	}
 
 	if isK8s {
-		if err = k8s.InitKubeConfig(); err != nil {
+		if KubeConfig, err = k8s.GetKubeConfig(); err != nil {
 			return fmt.Errorf("failed to initialize kubernetes config: %v", err)
 		}
 	}

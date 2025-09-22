@@ -49,6 +49,7 @@ WORKDIR /app
 # Template environment variables
 ENV MF_LOG_LEVEL=debug
 ENV MF_LOG_REPORTCALLER_STATUS=true
+ENV MF_RUNNING_IN_K8S=true
 
 # Copy the binary from builder stage
 COPY --from=builder /app/main .

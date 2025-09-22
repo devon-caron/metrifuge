@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: metrifuge-test
+  name: metrifuge-test
+  namespace: metrifuge
+spec:
+  containers:
+  - image: docker.io/library/metrifuge:20250921-2218
+    name: metrifuge-test
+    resources: {}
+  dnsPolicy: ClusterFirst
+  serviceAccountName: metrifuge-sa
+  restartPolicy: Always
+status: {}

@@ -2,11 +2,11 @@ package core
 
 import (
 	"fmt"
+	"os"
+
 	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
 	me "github.com/devon-caron/metrifuge/k8s/api/metric_exporter"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
-	"k8s.io/client-go/rest"
-	"os"
 
 	"github.com/devon-caron/metrifuge/k8s"
 )
@@ -26,7 +26,7 @@ func initRuleSets(isK8s bool) ([]*ruleset.RuleSet, error) {
 		return myRuleSets, nil
 	}
 
-	myRuleSets, err := k8s.GetK8sResources[ruleset.RuleSet](&rest.Config{}, "RuleSet", "v1alpha1", "rulesets")
+	myRuleSets, err := k8s.GetK8sResources[ruleset.RuleSet](KubeConfig, "RuleSet", "v1alpha1", "rulesets")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get k8s resources: %v", err)
 	}
@@ -49,7 +49,7 @@ func initMetricExporters(isK8s bool) ([]*me.MetricExporter, error) {
 		return myMetricExporters, nil
 	}
 
-	myMetricExporters, err := k8s.GetK8sResources[me.MetricExporter](&rest.Config{}, "MetricExporter", "v1alpha1", "metricexporters")
+	myMetricExporters, err := k8s.GetK8sResources[me.MetricExporter](KubeConfig, "MetricExporter", "v1alpha1", "metricexporters")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get k8s resources: %v", err)
 	}
@@ -72,7 +72,7 @@ func initLogExporters(isK8s bool) ([]*le.LogExporter, error) {
 		return myLogExporters, nil
 	}
 
-	myLogExporters, err := k8s.GetK8sResources[le.LogExporter](&rest.Config{}, "LogExporter", "v1alpha1", "logexporters")
+	myLogExporters, err := k8s.GetK8sResources[le.LogExporter](KubeConfig, "LogExporter", "v1alpha1", "logexporters")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get k8s resources: %v", err)
 	}

@@ -6,6 +6,8 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"slices"
+
 	"github.com/devon-caron/metrifuge/k8s/api"
 	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
@@ -15,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"slices"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
@@ -121,13 +122,13 @@ func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) *rule
 
 func getRules(_ map[string]any) []*ruleset.Rule {
 	panic("getRules function not implemented")
-	return nil
 }
 
 func validateResources(restConfig *rest.Config) error {
 
 	var requiredCrdNames = []string{"RuleSet", "LogExporter", "MetricExporter"}
 
+	log.Info("creating clientSet...")
 	// 1. Create custom crdClientSet
 	// here restConfig is your .kube/config file
 	crdClientSet, err := clientset.NewForConfig(restConfig)
@@ -135,6 +136,7 @@ func validateResources(restConfig *rest.Config) error {
 		return err
 	}
 
+	log.Info("listing CRDs...")
 	// 2. List all CRDs
 	crdList, err = crdClientSet.ApiextensionsV1().CustomResourceDefinitions().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
