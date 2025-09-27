@@ -20,7 +20,7 @@ type MetricExporterSpec struct {
 	Name            string                    `json:"name" yaml:"name"`
 	Selector        *api.Selector             `json:"selector,omitempty" yaml:"selector,omitempty"`
 	RefreshInterval time.Duration             `json:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty"`
-	Source          *api.Source               `json:"source,omitempty" yaml:"source,omitempty"`
+	Source          *api.SourceSpec           `json:"source,omitempty" yaml:"source,omitempty"`
 	Destination     MetricExporterDestination `json:"destination" yaml:"destination"`
 }
 

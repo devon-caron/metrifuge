@@ -64,7 +64,7 @@ type Selector struct {
 	MatchLabels map[string]any `json:"matchLabels,omitempty" yaml:"matchLabels,omitempty"`
 }
 
-type Source struct {
+type SourceSpec struct {
 	Type      string `json:"type" yaml:"type"`
 	LogSource struct {
 		Name string `json:"name" yaml:"name"`
@@ -87,7 +87,7 @@ type PodSource struct {
 	} `json:"pod" yaml:"pod"`
 }
 
-type SourceDefinition interface {
+type Source interface {
 	GetSourceInfo() string
 }
 

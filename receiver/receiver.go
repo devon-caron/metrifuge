@@ -30,7 +30,7 @@ func (lr *LogReceiver) Update(initialExporters []*le.LogExporter) {
 			continue
 		}
 
-		source := getRawSource(sourceSpec.Type)
+		source := getRawSource(sourceSpec)
 		if source == nil {
 			continue
 		}
@@ -43,11 +43,11 @@ func (lr *LogReceiver) Update(initialExporters []*le.LogExporter) {
 	}
 }
 
-func getRawSource(s string) api.SourceDefinition {
+func getRawSource(s *api.SourceSpec) api.Source {
 	fmt.Println("unimplemented")
 	return &api.PVCSource{}
 }
 
-func (lr *LogReceiver) receiveLogs(source api.SourceDefinition) {
+func (lr *LogReceiver) receiveLogs(source api.Source) {
 	fmt.Println("unimplemented")
 }
