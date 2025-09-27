@@ -2,14 +2,15 @@ package core
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+	"sync"
+
 	"github.com/devon-caron/metrifuge/k8s"
 	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
 	me "github.com/devon-caron/metrifuge/k8s/api/metric_exporter"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
 	"k8s.io/client-go/rest"
-	"os"
-	"strconv"
-	"sync"
 
 	"github.com/devon-caron/metrifuge/api"
 	"github.com/devon-caron/metrifuge/logger"
@@ -32,16 +33,17 @@ func Start() {
 	log.Info("starting api")
 	api.StartApi()
 
-	if err := initResources(); err != nil {
-		log.Fatalf("failed to initialize program resources: %v", err)
+	if err := loadResources(); err != nil {
+		log.Fatalf("failed to load program resources: %v", err)
 		os.Exit(1)
 	}
 
-	log.Info("ruleset and exporter resources initialized")
+	log.Info("ruleset and exporter resources loaded")
+	log.Info("initializing log and inline sources...")
 
 }
 
-func initResources() error {
+func loadResources() error {
 	var err error
 	wg.Add(4)
 
@@ -49,6 +51,8 @@ func initResources() error {
 	if err != nil {
 		return fmt.Errorf("failed to parse environment variable MF_RUNNING_IN_K8S:%v", err)
 	}
+
+	log.Infof("It is %v that the application is running in k8s", isK8s)
 
 	if isK8s {
 		if KubeConfig, err = k8s.GetKubeConfig(); err != nil {

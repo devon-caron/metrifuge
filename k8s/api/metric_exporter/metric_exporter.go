@@ -1,8 +1,9 @@
 package metric_exporter
 
 import (
-	"github.com/devon-caron/metrifuge/k8s/api"
 	"time"
+
+	"github.com/devon-caron/metrifuge/k8s/api"
 )
 
 // MetricExporter represents a configuration for exporting metrics to various destinations
@@ -19,6 +20,7 @@ type MetricExporterSpec struct {
 	Name            string                    `json:"name" yaml:"name"`
 	Selector        *api.Selector             `json:"selector,omitempty" yaml:"selector,omitempty"`
 	RefreshInterval time.Duration             `json:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty"`
+	Source          *api.Source               `json:"source,omitempty" yaml:"source,omitempty"`
 	Destination     MetricExporterDestination `json:"destination" yaml:"destination"`
 }
 

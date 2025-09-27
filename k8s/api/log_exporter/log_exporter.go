@@ -17,6 +17,7 @@ type LogExporter struct {
 type LogExporterSpec struct {
 	Name        string                 `json:"name" yaml:"name"`
 	Selector    *api.Selector          `json:"selector,omitempty" yaml:"selector,omitempty"`
+	Source      *api.Source            `json:"source,omitempty" yaml:"source,omitempty"`
 	Destination LogExporterDestination `json:"destination" yaml:"destination"`
 }
 
