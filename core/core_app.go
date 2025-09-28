@@ -6,15 +6,15 @@ import (
 	"strconv"
 	"sync"
 
+	exapi "github.com/devon-caron/metrifuge/api"
 	"github.com/devon-caron/metrifuge/k8s"
+	"github.com/devon-caron/metrifuge/k8s/api"
 	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
 	ls "github.com/devon-caron/metrifuge/k8s/api/log_source"
 	me "github.com/devon-caron/metrifuge/k8s/api/metric_exporter"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
-	"github.com/devon-caron/metrifuge/api"
 	"github.com/devon-caron/metrifuge/logger"
 	"github.com/devon-caron/metrifuge/receiver"
 	"github.com/sirupsen/logrus"
@@ -29,13 +29,13 @@ var (
 	metricExporters []*me.MetricExporter
 	logExporters    []*le.LogExporter
 	KubeConfig      *rest.Config
-	K8sClient       *dynamic.DynamicClient
+	K8sClient       *api.K8sClientWrapper
 )
 
 func Start() {
 	log = logger.Get()
 	log.Info("starting api")
-	api.StartApi()
+	exapi.StartApi()
 
 	if err := loadResources(); err != nil {
 		log.Fatalf("failed to load program resources: %v", err)
@@ -65,6 +65,9 @@ func loadResources() error {
 		}
 		if K8sClient, err = initClient(KubeConfig); err != nil {
 			return fmt.Errorf("failed to initialize kubernetes client: %v", err)
+		}
+		if err = k8s.ValidateResources(KubeConfig); err != nil {
+			return fmt.Errorf("failed to validate kubernetes resources: %v", err)
 		}
 	}
 

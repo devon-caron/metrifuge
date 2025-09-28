@@ -4,25 +4,25 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/devon-caron/metrifuge/k8s"
+	"github.com/devon-caron/metrifuge/k8s/api"
 	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
 	ls "github.com/devon-caron/metrifuge/k8s/api/log_source"
 	me "github.com/devon-caron/metrifuge/k8s/api/metric_exporter"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
-
-	"github.com/devon-caron/metrifuge/k8s"
 )
 
-func initClient(config *rest.Config) (*dynamic.DynamicClient, error) {
+func initClient(config *rest.Config) (*api.K8sClientWrapper, error) {
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
-	return dynamicClient, nil
+	return api.NewK8sClientWrapper(dynamicClient), nil
 }
 
-func initRuleSets(isK8s bool, k8sClient *dynamic.DynamicClient) ([]*ruleset.RuleSet, error) {
+func initRuleSets(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ruleset.RuleSet, error) {
 	if !isK8s {
 		ruleFilePath := os.Getenv("MF_RULES_FILEPATH")
 		data, err := os.ReadFile(ruleFilePath)
@@ -45,7 +45,7 @@ func initRuleSets(isK8s bool, k8sClient *dynamic.DynamicClient) ([]*ruleset.Rule
 	return myRuleSets, nil
 }
 
-func initLogSources(isK8s bool, k8sClient *dynamic.DynamicClient) ([]*ls.LogSource, error) {
+func initLogSources(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ls.LogSource, error) {
 	if !isK8s {
 		logSourceFilePath := os.Getenv("MF_LOG_SOURCES_FILEPATH")
 		data, err := os.ReadFile(logSourceFilePath)
@@ -68,7 +68,7 @@ func initLogSources(isK8s bool, k8sClient *dynamic.DynamicClient) ([]*ls.LogSour
 	return myLogSources, nil
 }
 
-func initMetricExporters(isK8s bool, k8sClient *dynamic.DynamicClient) ([]*me.MetricExporter, error) {
+func initMetricExporters(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*me.MetricExporter, error) {
 	if !isK8s {
 		metricExporterFilePath := os.Getenv("MF_METRIC_EXPORTERS_FILEPATH")
 		data, err := os.ReadFile(metricExporterFilePath)
@@ -91,7 +91,7 @@ func initMetricExporters(isK8s bool, k8sClient *dynamic.DynamicClient) ([]*me.Me
 	return myMetricExporters, nil
 }
 
-func initLogExporters(isK8s bool, k8sClient *dynamic.DynamicClient) ([]*le.LogExporter, error) {
+func initLogExporters(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*le.LogExporter, error) {
 	if !isK8s {
 		logExporterFilePath := os.Getenv("MF_LOG_EXPORTERS_FILEPATH")
 		data, err := os.ReadFile(logExporterFilePath)

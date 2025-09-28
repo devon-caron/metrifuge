@@ -16,7 +16,6 @@ import (
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
@@ -27,7 +26,7 @@ var (
 	crdList *v1.CustomResourceDefinitionList
 )
 
-func GetK8sResources[Resource api.MetrifugeK8sResource](k8sClient *dynamic.DynamicClient, kind, version, kindPlural string) ([]*Resource, error) {
+func GetK8sResources[Resource api.MetrifugeK8sResource](k8sClient *api.K8sClientWrapper, kind, version, kindPlural string) ([]*Resource, error) {
 
 	gvr := schema.GroupVersionResource{
 		Group:    "metrifuge.com/k8s",
@@ -115,7 +114,7 @@ func getRules(_ map[string]any) []*ruleset.Rule {
 	panic("getRules function not implemented")
 }
 
-func validateResources(restConfig *rest.Config) error {
+func ValidateResources(restConfig *rest.Config) error {
 
 	var requiredCrdNames = []string{"RuleSet", "LogExporter", "MetricExporter"}
 
