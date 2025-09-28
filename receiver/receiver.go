@@ -24,16 +24,18 @@ type LogReceiver struct {
 	KubeConfig      *rest.Config
 }
 
-func (lr *LogReceiver) Initialize(initialSources []*ls.LogSource, log *logrus.Logger, kubeConfig *rest.Config) {
+func (lr *LogReceiver) Initialize(initialSources []*ls.LogSource, log *logrus.Logger, kubeConfig *rest.Config) error {
 	lr.once.Do(func() {
 		lr.log = log
 		lr.KubeConfig = kubeConfig
 		lr.sourceStopChans = make(map[string]chan struct{})
 		lr.Update(initialSources)
 	})
+
+	return nil
 }
 
-func (lr *LogReceiver) Update(sources []*ls.LogSource) {
+func (lr *LogReceiver) Update(sources []*ls.LogSource) error {
 	// Create a set of current exporter names
 	currentSources := make(map[string]bool)
 	for _, source := range sources {
@@ -70,6 +72,8 @@ func (lr *LogReceiver) Update(sources []*ls.LogSource) {
 			lr.receiveLogs(src, ch)
 		}(source.Metadata.Name, *source, stopCh)
 	}
+
+	return nil
 }
 
 // ShutDown signals all goroutines to stop and waits for them to complete
@@ -110,13 +114,13 @@ func (lr *LogReceiver) receiveLogs(sourceObj ls.LogSource, stopCh <-chan struct{
 	var source api.Source
 
 	switch sourceObj.Spec.Type {
-	case "pvc":
+	case "PVCSource":
 		source = sourceObj.Spec.Source.PVCSource
-	case "pod":
+	case "PodSource":
 		source = sourceObj.Spec.Source.PodSource
-	case "local":
+	case "LocalSource":
 		source = sourceObj.Spec.Source.LocalSource
-	case "cmd":
+	case "CmdSource":
 		source = sourceObj.Spec.Source.CmdSource
 	default:
 		lr.log.Errorf("unknown log source type: %s", sourceObj.Spec.Type)
