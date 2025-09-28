@@ -45,3 +45,38 @@ func (pod *PodSource) StartLogStream(stopCh <-chan struct{}) {
 func (pod *PodSource) GetNewLogs() []string {
 	return nil
 }
+
+// LocalSource contains the configuration for getting logs from a local file
+type LocalSource struct {
+	Path string `json:"path" yaml:"path"`
+}
+
+// CmdSource contains the configuration for getting logs from a command
+// TODO: implement for given pod/container
+type CmdSource struct {
+	Command string `json:"command" yaml:"command"`
+}
+
+func (locs *LocalSource) GetSourceInfo() string {
+	return fmt.Sprintf("Local: %s", locs.Path)
+}
+
+func (locs *LocalSource) StartLogStream(stopCh <-chan struct{}) {
+
+}
+
+func (locs *LocalSource) GetNewLogs() []string {
+	return nil
+}
+
+func (cs *CmdSource) GetSourceInfo() string {
+	return fmt.Sprintf("Command: %s", cs.Command)
+}
+
+func (cs *CmdSource) StartLogStream(stopCh <-chan struct{}) {
+
+}
+
+func (cs *CmdSource) GetNewLogs() []string {
+	return nil
+}

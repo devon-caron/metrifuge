@@ -1,8 +1,6 @@
 package logsource
 
 import (
-	"fmt"
-
 	"github.com/devon-caron/metrifuge/k8s/api"
 )
 
@@ -17,43 +15,6 @@ type LogSource struct {
 
 // LogSourceSpec contains the log source configuration
 type LogSourceSpec struct {
-	Type        string         `json:"type" yaml:"type"`
-	PVCSource   *api.PVCSource `json:"pvcSource,omitempty" yaml:"pvcSource,omitempty"`
-	K8Source    *api.PodSource `json:"k8Source,omitempty" yaml:"k8Source,omitempty"`
-	LocalSource *LocalSource   `json:"localSource,omitempty" yaml:"localSource,omitempty"`
-	CmdSource   *CmdSource     `json:"cmdSource,omitempty" yaml:"cmdSource,omitempty"`
-}
-
-// LocalSource contains the configuration for getting logs from a local file
-type LocalSource struct {
-	Path string `json:"path" yaml:"path"`
-}
-
-// CmdSource contains the configuration for getting logs from a command
-// TODO: implement for given pod/container
-type CmdSource struct {
-	Command string `json:"command" yaml:"command"`
-}
-
-func (locs *LocalSource) GetSourceInfo() string {
-	return fmt.Sprintf("Local: %s", locs.Path)
-}
-func (locs *LocalSource) StartLogStream(stopCh <-chan struct{}) {
-
-}
-
-func (locs *LocalSource) GetNewLogs() []string {
-	return nil
-}
-
-func (cs *CmdSource) GetSourceInfo() string {
-	return fmt.Sprintf("Command: %s", cs.Command)
-}
-
-func (cs *CmdSource) StartLogStream(stopCh <-chan struct{}) {
-
-}
-
-func (cs *CmdSource) GetNewLogs() []string {
-	return nil
+	Type   string         `json:"type" yaml:"type"`
+	Source api.SourceSpec `json:"source" yaml:"source"`
 }

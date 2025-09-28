@@ -67,6 +67,8 @@ type SourceSpec struct {
 	LogSource struct {
 		Name string `json:"name" yaml:"name"`
 	} `json:"logSource" yaml:"logSource"`
-	PVCSource *PVCSource `json:"pvcSource,omitempty" yaml:"pvcSource,omitempty"`
-	PodSource *PodSource `json:"podSource,omitempty" yaml:"podSource,omitempty"`
+	PVCSource   *PVCSource   `json:"pvcSource,omitempty" yaml:"pvcSource,omitempty"`
+	PodSource   *PodSource   `json:"podSource,omitempty" yaml:"podSource,omitempty"`
+	LocalSource *LocalSource `json:"localSource,omitempty" yaml:"localSource,omitempty"`
+	CmdSource   *CmdSource   `json:"cmdSource,omitempty" yaml:"cmdSource,omitempty"`
 }

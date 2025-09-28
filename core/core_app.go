@@ -8,6 +8,7 @@ import (
 
 	"github.com/devon-caron/metrifuge/k8s"
 	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
+	ls "github.com/devon-caron/metrifuge/k8s/api/log_source"
 	me "github.com/devon-caron/metrifuge/k8s/api/metric_exporter"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
 	"k8s.io/client-go/rest"
@@ -23,6 +24,7 @@ var (
 	lr              *receiver.LogReceiver
 	log             *logrus.Logger
 	ruleSets        []*ruleset.RuleSet
+	logSources      []*ls.LogSource
 	metricExporters []*me.MetricExporter
 	logExporters    []*le.LogExporter
 	KubeConfig      *rest.Config
@@ -41,7 +43,7 @@ func Start() {
 	log.Info("ruleset and exporter resources loaded")
 	log.Info("initializing log and inline sources...")
 
-	lr.Initialize(logExporters, log, KubeConfig)
+	lr.Initialize(logSources, log, KubeConfig)
 }
 
 func loadResources() error {
