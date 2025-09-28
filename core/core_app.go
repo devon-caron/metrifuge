@@ -72,7 +72,7 @@ func loadResources() error {
 		var myErr error
 		defer wg.Done()
 		if ruleSets, myErr = initRuleSets(isK8s, K8sClient); myErr != nil {
-			err = fmt.Errorf("%v{error initializing rulesets: %v}\n", err, myErr)
+			err = fmt.Errorf("%v{error initializing rulesets 😔: %v}\n", err, myErr)
 		}
 	}()
 
@@ -80,7 +80,7 @@ func loadResources() error {
 		var myErr error
 		defer wg.Done()
 		if logSources, myErr = initLogSources(isK8s, K8sClient); myErr != nil {
-			err = fmt.Errorf("%v{error initializing log sources: %v}\n", err, myErr)
+			err = fmt.Errorf("%v{error initializing log sources 😔: %v}\n", err, myErr)
 		}
 	}()
 
@@ -88,7 +88,7 @@ func loadResources() error {
 		var myErr error
 		defer wg.Done()
 		if metricExporters, myErr = initMetricExporters(isK8s, K8sClient); myErr != nil {
-			err = fmt.Errorf("%v{error initializing metric exporters: %v}\n", err, myErr)
+			err = fmt.Errorf("%v{error initializing metric exporters 😔: %v}\n", err, myErr)
 		}
 	}()
 
@@ -96,7 +96,7 @@ func loadResources() error {
 		var myErr error
 		defer wg.Done()
 		if logExporters, myErr = initLogExporters(isK8s, K8sClient); myErr != nil {
-			err = fmt.Errorf("%v{error initializing log exporters: %v}\n", err, myErr)
+			err = fmt.Errorf("%v{error initializing log exporters 😔: %v}\n", err, myErr)
 		}
 	}()
 
