@@ -24,18 +24,18 @@ type LogReceiver struct {
 	KubeConfig      *rest.Config
 }
 
-func (lr *LogReceiver) Initialize(initialSources []*ls.LogSource, log *logrus.Logger, kubeConfig *rest.Config) error {
+func (lr *LogReceiver) Initialize(initialSources []*ls.LogSource, log *logrus.Logger, kubeConfig *rest.Config, k8sClient *api.K8sClientWrapper) error {
 	lr.once.Do(func() {
 		lr.log = log
 		lr.KubeConfig = kubeConfig
 		lr.sourceStopChans = make(map[string]chan struct{})
-		lr.Update(initialSources)
+		lr.Update(initialSources, k8sClient)
 	})
 
 	return nil
 }
 
-func (lr *LogReceiver) Update(sources []*ls.LogSource) error {
+func (lr *LogReceiver) Update(sources []*ls.LogSource, k8sClient *api.K8sClientWrapper) error {
 	// Create a set of current exporter names
 	currentSources := make(map[string]bool)
 	for _, source := range sources {
@@ -69,7 +69,7 @@ func (lr *LogReceiver) Update(sources []*ls.LogSource) error {
 		lr.wg.Add(1)
 		go func(name string, src ls.LogSource, ch chan struct{}) {
 			defer lr.wg.Done()
-			lr.receiveLogs(src, ch)
+			lr.receiveLogs(src, k8sClient, ch)
 		}(source.Metadata.Name, *source, stopCh)
 	}
 
@@ -106,7 +106,7 @@ func (lr *LogReceiver) StopExporter(name string) bool {
 	return false
 }
 
-func (lr *LogReceiver) receiveLogs(sourceObj ls.LogSource, stopCh <-chan struct{}) {
+func (lr *LogReceiver) receiveLogs(sourceObj ls.LogSource, kClient *api.K8sClientWrapper, stopCh <-chan struct{}) {
 	// Create a ticker for periodic processing
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
@@ -127,7 +127,7 @@ func (lr *LogReceiver) receiveLogs(sourceObj ls.LogSource, stopCh <-chan struct{
 		return
 	}
 
-	source.StartLogStream(lr.KubeConfig, nil, stopCh)
+	source.StartLogStream(kClient, nil, stopCh)
 
 	for {
 		select {

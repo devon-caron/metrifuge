@@ -63,10 +63,7 @@ type Selector struct {
 }
 
 type SourceSpec struct {
-	Type      string `json:"type" yaml:"type"`
-	LogSource struct {
-		Name string `json:"name" yaml:"name"`
-	} `json:"logSource" yaml:"logSource"`
+	Type        string       `json:"type" yaml:"type"`
 	PVCSource   *PVCSource   `json:"pvcSource,omitempty" yaml:"pvcSource,omitempty"`
 	PodSource   *PodSource   `json:"podSource,omitempty" yaml:"podSource,omitempty"`
 	LocalSource *LocalSource `json:"localSource,omitempty" yaml:"localSource,omitempty"`
