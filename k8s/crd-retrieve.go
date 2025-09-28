@@ -64,7 +64,7 @@ func GetK8sResources[Resource api.MetrifugeK8sResource](k8sClient *api.K8sClient
 }
 
 func getResource[Resource api.MetrifugeK8sResource](crdResource unstructured.Unstructured, kind string, spec map[string]interface{}) (*Resource, error) {
-	var mfK8sCrdNames = []string{"RuleSet", "LogExporter", "MetricExporter"}
+	var mfK8sCrdNames = []string{"RuleSet", "LogSource", "LogExporter", "MetricExporter"}
 
 	var resource any
 
@@ -116,7 +116,7 @@ func getRules(_ map[string]any) []*ruleset.Rule {
 
 func ValidateResources(restConfig *rest.Config) error {
 
-	var requiredCrdNames = []string{"RuleSet", "LogExporter", "MetricExporter"}
+	var requiredCrdNames = []string{"RuleSet", "LogSource", "LogExporter", "MetricExporter"}
 
 	log.Info("creating clientSet...")
 	// 1. Create custom crdClientSet
