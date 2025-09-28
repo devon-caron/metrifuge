@@ -1,8 +1,5 @@
 package k8s
 
-// for listing CRD, go provides client which is different from
-// "kubernetes.clientset"
-// This clientset will be used to list down the existing CRD
 import (
 	"context"
 	"fmt"
@@ -12,21 +9,30 @@ import (
 	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
 	"github.com/devon-caron/metrifuge/logger"
-	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 )
 
 var (
 	log     = logger.Get()
-	crdList *v1.CustomResourceDefinitionList
+	crdList *apiextensionsv1.CustomResourceDefinitionList
 )
 
 func GetK8sResources[Resource api.MetrifugeK8sResource](k8sClient *api.K8sClientWrapper, kind, version, kindPlural string) ([]*Resource, error) {
+	// For typed client, we would typically use code-generated clients for CRDs
+	// Since we don't have those, we'll continue using the dynamic client for now
+	// but we'll get it from the rest config in the wrapper
+
+	// First, create a dynamic client using the config from the wrapper
+	dynamicClient, err := dynamic.NewForConfig(k8sClient.Config())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create dynamic client: %v", err)
+	}
 
 	gvr := schema.GroupVersionResource{
 		Group:    "metrifuge.com/k8s",
@@ -34,7 +40,7 @@ func GetK8sResources[Resource api.MetrifugeK8sResource](k8sClient *api.K8sClient
 		Resource: kindPlural,
 	}
 
-	crdResourceList, err := k8sClient.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
+	crdResourceList, err := dynamicClient.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +70,7 @@ func GetK8sResources[Resource api.MetrifugeK8sResource](k8sClient *api.K8sClient
 }
 
 func getResource[Resource api.MetrifugeK8sResource](crdResource unstructured.Unstructured, kind string, spec map[string]interface{}) (*Resource, error) {
-	var mfK8sCrdNames = []string{"RuleSet", "LogSource", "LogExporter", "MetricExporter"}
+	var mfK8sCrdNames = []string{"RuleSet", "LogExporter", "MetricExporter"}
 
 	var resource any
 
@@ -116,21 +122,19 @@ func getRules(_ map[string]any) []*ruleset.Rule {
 
 func ValidateResources(restConfig *rest.Config) error {
 
-	var requiredCrdNames = []string{"RuleSet", "LogSource", "LogExporter", "MetricExporter"}
+	var requiredCrdNames = []string{"RuleSet", "LogExporter", "MetricExporter"}
 
 	log.Info("creating clientSet...")
-	// 1. Create custom crdClientSet
-	// here restConfig is your .kube/config file
-	crdClientSet, err := clientset.NewForConfig(restConfig)
+	// Create a new clientset which includes the CRD API
+	clientset, err := apiextensionsclientset.NewForConfig(restConfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create clientset: %v", err)
 	}
 
-	log.Info("listing CRDs...")
-	// 2. List all CRDs
-	crdList, err = crdClientSet.ApiextensionsV1().CustomResourceDefinitions().List(context.TODO(), metav1.ListOptions{})
+	// List all CRDs in the cluster
+	crdList, err = clientset.ApiextensionsV1().CustomResourceDefinitions().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to list CRDs: %v", err)
 	}
 
 	var existingCrdNames []string

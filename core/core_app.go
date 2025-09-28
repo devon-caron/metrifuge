@@ -63,7 +63,7 @@ func loadResources() error {
 		if KubeConfig, err = k8s.GetKubeConfig(); err != nil {
 			return fmt.Errorf("failed to initialize kubernetes config: %v", err)
 		}
-		if K8sClient, err = initClient(KubeConfig); err != nil {
+		if K8sClient, err = api.NewK8sClientWrapper(KubeConfig); err != nil {
 			return fmt.Errorf("failed to initialize kubernetes client: %v", err)
 		}
 		if err = k8s.ValidateResources(KubeConfig); err != nil {

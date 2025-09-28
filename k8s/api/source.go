@@ -1,7 +1,13 @@
 package api
 
 import (
+	"bufio"
+	"context"
 	"fmt"
+	"io"
+
+	"github.com/sirupsen/logrus"
+	v1 "k8s.io/api/core/v1"
 )
 
 type Source interface {
@@ -11,7 +17,7 @@ type Source interface {
 	// nonK8sConfig is the non-kubernetes config
 	// stopCh is the channel to signal the end of the log stream
 	// This function assumes k8s is active until the rest config is checked. If the k8s config is not present, it will use the non-k8s config.
-	StartLogStream(kClient *K8sClientWrapper, nonK8sConfig map[string]interface{}, stopCh <-chan struct{})
+	StartLogStream(kClient *K8sClientWrapper, nonK8sConfig map[string]interface{}, stopCh <-chan struct{}) error
 	GetNewLogs() []string
 }
 
@@ -25,16 +31,20 @@ type PVCSource struct {
 type PodSource struct {
 	Pod struct {
 		Name      string `json:"name" yaml:"name"`
+		Namespace string `json:"namespace" yaml:"namespace"`
 		Container string `json:"container" yaml:"container"`
 	} `json:"pod" yaml:"pod"`
+	stream io.ReadCloser
+	buffer []string
 }
 
 func (pvc *PVCSource) GetSourceInfo() string {
 	return fmt.Sprintf("PVC: %s, Log File Path: %s", pvc.PVC.Name, pvc.LogFilePath)
 }
 
-func (pvc *PVCSource) StartLogStream(kClient *K8sClientWrapper, nonK8sConfig map[string]interface{}, stopCh <-chan struct{}) {
+func (pvc *PVCSource) StartLogStream(kClient *K8sClientWrapper, nonK8sConfig map[string]interface{}, stopCh <-chan struct{}) error {
 	// may need to implement mount sockets for this to work
+	return nil
 }
 
 func (pvc *PVCSource) GetNewLogs() []string {
@@ -45,14 +55,45 @@ func (pod *PodSource) GetSourceInfo() string {
 	return fmt.Sprintf("Pod: %s, Container: %s", pod.Pod.Name, pod.Pod.Container)
 }
 
-func (pod *PodSource) StartLogStream(kClient *K8sClientWrapper, nonK8sConfig map[string]interface{}, stopCh <-chan struct{}) {
+func (pod *PodSource) StartLogStream(kClient *K8sClientWrapper, nonK8sConfig map[string]interface{}, stopCh <-chan struct{}) error {
 	if kClient == nil {
 		panic("kClient is nil, nonK8sConfig must be provided")
 	}
+	stopChContext, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func() {
+		<-stopCh
+		cancel()
+	}()
+
+	stream, err := kClient.Clientset().CoreV1().Pods(pod.Pod.Namespace).GetLogs(pod.Pod.Name, &v1.PodLogOptions{
+		Container: pod.Pod.Container,
+	}).Stream(stopChContext)
+	if err != nil {
+		logrus.Error(err)
+		return err
+	}
+	// Create a scanner to read line by line
+	scanner := bufio.NewScanner(stream)
+
+	for scanner.Scan() {
+		logLine := scanner.Text()
+		pod.buffer = append(pod.buffer, logLine)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	pod.stream = stream
+	return nil
 }
 
 func (pod *PodSource) GetNewLogs() []string {
-	return nil
+	newLogs := make([]string, len(pod.buffer))
+	copy(newLogs, pod.buffer)
+	pod.buffer = make([]string, 0)
+	return newLogs
 }
 
 // LocalSource contains the configuration for getting logs from a local file
@@ -70,8 +111,8 @@ func (locs *LocalSource) GetSourceInfo() string {
 	return fmt.Sprintf("Local: %s", locs.Path)
 }
 
-func (locs *LocalSource) StartLogStream(kClient *K8sClientWrapper, nonK8sConfig map[string]interface{}, stopCh <-chan struct{}) {
-
+func (locs *LocalSource) StartLogStream(kClient *K8sClientWrapper, nonK8sConfig map[string]interface{}, stopCh <-chan struct{}) error {
+	return nil
 }
 
 func (locs *LocalSource) GetNewLogs() []string {
@@ -82,8 +123,8 @@ func (cs *CmdSource) GetSourceInfo() string {
 	return fmt.Sprintf("Command: %s", cs.Command)
 }
 
-func (cs *CmdSource) StartLogStream(kClient *K8sClientWrapper, nonK8sConfig map[string]interface{}, stopCh <-chan struct{}) {
-
+func (cs *CmdSource) StartLogStream(kClient *K8sClientWrapper, nonK8sConfig map[string]interface{}, stopCh <-chan struct{}) error {
+	return nil
 }
 
 func (cs *CmdSource) GetNewLogs() []string {
