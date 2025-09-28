@@ -41,6 +41,7 @@ func Start() {
 	log.Info("ruleset and exporter resources loaded")
 	log.Info("initializing log and inline sources...")
 
+	lr.Initialize(logExporters, log, KubeConfig)
 }
 
 func loadResources() error {

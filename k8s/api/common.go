@@ -1,7 +1,5 @@
 package api
 
-import "fmt"
-
 type MetrifugeK8sResource interface {
 	GetMetadata() Metadata
 }
@@ -71,30 +69,4 @@ type SourceSpec struct {
 	} `json:"logSource" yaml:"logSource"`
 	PVCSource *PVCSource `json:"pvcSource,omitempty" yaml:"pvcSource,omitempty"`
 	PodSource *PodSource `json:"podSource,omitempty" yaml:"podSource,omitempty"`
-}
-
-type PVCSource struct {
-	PVC struct {
-		Name string `json:"name" yaml:"name"`
-	} `json:"pvc" yaml:"pvc"`
-	LogFilePath string `json:"logFilePath" yaml:"logFilePath"`
-}
-
-type PodSource struct {
-	Pod struct {
-		Name      string `json:"name" yaml:"name"`
-		Container string `json:"container" yaml:"container"`
-	} `json:"pod" yaml:"pod"`
-}
-
-type Source interface {
-	GetSourceInfo() string
-}
-
-func (pvc *PVCSource) GetSourceInfo() string {
-	return fmt.Sprintf("PVC: %s, Log File Path: %s", pvc.PVC.Name, pvc.LogFilePath)
-}
-
-func (pod *PodSource) GetSourceInfo() string {
-	return fmt.Sprintf("Pod: %s, Container: %s", pod.Pod.Name, pod.Pod.Container)
 }
