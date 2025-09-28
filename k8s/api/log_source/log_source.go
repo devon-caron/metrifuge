@@ -18,3 +18,7 @@ type LogSourceSpec struct {
 	Type   string         `json:"type" yaml:"type"`
 	Source api.SourceSpec `json:"source" yaml:"source"`
 }
+
+func (ls LogSource) GetMetadata() api.Metadata {
+	return ls.Metadata
+}

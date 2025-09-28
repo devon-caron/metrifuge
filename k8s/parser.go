@@ -3,7 +3,9 @@ package k8s
 import (
 	"bytes"
 	"fmt"
+
 	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
+	ls "github.com/devon-caron/metrifuge/k8s/api/log_source"
 	me "github.com/devon-caron/metrifuge/k8s/api/metric_exporter"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
 
@@ -56,6 +58,25 @@ func ParseRules(data []byte) ([]*ruleset.RuleSet, error) {
 	}
 
 	return rules, nil
+}
+
+func ParseLogSources(data []byte) ([]*ls.LogSource, error) {
+	documents, err := parseDocuments(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse YAML documents: %w", err)
+	}
+
+	logSources := make([]*ls.LogSource, 0, len(documents))
+
+	for i, doc := range documents {
+		var logSource ls.LogSource
+		if err := yaml.Unmarshal(doc, &logSource); err != nil {
+			return nil, fmt.Errorf("failed to parse log source document %d: %w", i+1, err)
+		}
+		logSources = append(logSources, &logSource)
+	}
+
+	return logSources, nil
 }
 
 func ParseLogExporters(data []byte) ([]*le.LogExporter, error) {

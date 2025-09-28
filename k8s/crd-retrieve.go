@@ -27,16 +27,7 @@ var (
 	crdList *v1.CustomResourceDefinitionList
 )
 
-func GetK8sResources[Resource api.MetrifugeK8sResource](restConfig *rest.Config, kind, version, kindPlural string) ([]*Resource, error) {
-	log.Infof("getting %v from %s", kind, restConfig.Host)
-	if err := validateResources(restConfig); err != nil {
-		log.Warnf("failed to validate CRDs in cluster: %v", err)
-	}
-
-	dynamicClient, err := dynamic.NewForConfig(restConfig)
-	if err != nil {
-		return nil, err
-	}
+func GetK8sResources[Resource api.MetrifugeK8sResource](k8sClient *dynamic.DynamicClient, kind, version, kindPlural string) ([]*Resource, error) {
 
 	gvr := schema.GroupVersionResource{
 		Group:    "metrifuge.com/k8s",
@@ -44,7 +35,7 @@ func GetK8sResources[Resource api.MetrifugeK8sResource](restConfig *rest.Config,
 		Resource: kindPlural,
 	}
 
-	crdResourceList, err := dynamicClient.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
+	crdResourceList, err := k8sClient.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

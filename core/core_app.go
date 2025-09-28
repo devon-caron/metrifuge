@@ -11,6 +11,7 @@ import (
 	ls "github.com/devon-caron/metrifuge/k8s/api/log_source"
 	me "github.com/devon-caron/metrifuge/k8s/api/metric_exporter"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
 	"github.com/devon-caron/metrifuge/api"
@@ -28,6 +29,7 @@ var (
 	metricExporters []*me.MetricExporter
 	logExporters    []*le.LogExporter
 	KubeConfig      *rest.Config
+	K8sClient       *dynamic.DynamicClient
 )
 
 func Start() {
@@ -61,19 +63,31 @@ func loadResources() error {
 		if KubeConfig, err = k8s.GetKubeConfig(); err != nil {
 			return fmt.Errorf("failed to initialize kubernetes config: %v", err)
 		}
+		if K8sClient, err = initClient(KubeConfig); err != nil {
+			return fmt.Errorf("failed to initialize kubernetes client: %v", err)
+		}
 	}
 
 	go func() {
 		var myErr error
 		defer wg.Done()
-		if ruleSets, myErr = initRuleSets(isK8s); myErr != nil {
+		if ruleSets, myErr = initRuleSets(isK8s, K8sClient); myErr != nil {
 			err = fmt.Errorf("%v{error initializing rulesets: %v}\n", err, myErr)
 		}
 	}()
+
 	go func() {
 		var myErr error
 		defer wg.Done()
-		if metricExporters, myErr = initMetricExporters(isK8s); myErr != nil {
+		if logSources, myErr = initLogSources(isK8s, K8sClient); myErr != nil {
+			err = fmt.Errorf("%v{error initializing log sources: %v}\n", err, myErr)
+		}
+	}()
+
+	go func() {
+		var myErr error
+		defer wg.Done()
+		if metricExporters, myErr = initMetricExporters(isK8s, K8sClient); myErr != nil {
 			err = fmt.Errorf("%v{error initializing metric exporters: %v}\n", err, myErr)
 		}
 	}()
@@ -81,7 +95,7 @@ func loadResources() error {
 	go func() {
 		var myErr error
 		defer wg.Done()
-		if logExporters, myErr = initLogExporters(isK8s); myErr != nil {
+		if logExporters, myErr = initLogExporters(isK8s, K8sClient); myErr != nil {
 			err = fmt.Errorf("%v{error initializing log exporters: %v}\n", err, myErr)
 		}
 	}()

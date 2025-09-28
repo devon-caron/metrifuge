@@ -123,7 +123,7 @@ func (lr *LogReceiver) receiveLogs(sourceObj ls.LogSource, stopCh <-chan struct{
 		return
 	}
 
-	source.StartLogStream(stopCh)
+	source.StartLogStream(lr.KubeConfig, nil, stopCh)
 
 	for {
 		select {
