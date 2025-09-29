@@ -11,6 +11,7 @@ var (
 	DEFAULT_LOG_LEVEL               = "debug"
 	DEFAULT_LOG_REPORTCALLER_STATUS = "true"
 	DEFAULT_RUNNING_IN_K8S          = "true"
+	DEFAULT_REFRESH_INTERVAL        = "60"
 )
 
 var (
@@ -21,6 +22,7 @@ var (
 	LOG_LEVEL               = DEFAULT_LOG_LEVEL
 	LOG_REPORTCALLER_STATUS = DEFAULT_LOG_REPORTCALLER_STATUS
 	RUNNING_IN_K8S          = DEFAULT_RUNNING_IN_K8S
+	REFRESH_INTERVAL        = DEFAULT_REFRESH_INTERVAL
 )
 
 func InitConfig() {
@@ -51,5 +53,9 @@ func InitConfig() {
 	maybeRunningInK8s := os.Getenv("MF_RUNNING_IN_K8S")
 	if maybeRunningInK8s != "" {
 		RUNNING_IN_K8S = maybeRunningInK8s
+	}
+	maybeRefreshInterval := os.Getenv("MF_REFRESH_INTERVAL")
+	if maybeRefreshInterval != "" {
+		REFRESH_INTERVAL = maybeRefreshInterval
 	}
 }

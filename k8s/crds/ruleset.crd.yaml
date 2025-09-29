@@ -1,0 +1,146 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: rulesets.metrifuge.dev
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.13.0
+  labels:
+    app.kubernetes.io/name: metrifuge
+    app.kubernetes.io/instance: metrifuge
+    app.kubernetes.io/version: "v1"
+spec:
+  group: metrifuge.dev
+  names:
+    kind: RuleSet
+    listKind: RuleSetList
+    plural: rulesets
+    singular: ruleset
+  scope: Namespaced
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required:
+              - match
+              - rules
+            properties:
+              match:
+                type: array
+                items:
+                  type: string
+                description: List of log patterns to match against log lines
+              rules:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - name
+                    - pattern
+                  properties:
+                    name:
+                      type: string
+                      description: Name of the rule
+                    description:
+                      type: string
+                      description: Optional description of the rule
+                    pattern:
+                      type: string
+                      description: Regex pattern to match against log lines
+                    conditionals:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - field1
+                          - operator
+                          - actionTrue
+                          - actionFalse
+                        properties:
+                          field1:
+                            $ref: "#/definitions/FieldValue"
+                          operator:
+                            type: string
+                            enum: ["LessThan", "Equals", "DoesNotEqual", "Exists", "DoesNotExist", "GreaterThan", "GreaterThanOrEqualTo"]
+                            description: Comparison operator for the condition
+                          field2:
+                            $ref: "#/definitions/FieldValue"
+                          actionTrue:
+                            type: string
+                            description: Action to take if condition evaluates to true
+                          actionFalse:
+                            type: string
+                            description: Action to take if condition evaluates to false
+                    metrics:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - name
+                          - kind
+                          - value
+                        properties:
+                          name:
+                            type: string
+                            description: Name of the metric
+                          kind:
+                            type: string
+                            enum: ["Int64Counter", "Float64Counter", "Int64Gauge", "Float64Gauge"]
+                            description: Type of metric
+                          value:
+                            $ref: "#/definitions/MetricValue"
+                          attributes:
+                            type: array
+                            items:
+                              $ref: "#/definitions/Attribute"
+                            description: Key-value pairs to attach to the metric
+    subresources:
+      status: {}
+
+definitions:
+  FieldValue:
+    type: object
+    required:
+      - type
+    properties:
+      type:
+        type: string
+        enum: ["Int64", "Float64", "String"]
+        description: Type of the field value
+      grokKey:
+        type: string
+        description: Key to extract from grok pattern matches
+      manualValue:
+        type: string
+        description: Static value to use
+  MetricValue:
+    type: object
+    required:
+      - type
+    properties:
+      type:
+        type: string
+        enum: ["Int64", "Float64", "String"]
+      grokKey:
+        type: string
+        description: Key to extract from grok pattern matches
+      manualValue:
+        type: string
+        description: Static value to use
+  Attribute:
+    type: object
+    required:
+      - key
+      - value
+    properties:
+      key:
+        type: string
+        description: Attribute key
+      value:
+        type: string
+        description: Attribute value

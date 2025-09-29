@@ -59,7 +59,7 @@ type Metadata struct {
 
 // Selector defines how to select resources
 type Selector struct {
-	MatchLabels map[string]any `json:"matchLabels,omitempty" yaml:"matchLabels,omitempty"`
+	MatchLabels map[string]string `json:"matchLabels,omitempty" yaml:"matchLabels,omitempty"`
 }
 
 type SourceSpec struct {

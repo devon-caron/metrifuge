@@ -13,7 +13,7 @@ import (
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
 )
 
-func initRuleSets(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ruleset.RuleSet, error) {
+func updateRuleSets(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ruleset.RuleSet, error) {
 	if !isK8s {
 		ruleFilePath := os.Getenv("MF_RULES_FILEPATH")
 		data, err := os.ReadFile(ruleFilePath)
@@ -36,7 +36,7 @@ func initRuleSets(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ruleset.RuleS
 	return myRuleSets, nil
 }
 
-func initLogSources(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ls.LogSource, error) {
+func updateLogSources(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ls.LogSource, error) {
 	if !isK8s {
 		logSourceFilePath := os.Getenv("MF_LOG_SOURCES_FILEPATH")
 		data, err := os.ReadFile(logSourceFilePath)
@@ -59,7 +59,7 @@ func initLogSources(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ls.LogSourc
 	return myLogSources, nil
 }
 
-func initMetricExporters(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*me.MetricExporter, error) {
+func updateMetricExporters(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*me.MetricExporter, error) {
 	if !isK8s {
 		metricExporterFilePath := os.Getenv("MF_METRIC_EXPORTERS_FILEPATH")
 		data, err := os.ReadFile(metricExporterFilePath)
@@ -82,7 +82,7 @@ func initMetricExporters(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*me.Met
 	return myMetricExporters, nil
 }
 
-func initLogExporters(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*le.LogExporter, error) {
+func updateLogExporters(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*le.LogExporter, error) {
 	if !isK8s {
 		logExporterFilePath := os.Getenv("MF_LOG_EXPORTERS_FILEPATH")
 		data, err := os.ReadFile(logExporterFilePath)
