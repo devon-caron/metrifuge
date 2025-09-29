@@ -1,37 +1,34 @@
 package logger
 
 import (
-	"github.com/sirupsen/logrus"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/devon-caron/metrifuge/global"
+	"github.com/sirupsen/logrus"
 )
 
 var (
-	logLevel                   logrus.Level
-	logger                     *logrus.Logger
-	once                       sync.Once
-	MF_LOG_LEVEL               string
-	MF_LOG_REPORTCALLER_STATUS bool
+	logLevel logrus.Level
+	logger   *logrus.Logger
+	once     sync.Once
 )
 
 func Get() *logrus.Logger {
 	once.Do(func() {
-		MF_LOG_LEVEL = os.Getenv("MF_LOG_LEVEL")
-		logLevel = initLogLevel(MF_LOG_LEVEL)
+		logLevel = initLogLevel(global.LOG_LEVEL)
 
 		logger = logrus.StandardLogger()
 
 		logger.SetLevel(logLevel)
 
-		var err error
-		MF_LOG_REPORTCALLER_STATUS, err = strconv.ParseBool(os.Getenv("MF_LOG_REPORTCALLER_STATUS"))
+		LOG_REPORTCALLER_STATUS, err := strconv.ParseBool(global.LOG_REPORTCALLER_STATUS)
 		if err != nil {
-			log.Fatalf("Error parsing MF_LOG_REPORTCALLER_STATUS: %s", err)
+			log.Fatalf("Error parsing global.LOG_REPORTCALLER_STATUS: %s", err)
 		}
-		logger.SetReportCaller(MF_LOG_REPORTCALLER_STATUS)
+		logger.SetReportCaller(LOG_REPORTCALLER_STATUS)
 
 		logger.Info("logger initialized")
 	})

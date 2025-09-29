@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/devon-caron/metrifuge/global"
 	"github.com/devon-caron/metrifuge/k8s"
 	"github.com/devon-caron/metrifuge/k8s/api"
 	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
@@ -27,7 +28,7 @@ func initRuleSets(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ruleset.RuleS
 		return myRuleSets, nil
 	}
 
-	myRuleSets, err := k8s.GetK8sResources[ruleset.RuleSet](k8sClient, "RuleSet", "v1alpha1", "rulesets")
+	myRuleSets, err := k8s.GetK8sResources[ruleset.RuleSet](k8sClient, global.RULESET_CRD_NAME, "v1alpha1", "rulesets")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get k8s resources: %v", err)
 	}
@@ -50,7 +51,7 @@ func initLogSources(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ls.LogSourc
 		return myLogSources, nil
 	}
 
-	myLogSources, err := k8s.GetK8sResources[ls.LogSource](k8sClient, "LogSource", "v1alpha1", "logsources")
+	myLogSources, err := k8s.GetK8sResources[ls.LogSource](k8sClient, global.LOGSOURCE_CRD_NAME, "v1alpha1", "logsources")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get k8s resources: %v", err)
 	}
@@ -73,7 +74,7 @@ func initMetricExporters(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*me.Met
 		return myMetricExporters, nil
 	}
 
-	myMetricExporters, err := k8s.GetK8sResources[me.MetricExporter](k8sClient, "MetricExporter", "v1alpha1", "metricexporters")
+	myMetricExporters, err := k8s.GetK8sResources[me.MetricExporter](k8sClient, global.METRICEXPORTER_CRD_NAME, "v1alpha1", "metricexporters")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get k8s resources: %v", err)
 	}
@@ -96,7 +97,7 @@ func initLogExporters(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*le.LogExp
 		return myLogExporters, nil
 	}
 
-	myLogExporters, err := k8s.GetK8sResources[le.LogExporter](k8sClient, "LogExporter", "v1alpha1", "logexporters")
+	myLogExporters, err := k8s.GetK8sResources[le.LogExporter](k8sClient, global.LOGEXPORTER_CRD_NAME, "v1alpha1", "logexporters")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get k8s resources: %v", err)
 	}

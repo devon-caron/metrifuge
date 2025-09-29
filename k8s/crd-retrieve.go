@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/devon-caron/metrifuge/global"
 	"github.com/devon-caron/metrifuge/k8s/api"
 	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
@@ -70,7 +71,7 @@ func GetK8sResources[Resource api.MetrifugeK8sResource](k8sClient *api.K8sClient
 }
 
 func getResource[Resource api.MetrifugeK8sResource](crdResource unstructured.Unstructured, kind string, spec map[string]interface{}) (*Resource, error) {
-	var mfK8sCrdNames = []string{"RuleSet", "LogExporter", "MetricExporter"}
+	var mfK8sCrdNames = []string{global.RULESET_CRD_NAME, global.LOGSOURCE_CRD_NAME, global.LOGEXPORTER_CRD_NAME, global.METRICEXPORTER_CRD_NAME}
 
 	var resource any
 
@@ -122,7 +123,7 @@ func getRules(_ map[string]any) []*ruleset.Rule {
 
 func ValidateResources(restConfig *rest.Config) error {
 
-	var requiredCrdNames = []string{"RuleSet", "LogExporter", "MetricExporter"}
+	var requiredCrdNames = []string{global.RULESET_CRD_NAME, global.LOGSOURCE_CRD_NAME, global.LOGEXPORTER_CRD_NAME, global.METRICEXPORTER_CRD_NAME}
 
 	log.Info("creating clientSet...")
 	// Create a new clientset which includes the CRD API

@@ -15,6 +15,7 @@ import (
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
 	"k8s.io/client-go/rest"
 
+	"github.com/devon-caron/metrifuge/global"
 	"github.com/devon-caron/metrifuge/logger"
 	"github.com/devon-caron/metrifuge/receiver"
 	"github.com/sirupsen/logrus"
@@ -33,6 +34,8 @@ var (
 )
 
 func Start() {
+	logrus.Info("fetching config/env variables...")
+	global.InitConfig()
 	log = logger.Get()
 	log.Info("starting api")
 	exapi.StartApi()
@@ -52,7 +55,7 @@ func loadResources() error {
 	var err error
 	wg.Add(4)
 
-	isK8s, err := strconv.ParseBool(os.Getenv("MF_RUNNING_IN_K8S"))
+	isK8s, err := strconv.ParseBool(global.RUNNING_IN_K8S)
 	if err != nil {
 		return fmt.Errorf("failed to parse environment variable MF_RUNNING_IN_K8S:%v", err)
 	}
