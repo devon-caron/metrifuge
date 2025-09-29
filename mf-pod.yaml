@@ -8,7 +8,7 @@ metadata:
   namespace: metrifuge
 spec:
   containers:
-  - image: docker.io/library/metrifuge:20250921-2218
+  - image: metrifuge:20250928-1244
     name: metrifuge-test
     resources: {}
   dnsPolicy: ClusterFirst

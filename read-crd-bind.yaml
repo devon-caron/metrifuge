@@ -5,7 +5,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: metrifuge-sa
-  namespace: default
+  namespace: metrifuge
 roleRef:
   kind: ClusterRole
   name: crd-reader-role

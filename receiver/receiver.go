@@ -1,7 +1,6 @@
 package receiver
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -134,11 +133,12 @@ func (lr *LogReceiver) receiveLogs(sourceObj ls.LogSource, kClient *api.K8sClien
 		case <-stopCh:
 			return
 		case <-ticker.C:
-			fmt.Printf("Processing logs from source: %s\n", source.GetSourceInfo())
+			lr.log.Infof("Processing logs from source: %s\n", source.GetSourceInfo())
 			logs := source.GetNewLogs()
 			for _, log := range logs {
-				fmt.Println(log)
-				panic("unimplemented")
+				lr.log.Debugf("SOURCE: %v", source.GetSourceInfo())
+				lr.log.Debugf("LOG: %v", log)
+				lr.log.Debugf("LOG PROCESSING STILL NEEDS IMPLEMENTATION")
 			}
 		}
 	}

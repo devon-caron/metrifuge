@@ -12,6 +12,7 @@ import (
 
 type Source interface {
 	GetSourceInfo() string
+
 	// StartLogStream starts a log stream for the source
 	// kClient is the kubernetes client
 	// nonK8sConfig is the non-kubernetes config
@@ -73,6 +74,8 @@ func (pod *PodSource) StartLogStream(kClient *K8sClientWrapper, nonK8sConfig map
 		logrus.Error(err)
 		return err
 	}
+	pod.stream = stream
+
 	// Create a scanner to read line by line
 	scanner := bufio.NewScanner(stream)
 
@@ -85,7 +88,6 @@ func (pod *PodSource) StartLogStream(kClient *K8sClientWrapper, nonK8sConfig map
 		return err
 	}
 
-	pod.stream = stream
 	return nil
 }
 
