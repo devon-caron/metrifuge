@@ -20,13 +20,11 @@ type LogReceiver struct {
 	once            sync.Once
 	sourceStopChans map[string]chan struct{} // Map of exporter names to their stop channels
 	mu              sync.RWMutex             // Protects the exporters map
-	KubeConfig      *rest.Config
 }
 
 func (lr *LogReceiver) Initialize(initialSources []*ls.LogSource, log *logrus.Logger, kubeConfig *rest.Config, k8sClient *api.K8sClientWrapper) error {
 	lr.once.Do(func() {
 		lr.log = log
-		lr.KubeConfig = kubeConfig
 		lr.sourceStopChans = make(map[string]chan struct{})
 		lr.Update(initialSources, k8sClient)
 	})
