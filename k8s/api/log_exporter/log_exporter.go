@@ -2,7 +2,6 @@ package log_exporter
 
 import (
 	"github.com/devon-caron/metrifuge/k8s/api"
-	rs "github.com/devon-caron/metrifuge/k8s/api/ruleset"
 )
 
 // LogExporter represents a configuration for exporting logs to various destinations
@@ -12,7 +11,7 @@ type LogExporter struct {
 	Kind       string          `json:"kind" yaml:"kind"`
 	Metadata   api.Metadata    `json:"metadata" yaml:"metadata"`
 	Spec       LogExporterSpec `json:"spec" yaml:"spec"`
-	ruleSets   []*rs.RuleSet
+	rules      []*api.Rule
 }
 
 // LogExporterSpec contains the log exporter configuration
@@ -37,22 +36,26 @@ func (le LogExporter) GetMetadata() api.Metadata {
 	return le.Metadata
 }
 
-func (le *LogExporter) MatchRuleSets(ruleSets []*rs.RuleSet) {
-	le.ruleSets = []*rs.RuleSet{}
-	for _, ruleSet := range ruleSets {
-		if le.Spec.Selector != nil {
-			if le.Spec.Selector.MatchLabels != nil {
-				allMatched := true
-				for labelKey, labelValue := range le.Spec.Selector.MatchLabels {
-					if ruleSet.Metadata.Labels[labelKey] != labelValue {
-						allMatched = false
-						continue
-					}
-				}
-				if allMatched {
-					le.ruleSets = append(le.ruleSets, ruleSet)
-				}
-			}
-		}
-	}
+func (le *LogExporter) AddRule(rule *api.Rule) {
+	le.rules = append(le.rules, rule)
 }
+
+// func (le *LogExporter) MatchRuleSets(ruleSets []*rs.RuleSet) {
+// 	le.ruleSets = []*rs.RuleSet{}
+// 	for _, ruleSet := range ruleSets {
+// 		if le.Spec.Selector != nil {
+// 			if le.Spec.Selector.MatchLabels != nil {
+// 				allMatched := true
+// 				for labelKey, labelValue := range le.Spec.Selector.MatchLabels {
+// 					if ruleSet.Metadata.Labels[labelKey] != labelValue {
+// 						allMatched = false
+// 						continue
+// 					}
+// 				}
+// 				if allMatched {
+// 					le.ruleSets = append(le.ruleSets, ruleSet)
+// 				}
+// 			}
+// 		}
+// 	}
+// }

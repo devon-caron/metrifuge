@@ -117,7 +117,7 @@ func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) *rule
 	return myRuleSet
 }
 
-func getRules(_ map[string]any) []*ruleset.Rule {
+func getRules(_ map[string]any) []*api.Rule {
 	panic("getRules function not implemented")
 }
 

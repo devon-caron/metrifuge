@@ -8,6 +8,7 @@ import (
 	"time"
 
 	exapi "github.com/devon-caron/metrifuge/api"
+	"github.com/devon-caron/metrifuge/exporter_manager"
 	"github.com/devon-caron/metrifuge/k8s"
 	"github.com/devon-caron/metrifuge/k8s/api"
 	"github.com/devon-caron/metrifuge/resources"
@@ -22,6 +23,7 @@ var (
 	log *logrus.Logger
 	wg  sync.WaitGroup
 	lr  *receiver.LogReceiver
+	em  *exporter_manager.ExporterManager
 )
 
 func Run() {
@@ -47,6 +49,20 @@ func Run() {
 		log.Warnf("using default value of 60")
 		refresh = 60
 	}
+
+	log.Info("initializing exporter manager...")
+
+	// First collect all exporters into a single slice
+	allExporters := make([]api.Exporter, 0)
+	for _, le := range res.GetLogExporters() {
+		allExporters = append(allExporters, le)
+	}
+	for _, me := range res.GetMetricExporters() {
+		allExporters = append(allExporters, me)
+	}
+
+	// Then pass the combined slice
+	em.Initialize(res.GetRuleSets(), res.GetKubeConfig(), res.GetK8sClient(), allExporters)
 
 	curRetries := 0
 	for {

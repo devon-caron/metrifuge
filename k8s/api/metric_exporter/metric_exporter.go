@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/devon-caron/metrifuge/k8s/api"
-	rs "github.com/devon-caron/metrifuge/k8s/api/ruleset"
 )
 
 // MetricExporter represents a configuration for exporting metrics to various destinations
@@ -14,7 +13,7 @@ type MetricExporter struct {
 	Kind       string             `json:"kind" yaml:"kind"`
 	Metadata   api.Metadata       `json:"metadata" yaml:"metadata"`
 	Spec       MetricExporterSpec `json:"spec" yaml:"spec"`
-	ruleSets   []*rs.RuleSet
+	rules      []*api.Rule
 }
 
 // MetricExporterSpec contains the metric exporter configuration
@@ -38,22 +37,26 @@ func (me MetricExporter) GetMetadata() api.Metadata {
 	return me.Metadata
 }
 
-func (me *MetricExporter) MatchRuleSets(ruleSets []*rs.RuleSet) {
-	me.ruleSets = []*rs.RuleSet{}
-	for _, ruleSet := range ruleSets {
-		if me.Spec.Selector != nil {
-			if me.Spec.Selector.MatchLabels != nil {
-				allMatched := true
-				for labelKey, labelValue := range me.Spec.Selector.MatchLabels {
-					if ruleSet.Metadata.Labels[labelKey] != labelValue {
-						allMatched = false
-						continue
-					}
-				}
-				if allMatched {
-					me.ruleSets = append(me.ruleSets, ruleSet)
-				}
-			}
-		}
-	}
+func (me *MetricExporter) AddRule(rule *api.Rule) {
+	me.rules = append(me.rules, rule)
 }
+
+// func (me *MetricExporter) MatchRuleSets(ruleSets []*rs.RuleSet) {
+// 	me.ruleSets = []*rs.RuleSet{}
+// 	for _, ruleSet := range ruleSets {
+// 		if me.Spec.Selector != nil {
+// 			if me.Spec.Selector.MatchLabels != nil {
+// 				allMatched := true
+// 				for labelKey, labelValue := range me.Spec.Selector.MatchLabels {
+// 					if ruleSet.Metadata.Labels[labelKey] != labelValue {
+// 						allMatched = false
+// 						continue
+// 					}
+// 				}
+// 				if allMatched {
+// 					me.ruleSets = append(me.ruleSets, ruleSet)
+// 				}
+// 			}
+// 		}
+// 	}
+// }
