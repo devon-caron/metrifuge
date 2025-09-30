@@ -51,7 +51,7 @@ func Run() {
 	curRetries := 0
 	for {
 		if err := updateResources(); err != nil {
-			log.Errorf("failed to update resources, retrying...: %v", err)
+			log.Errorf("retrying due to failure to update resources: %v", err)
 			time.Sleep(3 * time.Second)
 			curRetries++
 			if curRetries > 5 {

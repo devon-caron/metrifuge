@@ -1,7 +1,7 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: rulesets.metrifuge.dev
+  name: rulesets.metrifuge.com
   annotations:
     controller-gen.kubebuilder.io/version: v0.13.0
   labels:
@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: metrifuge
     app.kubernetes.io/version: "v1"
 spec:
-  group: metrifuge.dev
+  group: metrifuge.com
   names:
     kind: RuleSet
     listKind: RuleSetList
@@ -63,13 +63,39 @@ spec:
                           - actionFalse
                         properties:
                           field1:
-                            $ref: "#/definitions/FieldValue"
+                            type: object
+                            required:
+                              - type
+                            properties:
+                              type:
+                                type: string
+                                enum: ["Int64", "Float64", "String"]
+                                description: Type of the field value
+                              grokKey:
+                                type: string
+                                description: Key to extract from grok pattern matches
+                              manualValue:
+                                type: string
+                                description: Static value to use
                           operator:
                             type: string
                             enum: ["LessThan", "Equals", "DoesNotEqual", "Exists", "DoesNotExist", "GreaterThan", "GreaterThanOrEqualTo"]
                             description: Comparison operator for the condition
                           field2:
-                            $ref: "#/definitions/FieldValue"
+                            type: object
+                            required:
+                              - type
+                            properties:
+                              type:
+                                type: string
+                                enum: ["Int64", "Float64", "String"]
+                                description: Type of the field value
+                              grokKey:
+                                type: string
+                                description: Key to extract from grok pattern matches
+                              manualValue:
+                                type: string
+                                description: Static value to use
                           actionTrue:
                             type: string
                             description: Action to take if condition evaluates to true
@@ -93,54 +119,33 @@ spec:
                             enum: ["Int64Counter", "Float64Counter", "Int64Gauge", "Float64Gauge"]
                             description: Type of metric
                           value:
-                            $ref: "#/definitions/MetricValue"
+                            type: object
+                            required:
+                              - type
+                            properties:
+                              type:
+                                type: string
+                                enum: ["Int64", "Float64", "String"]
+                              grokKey:
+                                type: string
+                                description: Key to extract from grok pattern matches
+                              manualValue:
+                                type: string
+                                description: Static value to use
                           attributes:
                             type: array
                             items:
-                              $ref: "#/definitions/Attribute"
+                              type: object
+                              required:
+                                - key
+                                - value
+                              properties:
+                                key:
+                                  type: string
+                                  description: Attribute key
+                                value:
+                                  type: string
+                                  description: Attribute value
                             description: Key-value pairs to attach to the metric
     subresources:
       status: {}
-
-definitions:
-  FieldValue:
-    type: object
-    required:
-      - type
-    properties:
-      type:
-        type: string
-        enum: ["Int64", "Float64", "String"]
-        description: Type of the field value
-      grokKey:
-        type: string
-        description: Key to extract from grok pattern matches
-      manualValue:
-        type: string
-        description: Static value to use
-  MetricValue:
-    type: object
-    required:
-      - type
-    properties:
-      type:
-        type: string
-        enum: ["Int64", "Float64", "String"]
-      grokKey:
-        type: string
-        description: Key to extract from grok pattern matches
-      manualValue:
-        type: string
-        description: Static value to use
-  Attribute:
-    type: object
-    required:
-      - key
-      - value
-    properties:
-      key:
-        type: string
-        description: Attribute key
-      value:
-        type: string
-        description: Attribute value

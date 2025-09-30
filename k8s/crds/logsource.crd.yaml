@@ -1,7 +1,7 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: logsources.metrifuge.io
+  name: logsources.metrifuge.com
   labels:
     app.kubernetes.io/name: metrifuge
     app.kubernetes.io/instance: metrifuge
@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/component: crd
     app.kubernetes.io/part-of: metrifuge
 spec:
-  group: metrifuge.io
+  group: metrifuge.com
   names:
     kind: LogSource
     listKind: LogSourceList

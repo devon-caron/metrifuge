@@ -123,7 +123,7 @@ func getRules(_ map[string]any) []*ruleset.Rule {
 
 func ValidateResources(restConfig *rest.Config) error {
 
-	var requiredCrdNames = []string{global.RULESET_CRD_NAME, global.LOGSOURCE_CRD_NAME, global.LOGEXPORTER_CRD_NAME, global.METRICEXPORTER_CRD_NAME}
+	var requiredCrdTypes = []string{global.RULESET_CRD_NAME, global.LOGSOURCE_CRD_NAME, global.LOGEXPORTER_CRD_NAME, global.METRICEXPORTER_CRD_NAME}
 
 	log.Info("creating clientSet...")
 	// Create a new clientset which includes the CRD API
@@ -138,7 +138,7 @@ func ValidateResources(restConfig *rest.Config) error {
 		return fmt.Errorf("failed to list CRDs: %v", err)
 	}
 
-	var existingCrdNames []string
+	var existingCrdTypes []string
 	// 3. Print the CRDs
 	log.Infof("Found %d Custom Resource Definitions:\n", len(crdList.Items))
 	for _, crd := range crdList.Items {
@@ -155,14 +155,14 @@ func ValidateResources(restConfig *rest.Config) error {
 		log.Debugf("  Scope: %s", crd.Spec.Scope)
 		log.Debug("---")
 
-		if slices.Contains(requiredCrdNames, crd.Name) {
-			existingCrdNames = append(existingCrdNames, crd.Name)
+		if slices.Contains(requiredCrdTypes, crd.Spec.Names.Kind) {
+			existingCrdTypes = append(existingCrdTypes, crd.Spec.Names.Kind)
 		}
 	}
 
-	for _, crdName := range requiredCrdNames {
-		if !slices.Contains(existingCrdNames, crdName) {
-			return fmt.Errorf("required Custom Resource Definition %s not found", crdName)
+	for _, crdType := range requiredCrdTypes {
+		if !slices.Contains(existingCrdTypes, crdType) {
+			return fmt.Errorf("required Custom Resource Definition %s not found", crdType)
 		}
 	}
 
