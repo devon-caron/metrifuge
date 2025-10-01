@@ -41,6 +41,10 @@ func (me *MetricExporter) AddRule(rule *api.Rule) {
 	me.rules = append(me.rules, rule)
 }
 
+func (me *MetricExporter) GetDestinationType() string {
+	return me.Spec.Destination.Type
+}
+
 // func (me *MetricExporter) MatchRuleSets(ruleSets []*rs.RuleSet) {
 // 	me.ruleSets = []*rs.RuleSet{}
 // 	for _, ruleSet := range ruleSets {

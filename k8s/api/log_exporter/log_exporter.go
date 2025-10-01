@@ -40,6 +40,10 @@ func (le *LogExporter) AddRule(rule *api.Rule) {
 	le.rules = append(le.rules, rule)
 }
 
+func (le *LogExporter) GetDestinationType() string {
+	return le.Spec.Destination.Type
+}
+
 // func (le *LogExporter) MatchRuleSets(ruleSets []*rs.RuleSet) {
 // 	le.ruleSets = []*rs.RuleSet{}
 // 	for _, ruleSet := range ruleSets {
