@@ -110,7 +110,7 @@ func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) *rule
 			Namespace: crdRuleSet.GetNamespace(),
 			Labels:    crdRuleSet.GetLabels(),
 		},
-		Spec: ruleset.Spec{
+		Spec: ruleset.RuleSetSpec{
 			Rules: myRules,
 		},
 	}

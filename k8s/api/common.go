@@ -69,3 +69,12 @@ type SourceSpec struct {
 	LocalSource *LocalSource `json:"localSource,omitempty" yaml:"localSource,omitempty"`
 	CmdSource   *CmdSource   `json:"cmdSource,omitempty" yaml:"cmdSource,omitempty"`
 }
+
+func MatchLabels(requiredMatchingLabels map[string]string, labels map[string]string) bool {
+	for labelKey, labelValue := range requiredMatchingLabels {
+		if labels[labelKey] != labelValue {
+			return false
+		}
+	}
+	return true
+}

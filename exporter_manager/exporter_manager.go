@@ -8,6 +8,7 @@ import (
 
 type ExporterManager struct {
 	exporters map[string]api.Exporter
+	//otelClient *otel.OpenTelemetryClient
 }
 
 func (em *ExporterManager) Initialize(ruleSets []*rs.RuleSet,
@@ -17,10 +18,12 @@ func (em *ExporterManager) Initialize(ruleSets []*rs.RuleSet,
 	// TODO find a better loop, this looks like shit
 	for _, exporter := range exporters {
 		for _, ruleSet := range ruleSets {
-			for _, rule := range ruleSet.Spec.Rules {
-				exporter.AddRule(rule)
+			if api.MatchLabels(ruleSet.Spec.Selector.MatchLabels, exporter.GetMetadata().Labels) {
+				for _, rule := range ruleSet.Spec.Rules {
+					exporter.AddRule(rule)
+				}
+				em.exporters[exporter.GetMetadata().Name] = exporter
 			}
-			em.exporters[exporter.GetMetadata().Name] = exporter
 		}
 	}
 }

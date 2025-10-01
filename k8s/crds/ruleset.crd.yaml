@@ -27,14 +27,18 @@ spec:
           spec:
             type: object
             required:
-              - match
+              - selector
               - rules
             properties:
-              match:
-                type: array
-                items:
-                  type: string
-                description: List of log patterns to match against log lines
+              selector:
+                type: object
+                description: Selector to match exporters
+                properties:
+                  matchLabels:
+                    type: object
+                    additionalProperties:
+                      type: string
+                    description: Map of label keys and values to match against exporter labels
               rules:
                 type: array
                 items:
