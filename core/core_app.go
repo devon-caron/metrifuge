@@ -11,6 +11,7 @@ import (
 	"github.com/devon-caron/metrifuge/exporter_manager"
 	"github.com/devon-caron/metrifuge/k8s"
 	"github.com/devon-caron/metrifuge/k8s/api"
+	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
 	"github.com/devon-caron/metrifuge/resources"
 
 	"github.com/devon-caron/metrifuge/global"
@@ -53,12 +54,9 @@ func Run() {
 	log.Info("initializing exporter manager...")
 
 	// First collect all exporters into a single slice
-	allExporters := make([]api.Exporter, 0)
-	for _, le := range res.GetLogExporters() {
-		allExporters = append(allExporters, le)
-	}
-	for _, me := range res.GetMetricExporters() {
-		allExporters = append(allExporters, me)
+	allExporters := make([]e.Exporter, 0)
+	for _, e := range res.GetExporters() {
+		allExporters = append(allExporters, *e)
 	}
 
 	// Then pass the combined slice
@@ -134,19 +132,10 @@ func updateResources() error {
 
 	go func() {
 		defer wg.Done()
-		if metricExporters, myErr := updateMetricExporters(isK8s, res.GetK8sClient()); myErr != nil {
-			err = fmt.Errorf("%v{error updating metric exporters 😔: %v}\n", err, myErr)
+		if exporters, myErr := updateExporters(isK8s, res.GetK8sClient()); myErr != nil {
+			err = fmt.Errorf("%v{error updating exporters 😔: %v}\n", err, myErr)
 		} else {
-			res.SetMetricExporters(metricExporters)
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if logExporters, myErr := updateLogExporters(isK8s, res.GetK8sClient()); myErr != nil {
-			err = fmt.Errorf("%v{error updating log exporters 😔: %v}\n", err, myErr)
-		} else {
-			res.SetLogExporters(logExporters)
+			res.SetExporters(exporters)
 		}
 	}()
 
