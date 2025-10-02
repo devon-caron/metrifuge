@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
-	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
+	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
 	ls "github.com/devon-caron/metrifuge/k8s/api/log_source"
-	me "github.com/devon-caron/metrifuge/k8s/api/metric_exporter"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
 
 	"gopkg.in/yaml.v3"
@@ -79,37 +78,18 @@ func ParseLogSources(data []byte) ([]*ls.LogSource, error) {
 	return logSources, nil
 }
 
-func ParseLogExporters(data []byte) ([]*le.LogExporter, error) {
+func ParseExporters(data []byte) ([]*e.Exporter, error) {
 	documents, err := parseDocuments(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse YAML documents: %w", err)
 	}
 
-	exporters := make([]*le.LogExporter, 0, len(documents))
+	exporters := make([]*e.Exporter, 0, len(documents))
 
 	for i, doc := range documents {
-		var exporter le.LogExporter
+		var exporter e.Exporter
 		if err := yaml.Unmarshal(doc, &exporter); err != nil {
-			return nil, fmt.Errorf("failed to parse log exporter document %d: %w", i+1, err)
-		}
-		exporters = append(exporters, &exporter)
-	}
-
-	return exporters, nil
-}
-
-func ParseMetricExporters(data []byte) ([]*me.MetricExporter, error) {
-	documents, err := parseDocuments(data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse YAML documents: %w", err)
-	}
-
-	exporters := make([]*me.MetricExporter, 0, len(documents))
-
-	for i, doc := range documents {
-		var exporter me.MetricExporter
-		if err := yaml.Unmarshal(doc, &exporter); err != nil {
-			return nil, fmt.Errorf("failed to parse metric exporter document %d: %w", i+1, err)
+			return nil, fmt.Errorf("failed to parse exporter document %d: %w", i+1, err)
 		}
 		exporters = append(exporters, &exporter)
 	}

@@ -7,9 +7,8 @@ import (
 	"github.com/devon-caron/metrifuge/global"
 	"github.com/devon-caron/metrifuge/k8s"
 	"github.com/devon-caron/metrifuge/k8s/api"
-	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
+	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
 	ls "github.com/devon-caron/metrifuge/k8s/api/log_source"
-	me "github.com/devon-caron/metrifuge/k8s/api/metric_exporter"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
 )
 
@@ -59,48 +58,25 @@ func updateLogSources(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ls.LogSou
 	return myLogSources, nil
 }
 
-func updateMetricExporters(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*me.MetricExporter, error) {
+func updateExporters(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*e.Exporter, error) {
 	if !isK8s {
-		metricExporterFilePath := os.Getenv("MF_METRIC_EXPORTERS_FILEPATH")
-		data, err := os.ReadFile(metricExporterFilePath)
+		exporterFilePath := os.Getenv("MF_EXPORTERS_FILEPATH")
+		data, err := os.ReadFile(exporterFilePath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read metric myMetricExporters file: %v", err)
 		}
 
-		myMetricExporters, err := k8s.ParseMetricExporters(data)
+		myExporters, err := k8s.ParseExporters(data)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse metric myMetricExporters file: %v", err)
 		}
-		return myMetricExporters, nil
+		return myExporters, nil
 	}
 
-	myMetricExporters, err := k8s.GetK8sResources[me.MetricExporter](k8sClient, global.METRICEXPORTER_CRD_NAME, "v1alpha1", "metricexporters")
+	myExporters, err := k8s.GetK8sResources[e.Exporter](k8sClient, global.EXPORTER_CRD_NAME, "v1alpha1", "exporters")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get k8s resources: %v", err)
 	}
 
-	return myMetricExporters, nil
-}
-
-func updateLogExporters(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*le.LogExporter, error) {
-	if !isK8s {
-		logExporterFilePath := os.Getenv("MF_LOG_EXPORTERS_FILEPATH")
-		data, err := os.ReadFile(logExporterFilePath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read log myLogExporters file: %v", err)
-		}
-
-		myLogExporters, err := k8s.ParseLogExporters(data)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse log myLogExporters file: %v", err)
-		}
-		return myLogExporters, nil
-	}
-
-	myLogExporters, err := k8s.GetK8sResources[le.LogExporter](k8sClient, global.LOGEXPORTER_CRD_NAME, "v1alpha1", "logexporters")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get k8s resources: %v", err)
-	}
-
-	return myLogExporters, nil
+	return myExporters, nil
 }

@@ -7,8 +7,9 @@ import (
 
 	"github.com/devon-caron/metrifuge/global"
 	"github.com/devon-caron/metrifuge/k8s/api"
-	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
-	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
+	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
+	ls "github.com/devon-caron/metrifuge/k8s/api/log_source"
+	rs "github.com/devon-caron/metrifuge/k8s/api/ruleset"
 	"github.com/devon-caron/metrifuge/logger"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -71,7 +72,7 @@ func GetK8sResources[Resource api.MetrifugeK8sResource](k8sClient *api.K8sClient
 }
 
 func getResource[Resource api.MetrifugeK8sResource](crdResource unstructured.Unstructured, kind string, spec map[string]interface{}) (*Resource, error) {
-	var mfK8sCrdNames = []string{global.RULESET_CRD_NAME, global.LOGSOURCE_CRD_NAME, global.LOGEXPORTER_CRD_NAME, global.METRICEXPORTER_CRD_NAME}
+	var mfK8sCrdNames = []string{global.RULESET_CRD_NAME, global.LOGSOURCE_CRD_NAME, global.EXPORTER_CRD_NAME}
 
 	var resource any
 
@@ -79,9 +80,9 @@ func getResource[Resource api.MetrifugeK8sResource](crdResource unstructured.Uns
 	case mfK8sCrdNames[0]:
 		resource = getRuleSet(crdResource, spec)
 	case mfK8sCrdNames[1]:
-		resource = getLogExporter(crdResource, spec)
+		resource = getLogSource(crdResource, spec)
 	case mfK8sCrdNames[2]:
-		resource = getMetricExporter(crdResource, spec)
+		resource = getExporter(crdResource, spec)
 	}
 	r, ok := resource.(Resource)
 	if !ok {
@@ -90,19 +91,19 @@ func getResource[Resource api.MetrifugeK8sResource](crdResource unstructured.Uns
 	return &r, nil
 }
 
-func getMetricExporter(crdLogExporter unstructured.Unstructured, spec map[string]any) *le.LogExporter {
-	panic("getMetricExporter is not implemented yet")
+func getExporter(crdExporter unstructured.Unstructured, spec map[string]any) *e.Exporter {
+	panic("getExporter is not implemented yet")
 }
 
-func getLogExporter(crdLogExporter unstructured.Unstructured, spec map[string]any) *le.LogExporter {
-	panic("getLogExporter is not implemented yet")
+func getLogSource(crdLogSource unstructured.Unstructured, spec map[string]any) *ls.LogSource {
+	panic("getLogSource is not implemented yet")
 }
 
-func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) *ruleset.RuleSet {
+func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) *rs.RuleSet {
 	rulesMap := spec["rules"].(map[string]any)
 	myRules := getRules(rulesMap)
 
-	myRuleSet := &ruleset.RuleSet{
+	myRuleSet := &rs.RuleSet{
 		APIVersion: crdRuleSet.GetAPIVersion(),
 		Kind:       crdRuleSet.GetKind(),
 		Metadata: api.Metadata{
@@ -110,7 +111,7 @@ func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) *rule
 			Namespace: crdRuleSet.GetNamespace(),
 			Labels:    crdRuleSet.GetLabels(),
 		},
-		Spec: ruleset.RuleSetSpec{
+		Spec: rs.RuleSetSpec{
 			Rules: myRules,
 		},
 	}
@@ -123,7 +124,7 @@ func getRules(_ map[string]any) []*api.Rule {
 
 func ValidateResources(restConfig *rest.Config) error {
 
-	var requiredCrdTypes = []string{global.RULESET_CRD_NAME, global.LOGSOURCE_CRD_NAME, global.LOGEXPORTER_CRD_NAME, global.METRICEXPORTER_CRD_NAME}
+	var requiredCrdTypes = []string{global.RULESET_CRD_NAME, global.LOGSOURCE_CRD_NAME, global.EXPORTER_CRD_NAME}
 
 	log.Info("creating clientSet...")
 	// Create a new clientset which includes the CRD API

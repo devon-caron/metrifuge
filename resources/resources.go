@@ -4,9 +4,8 @@ import (
 	"sync"
 
 	"github.com/devon-caron/metrifuge/k8s/api"
-	le "github.com/devon-caron/metrifuge/k8s/api/log_exporter"
+	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
 	ls "github.com/devon-caron/metrifuge/k8s/api/log_source"
-	me "github.com/devon-caron/metrifuge/k8s/api/metric_exporter"
 	rs "github.com/devon-caron/metrifuge/k8s/api/ruleset"
 	"k8s.io/client-go/rest"
 )
@@ -17,13 +16,12 @@ var (
 )
 
 type Resources struct {
-	mu              sync.RWMutex
-	ruleSets        []*rs.RuleSet
-	logSources      []*ls.LogSource
-	metricExporters []*me.MetricExporter
-	logExporters    []*le.LogExporter
-	kubeConfig      *rest.Config
-	k8sClient       *api.K8sClientWrapper
+	mu         sync.RWMutex
+	ruleSets   []*rs.RuleSet
+	logSources []*ls.LogSource
+	exporters  []*e.Exporter
+	kubeConfig *rest.Config
+	k8sClient  *api.K8sClientWrapper
 }
 
 // GetInstance returns the singleton instance of Resources
@@ -47,16 +45,10 @@ func (r *Resources) GetLogSources() []*ls.LogSource {
 	return r.logSources
 }
 
-func (r *Resources) GetMetricExporters() []*me.MetricExporter {
+func (r *Resources) GetExporters() []*e.Exporter {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	return r.metricExporters
-}
-
-func (r *Resources) GetLogExporters() []*le.LogExporter {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	return r.logExporters
+	return r.exporters
 }
 
 func (r *Resources) GetKubeConfig() *rest.Config {
@@ -84,16 +76,10 @@ func (r *Resources) SetLogSources(logSources []*ls.LogSource) {
 	r.logSources = logSources
 }
 
-func (r *Resources) SetMetricExporters(metricExporters []*me.MetricExporter) {
+func (r *Resources) SetExporters(exporters []*e.Exporter) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.metricExporters = metricExporters
-}
-
-func (r *Resources) SetLogExporters(logExporters []*le.LogExporter) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.logExporters = logExporters
+	r.exporters = exporters
 }
 
 func (r *Resources) SetKubeConfig(kubeConfig *rest.Config) {
