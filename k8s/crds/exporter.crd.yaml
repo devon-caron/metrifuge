@@ -1,0 +1,299 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: exporters.metrifuge.com
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.14.0
+  labels:
+    app.kubernetes.io/name: metrifuge
+    app.kubernetes.io/instance: metrifuge
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/part-of: metrifuge
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: metrifuge
+spec:
+  group: metrifuge.com
+  names:
+    kind: Exporter
+    listKind: ExporterList
+    plural: exporters
+    singular: exporter
+    shortNames:
+      - exp
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required:
+            - apiVersion
+            - kind
+            - metadata
+            - spec
+          properties:
+            apiVersion:
+              type: string
+              enum: [metrifuge.com/v1alpha1]
+            kind:
+              type: string
+              enum: [Exporter]
+            metadata:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                namespace:
+                  type: string
+                  minLength: 1
+                labels:
+                  type: object
+                  additionalProperties:
+                    type: string
+            spec:
+              type: object
+              required:
+                - type
+                - destination
+              properties:
+                type:
+                  type: string
+                  enum: [metric, log, dual]
+                metricExporter:
+                  type: object
+                  properties:
+                    selector:
+                      type: object
+                      properties:
+                        matchLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                    refreshInterval:
+                      type: string
+                      pattern: '^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$'
+                    source:
+                      type: object
+                      required:
+                        - type
+                      properties:
+                        type:
+                          type: string
+                          enum: [pvc, pod, local, cmd]
+                        pvcSource:
+                          type: object
+                          required:
+                            - pvc
+                            - logFilePath
+                          properties:
+                            pvc:
+                              type: object
+                              required:
+                                - name
+                              properties:
+                                name:
+                                  type: string
+                            logFilePath:
+                              type: string
+                        podSource:
+                          type: object
+                          required:
+                            - pod
+                          properties:
+                            pod:
+                              type: object
+                              required:
+                                - name
+                                - namespace
+                                - container
+                              properties:
+                                name:
+                                  type: string
+                                namespace:
+                                  type: string
+                                container:
+                                  type: string
+                        localSource:
+                          type: object
+                          required:
+                            - path
+                          properties:
+                            path:
+                              type: string
+                        cmdSource:
+                          type: object
+                          required:
+                            - command
+                          properties:
+                            command:
+                              type: string
+                logExporter:
+                  type: object
+                  properties:
+                    selector:
+                      type: object
+                      properties:
+                        matchLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                    source:
+                      type: object
+                      required:
+                        - type
+                      properties:
+                        type:
+                          type: string
+                          enum: [pvc, pod, local, cmd]
+                        pvcSource:
+                          type: object
+                          required:
+                            - pvc
+                            - logFilePath
+                          properties:
+                            pvc:
+                              type: object
+                              required:
+                                - name
+                              properties:
+                                name:
+                                  type: string
+                            logFilePath:
+                              type: string
+                        podSource:
+                          type: object
+                          required:
+                            - pod
+                          properties:
+                            pod:
+                              type: object
+                              required:
+                                - name
+                                - namespace
+                                - container
+                              properties:
+                                name:
+                                  type: string
+                                namespace:
+                                  type: string
+                                container:
+                                  type: string
+                        localSource:
+                          type: object
+                          required:
+                            - path
+                          properties:
+                            path:
+                              type: string
+                        cmdSource:
+                          type: object
+                          required:
+                            - command
+                          properties:
+                            command:
+                              type: string
+                destination:
+                  type: object
+                  required:
+                    - type
+                  properties:
+                    type:
+                      type: string
+                      enum: [honeycomb, prometheus, elasticsearch, splunk, datadog, loki]
+                    honeycomb:
+                      type: object
+                      required:
+                        - apiKey
+                        - dataset
+                      properties:
+                        apiKey:
+                          type: string
+                        dataset:
+                          type: string
+                        environment:
+                          type: string
+                    prometheus:
+                      type: object
+                      required:
+                        - endpoint
+                      properties:
+                        endpoint:
+                          type: string
+                    elasticsearch:
+                      type: object
+                      required:
+                        - url
+                        - index
+                      properties:
+                        url:
+                          type: string
+                        index:
+                          type: string
+                        username:
+                          type: string
+                        password:
+                          type: string
+                        apiKey:
+                          type: string
+                    splunk:
+                      type: object
+                      required:
+                        - url
+                        - token
+                      properties:
+                        url:
+                          type: string
+                        token:
+                          type: string
+                        index:
+                          type: string
+                        source:
+                          type: string
+                        sourceType:
+                          type: string
+                    datadog:
+                      type: object
+                      required:
+                        - apiKey
+                      properties:
+                        apiKey:
+                          type: string
+                        service:
+                          type: string
+                        source:
+                          type: string
+                        appKey:
+                          type: string
+                        site:
+                          type: string
+                    loki:
+                      type: object
+                      required:
+                        - url
+                      properties:
+                        url:
+                          type: string
+                        username:
+                          type: string
+                        password:
+                          type: string
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Type
+          type: string
+          jsonPath: .spec.type
+          description: The type of exporter (metric or log)
+        - name: Destination
+          type: string
+          jsonPath: .spec.destination.type
+          description: The destination type
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      
+  conversion:
+    strategy: None
