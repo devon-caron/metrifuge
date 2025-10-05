@@ -1,0 +1,13 @@
+apiVersion: metrifuge.com/v1alpha1
+kind: LogSource
+metadata:
+  name: mf-logsource
+  namespace: metrifuge
+spec:
+  source:
+    type: PodSource
+    podSource:
+      pod:
+        name: mf-log-pod
+        namespace: metrifuge
+        container: mf-log-pod

@@ -36,12 +36,14 @@ func GetK8sResources[Resource api.MetrifugeK8sResource](k8sClient *api.K8sClient
 		return nil, fmt.Errorf("failed to create dynamic client: %v", err)
 	}
 
+	group := "metrifuge.com"
 	gvr := schema.GroupVersionResource{
-		Group:    "metrifuge.com/k8s",
+		Group:    group,
 		Version:  version,
 		Resource: kindPlural,
 	}
 
+	log.Debugf("Looking for resources with GVR: %+v", gvr)
 	crdResourceList, err := dynamicClient.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -96,7 +98,25 @@ func getExporter(crdExporter unstructured.Unstructured, spec map[string]any) *e.
 }
 
 func getLogSource(crdLogSource unstructured.Unstructured, spec map[string]any) *ls.LogSource {
-	panic("getLogSource is not implemented yet")
+	//	panic("getLogSource is not implemented yet")
+	lsSpec := spec["source"].(map[string]any)
+	lsType := lsSpec["type"].(string)
+	switch lsType {
+	case "PodSource":
+		return &ls.LogSource{
+			APIVersion: crdLogSource.GetAPIVersion(),
+			Kind:       crdLogSource.GetKind(),
+			Metadata: api.Metadata{
+				Name:      crdLogSource.GetName(),
+				Namespace: crdLogSource.GetNamespace(),
+				Labels:    crdLogSource.GetLabels(),
+			},
+			Spec: ls.LogSourceSpec{
+				Source: lsSpec["podSource"].(api.SourceSpec),
+			},
+		}
+	}
+	return nil
 }
 
 func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) *rs.RuleSet {
@@ -167,5 +187,6 @@ func ValidateResources(restConfig *rest.Config) error {
 		}
 	}
 
+	log.Info("all required CRDs found, resources validated successfully")
 	return nil
 }

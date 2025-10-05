@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: metrifuge
     app.kubernetes.io/instance: metrifuge
-    app.kubernetes.io/version: "v1"
+    app.kubernetes.io/version: "v1alpha1"
 spec:
   group: metrifuge.com
   names:
@@ -17,7 +17,7 @@ spec:
     singular: ruleset
   scope: Namespaced
   versions:
-  - name: v1
+  - name: v1alpha1
     served: true
     storage: true
     schema:

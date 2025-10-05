@@ -64,6 +64,7 @@ func Run() {
 
 	curRetries := 0
 	for {
+		log.Info("updating resources...")
 		if err := updateResources(); err != nil {
 			log.Errorf("retrying due to failure to update resources: %v", err)
 			time.Sleep(3 * time.Second)
@@ -81,7 +82,7 @@ func Run() {
 
 func updateResources() error {
 	var err error
-	wg.Add(4)
+	wg.Add(3)
 
 	isK8s, err := strconv.ParseBool(global.RUNNING_IN_K8S)
 	if err != nil {
@@ -119,6 +120,7 @@ func updateResources() error {
 		} else {
 			res.SetRuleSets(ruleSets)
 		}
+		log.Info("rulesets updated")
 	}()
 
 	go func() {
@@ -128,6 +130,7 @@ func updateResources() error {
 		} else {
 			res.SetLogSources(logSources)
 		}
+		log.Info("log sources updated")
 	}()
 
 	go func() {
@@ -137,13 +140,15 @@ func updateResources() error {
 		} else {
 			res.SetExporters(exporters)
 		}
+		log.Info("exporters updated")
 	}()
 
 	wg.Wait()
 
 	if err != nil {
-		err = fmt.Errorf("failed to initialize resources: \n%v", err)
+		err = fmt.Errorf("failed to update resources: \n%v", err)
 	}
 
+	log.Info("resources updated")
 	return err
 }

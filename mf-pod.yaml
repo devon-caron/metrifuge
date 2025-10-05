@@ -8,9 +8,9 @@ metadata:
   namespace: metrifuge
 spec:
   containers:
-  - image: metrifuge:20250929-2352
-    name: metrifuge-test
-    resources: {}
+    - image: metrifuge:20251005-0059
+      name: metrifuge-test
+      resources: {}
   dnsPolicy: ClusterFirst
   serviceAccountName: metrifuge-sa
   restartPolicy: Always

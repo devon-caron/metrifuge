@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: metrifuge
     app.kubernetes.io/instance: metrifuge
-    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/version: "v1alpha1"
     app.kubernetes.io/part-of: metrifuge
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: metrifuge
@@ -42,17 +42,6 @@ spec:
               enum: [Exporter]
             metadata:
               type: object
-              properties:
-                name:
-                  type: string
-                  minLength: 1
-                namespace:
-                  type: string
-                  minLength: 1
-                labels:
-                  type: object
-                  additionalProperties:
-                    type: string
             spec:
               type: object
               required:
