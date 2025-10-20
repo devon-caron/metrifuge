@@ -46,7 +46,7 @@ func GetK8sResources[Resource api.MetrifugeK8sResource](k8sClient *api.K8sClient
 	log.Debugf("Looking for resources with GVR: %+v", gvr)
 	crdResourceList, err := dynamicClient.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list resources: %v", err)
 	}
 
 	var resources []*Resource
@@ -77,14 +77,23 @@ func getResource[Resource api.MetrifugeK8sResource](crdResource unstructured.Uns
 	var mfK8sCrdNames = []string{global.RULESET_CRD_NAME, global.LOGSOURCE_CRD_NAME, global.EXPORTER_CRD_NAME}
 
 	var resource any
-
+	var err error
 	switch kind {
 	case mfK8sCrdNames[0]:
-		resource = getRuleSet(crdResource, spec)
+		resource, err = getRuleSet(crdResource, spec)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get rule set: %v", err)
+		}
 	case mfK8sCrdNames[1]:
-		resource = getLogSource(crdResource, spec)
+		resource, err = getLogSource(crdResource, spec)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get log source: %v", err)
+		}
 	case mfK8sCrdNames[2]:
-		resource = getExporter(crdResource, spec)
+		resource, err = getExporter(crdResource, spec)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get exporter: %v", err)
+		}
 	}
 	r, ok := resource.(Resource)
 	if !ok {
@@ -93,16 +102,22 @@ func getResource[Resource api.MetrifugeK8sResource](crdResource unstructured.Uns
 	return &r, nil
 }
 
-func getExporter(crdExporter unstructured.Unstructured, spec map[string]any) *e.Exporter {
+func getExporter(crdExporter unstructured.Unstructured, spec map[string]any) (*e.Exporter, error) {
 	panic("getExporter is not implemented yet")
 }
 
-func getLogSource(crdLogSource unstructured.Unstructured, spec map[string]any) *ls.LogSource {
-	//	panic("getLogSource is not implemented yet")
-	lsSpec := spec["source"].(map[string]any)
+func getLogSource(crdLogSource unstructured.Unstructured, spec map[string]any) (*ls.LogSource, error) {
+	lsSpec, ok := spec["source"].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("failed to get log source spec: %v", spec)
+	}
 	lsType := lsSpec["type"].(string)
 	switch lsType {
 	case "PodSource":
+		lsSource, err := marshalPodSource(lsSpec["podSource"].(map[string]any))
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal pod source: %v", err)
+		}
 		return &ls.LogSource{
 			APIVersion: crdLogSource.GetAPIVersion(),
 			Kind:       crdLogSource.GetKind(),
@@ -112,17 +127,26 @@ func getLogSource(crdLogSource unstructured.Unstructured, spec map[string]any) *
 				Labels:    crdLogSource.GetLabels(),
 			},
 			Spec: ls.LogSourceSpec{
-				Source: lsSpec["podSource"].(api.SourceSpec),
+				Type: lsType,
+				Source: api.SourceSpec{
+					PodSource: lsSource,
+				},
 			},
-		}
+		}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("unknown log source type: %s", lsType)
 }
 
-func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) *rs.RuleSet {
-	rulesMap := spec["rules"].(map[string]any)
-	myRules := getRules(rulesMap)
+func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) (*rs.RuleSet, error) {
+	rulesMap, ok := spec["rules"].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("failed to get rules map: %v", spec)
+	}
 
+	myRules, err := getRules(rulesMap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rules: %v", err)
+	}
 	myRuleSet := &rs.RuleSet{
 		APIVersion: crdRuleSet.GetAPIVersion(),
 		Kind:       crdRuleSet.GetKind(),
@@ -135,10 +159,34 @@ func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) *rs.R
 			Rules: myRules,
 		},
 	}
-	return myRuleSet
+	return myRuleSet, nil
 }
 
-func getRules(_ map[string]any) []*api.Rule {
+func marshalPodSource(podSource map[string]any) (*api.PodSource, error) {
+	myName, ok := podSource["name"].(string)
+	if !ok {
+		return nil, fmt.Errorf("failed to get pod name: %v", podSource)
+	}
+	myNamespace, ok := podSource["namespace"].(string)
+	if !ok {
+		return nil, fmt.Errorf("failed to get pod namespace: %v", podSource)
+	}
+	myContainer, ok := podSource["container"].(string)
+	if !ok {
+		return nil, fmt.Errorf("failed to get pod container: %v", podSource)
+	}
+	var sourceSpec = &api.PodSource{
+		Pod: api.Pod{
+			Name:      myName,
+			Namespace: myNamespace,
+			Container: myContainer,
+		},
+	}
+
+	return sourceSpec, nil
+}
+
+func getRules(_ map[string]any) ([]*api.Rule, error) {
 	panic("getRules function not implemented")
 }
 
