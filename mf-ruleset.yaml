@@ -1,0 +1,60 @@
+apiVersion: metrifuge.com/v1alpha1
+kind: RuleSet
+metadata:
+  name: metrifuge-debug-logs
+  namespace: metrifuge
+spec:
+  selector:
+    matchLabels:
+      app: metrifuge
+  rules:
+    - name: parse_debug_logs
+      description: Parse debug level logs from metrifuge application
+      pattern: 'time="%{TIMESTAMP_ISO8601:timestamp}"\s+level=%{WORD:log_level}\s+msg="%{GREEDYDATA:message}"(?:\s+func=%{GREEDYDATA:function})?(?:\s+file="%{GREEDYDATA:source_file}")?'
+      metrics:
+        - name: metrifuge_debug_logs_total
+          kind: Int64Counter
+          value:
+            type: Int64
+            manualValue: "1"
+          attributes:
+            - key: log_level
+              value: "debug"
+            - key: component
+              value: "metrifuge"
+    
+    - name: detect_crd_validation
+      description: Detect CRD validation debug messages
+      pattern: 'time="%{TIMESTAMP_ISO8601:timestamp}"\s+level=debug\s+msg="\s*%{WORD:field_name}:\s*%{GREEDYDATA:field_value}"'
+      conditionals:
+        - field1:
+            type: String
+            grokKey: field_name
+          operator: Equals
+          field2:
+            type: String
+            manualValue: "Name"
+          actionTrue: "process_crd_validation"
+          actionFalse: "continue"
+      metrics:
+        - name: metrifuge_crd_validation_total
+          kind: Int64Counter
+          value:
+            type: Int64
+            manualValue: "1"
+          attributes:
+            - key: field
+              value: "Name"
+    
+    - name: log_level_distribution
+      description: Track distribution of log levels
+      pattern: 'time="%{TIMESTAMP_ISO8601:timestamp}"\s+level=%{WORD:log_level}'
+      metrics:
+        - name: metrifuge_log_level_total
+          kind: Int64Counter
+          value:
+            type: Int64
+            manualValue: "1"
+          attributes:
+            - key: level
+              value: "debug"
