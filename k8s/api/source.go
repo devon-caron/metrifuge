@@ -30,13 +30,15 @@ type PVCSource struct {
 }
 
 type PodSource struct {
-	Pod struct {
-		Name      string `json:"name" yaml:"name"`
-		Namespace string `json:"namespace" yaml:"namespace"`
-		Container string `json:"container" yaml:"container"`
-	} `json:"pod" yaml:"pod"`
+	Pod    Pod `json:"pod" yaml:"pod"`
 	stream io.ReadCloser
 	buffer []string
+}
+
+type Pod struct {
+	Name      string `json:"name" yaml:"name"`
+	Namespace string `json:"namespace" yaml:"namespace"`
+	Container string `json:"container" yaml:"container"`
 }
 
 func (pvc *PVCSource) GetSourceInfo() string {
