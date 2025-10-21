@@ -43,6 +43,7 @@ func Run() {
 	log.Info("initializing log and inline sources...")
 
 	res := resources.GetInstance()
+	lr = &receiver.LogReceiver{}
 	lr.Initialize(res.GetLogSources(), log, res.GetKubeConfig(), res.GetK8sClient())
 	refresh, err := strconv.Atoi(global.REFRESH_INTERVAL)
 	if err != nil {
@@ -60,6 +61,7 @@ func Run() {
 	}
 
 	// Then pass the combined slice
+	em = &exporter_manager.ExporterManager{}
 	em.Initialize(res.GetRuleSets(), res.GetKubeConfig(), res.GetK8sClient(), allExporters)
 
 	curRetries := 0

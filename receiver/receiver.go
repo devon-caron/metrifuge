@@ -25,8 +25,11 @@ type LogReceiver struct {
 func (lr *LogReceiver) Initialize(initialSources []*ls.LogSource, log *logrus.Logger, kubeConfig *rest.Config, k8sClient *api.K8sClientWrapper) error {
 	lr.once.Do(func() {
 		lr.log = log
+		log.Info("initialized log receiver")
 		lr.sourceStopChans = make(map[string]chan struct{})
+		log.Info("initialized log receiver sources")
 		lr.Update(initialSources, k8sClient)
+		log.Info("log receiver updated successfully")
 	})
 
 	return nil
