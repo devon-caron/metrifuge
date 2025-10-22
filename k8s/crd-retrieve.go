@@ -25,7 +25,7 @@ var (
 	crdList *apiextensionsv1.CustomResourceDefinitionList
 )
 
-func GetK8sResources[Resource api.MetrifugeK8sResource](k8sClient *api.K8sClientWrapper, kind, version, kindPlural string) ([]*Resource, error) {
+func GetK8sResources(k8sClient *api.K8sClientWrapper, kind, version, kindPlural string) ([]api.MetrifugeK8sResource, error) {
 	// For typed client, we would typically use code-generated clients for CRDs
 	// Since we don't have those, we'll continue using the dynamic client for now
 	// but we'll get it from the rest config in the wrapper
@@ -49,7 +49,7 @@ func GetK8sResources[Resource api.MetrifugeK8sResource](k8sClient *api.K8sClient
 		return nil, fmt.Errorf("failed to list resources: %v", err)
 	}
 
-	var resources []*Resource
+	var resources []api.MetrifugeK8sResource
 	for _, crdResource := range crdResourceList.Items {
 		// Extract spec as map[string]any
 		spec, found, err := unstructured.NestedMap(crdResource.Object, "spec")
@@ -62,7 +62,7 @@ func GetK8sResources[Resource api.MetrifugeK8sResource](k8sClient *api.K8sClient
 			continue
 		}
 
-		resource, err := getResource[Resource](crdResource, kind, spec)
+		resource, err := getResource(crdResource, kind, spec)
 		if err != nil {
 			log.Warnf("failed to get resource: %v", err)
 			continue
@@ -73,33 +73,32 @@ func GetK8sResources[Resource api.MetrifugeK8sResource](k8sClient *api.K8sClient
 	return resources, nil
 }
 
-func getResource[Resource api.MetrifugeK8sResource](crdResource unstructured.Unstructured, kind string, spec map[string]interface{}) (*Resource, error) {
-	var mfK8sCrdNames = []string{global.RULESET_CRD_NAME, global.LOGSOURCE_CRD_NAME, global.EXPORTER_CRD_NAME}
+func getResource(crdResource unstructured.Unstructured, kind string, spec map[string]interface{}) (api.MetrifugeK8sResource, error) {
 
-	var resource any
-	var err error
+	var resource api.MetrifugeK8sResource
 	switch kind {
-	case mfK8sCrdNames[0]:
-		resource, err = getRuleSet(crdResource, spec)
+	case global.RULESET_CRD_NAME:
+		myRuleSet, err := getRuleSet(crdResource, spec)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get rule set: %v", err)
 		}
-	case mfK8sCrdNames[1]:
-		resource, err = getLogSource(crdResource, spec)
+		resource = myRuleSet
+	case global.LOGSOURCE_CRD_NAME:
+		myLogSource, err := getLogSource(crdResource, spec)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get log source: %v", err)
 		}
-	case mfK8sCrdNames[2]:
-		resource, err = getExporter(crdResource, spec)
+		resource = myLogSource
+	case global.EXPORTER_CRD_NAME:
+		myExporter, err := getExporter(crdResource, spec)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get exporter: %v", err)
 		}
+		resource = myExporter
 	}
-	r, ok := resource.(Resource)
-	if !ok {
-		return nil, fmt.Errorf("failed to cast resource: %v", resource)
-	}
-	return &r, nil
+
+	log.Infof("resource retrieved successfully: %+v", resource)
+	return resource, nil
 }
 
 func getExporter(crdExporter unstructured.Unstructured, spec map[string]any) (*e.Exporter, error) {
@@ -163,17 +162,21 @@ func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) (*rs.
 }
 
 func marshalPodSource(podSource map[string]any) (*api.PodSource, error) {
-	myName, ok := podSource["name"].(string)
+	pod, ok := podSource["pod"].(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("failed to get pod name: %v", podSource)
+		return nil, fmt.Errorf("failed to get pod source: %v", podSource)
 	}
-	myNamespace, ok := podSource["namespace"].(string)
+	myName, ok := pod["name"].(string)
 	if !ok {
-		return nil, fmt.Errorf("failed to get pod namespace: %v", podSource)
+		return nil, fmt.Errorf("failed to get pod name: %v", pod)
 	}
-	myContainer, ok := podSource["container"].(string)
+	myNamespace, ok := pod["namespace"].(string)
 	if !ok {
-		return nil, fmt.Errorf("failed to get pod container: %v", podSource)
+		return nil, fmt.Errorf("failed to get pod namespace: %v", pod)
+	}
+	myContainer, ok := pod["container"].(string)
+	if !ok {
+		return nil, fmt.Errorf("failed to get pod container: %v", pod)
 	}
 	var sourceSpec = &api.PodSource{
 		Pod: api.Pod{
@@ -182,6 +185,8 @@ func marshalPodSource(podSource map[string]any) (*api.PodSource, error) {
 			Container: myContainer,
 		},
 	}
+
+	log.Infof("podSource marshalled successfully: %+v", sourceSpec)
 
 	return sourceSpec, nil
 }

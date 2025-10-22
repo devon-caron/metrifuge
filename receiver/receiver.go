@@ -129,6 +129,7 @@ func (lr *LogReceiver) receiveLogs(sourceObj ls.LogSource, kClient *api.K8sClien
 
 	source.StartLogStream(kClient, nil, stopCh)
 
+	debugCounter := 0
 	for {
 		select {
 		case <-stopCh:
@@ -136,11 +137,13 @@ func (lr *LogReceiver) receiveLogs(sourceObj ls.LogSource, kClient *api.K8sClien
 		case <-ticker.C:
 			lr.log.Infof("Processing logs from source: %s\n", source.GetSourceInfo())
 			logs := source.GetNewLogs()
-			for _, log := range logs {
-				lr.log.Debugf("SOURCE: %v", source.GetSourceInfo())
-				lr.log.Debugf("LOG: %v", log)
-				lr.log.Debugf("LOG PROCESSING STILL NEEDS IMPLEMENTATION")
+			for range logs {
+				debugCounter++
+				if debugCounter > 20 {
+					lr.log.Debugf("RECEIVED 20 LOGS")
+				}
 			}
+			debugCounter = 0
 		}
 	}
 }

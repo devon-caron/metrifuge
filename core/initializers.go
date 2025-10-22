@@ -9,10 +9,10 @@ import (
 	"github.com/devon-caron/metrifuge/k8s/api"
 	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
 	ls "github.com/devon-caron/metrifuge/k8s/api/log_source"
-	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
+	rs "github.com/devon-caron/metrifuge/k8s/api/ruleset"
 )
 
-func updateRuleSets(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ruleset.RuleSet, error) {
+func updateRuleSets(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*rs.RuleSet, error) {
 	if !isK8s {
 		ruleFilePath := os.Getenv("MF_RULES_FILEPATH")
 		data, err := os.ReadFile(ruleFilePath)
@@ -27,12 +27,17 @@ func updateRuleSets(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ruleset.Rul
 		return myRuleSets, nil
 	}
 
-	myRuleSets, err := k8s.GetK8sResources[ruleset.RuleSet](k8sClient, global.RULESET_CRD_NAME, "v1alpha1", "rulesets")
+	myResources, err := k8s.GetK8sResources(k8sClient, global.RULESET_CRD_NAME, "v1alpha1", "rulesets")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get k8s resources: %v", err)
 	}
 
-	return myRuleSets, nil
+	myRulesets, err := convertToRulesets(myResources)
+	if err != nil {
+		return nil, fmt.Errorf("failed to cast resources to rulesets: %v", err)
+	}
+
+	return myRulesets, nil
 }
 
 func updateLogSources(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ls.LogSource, error) {
@@ -50,9 +55,14 @@ func updateLogSources(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ls.LogSou
 		return myLogSources, nil
 	}
 
-	myLogSources, err := k8s.GetK8sResources[ls.LogSource](k8sClient, global.LOGSOURCE_CRD_NAME, "v1alpha1", "logsources")
+	myResources, err := k8s.GetK8sResources(k8sClient, global.LOGSOURCE_CRD_NAME, "v1alpha1", "logsources")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get k8s resources: %v", err)
+	}
+
+	myLogSources, err := convertToLogSources(myResources)
+	if err != nil {
+		return nil, fmt.Errorf("failed to cast resources to log sources: %v", err)
 	}
 
 	return myLogSources, nil
@@ -73,10 +83,51 @@ func updateExporters(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*e.Exporter
 		return myExporters, nil
 	}
 
-	myExporters, err := k8s.GetK8sResources[e.Exporter](k8sClient, global.EXPORTER_CRD_NAME, "v1alpha1", "exporters")
+	myResources, err := k8s.GetK8sResources(k8sClient, global.EXPORTER_CRD_NAME, "v1alpha1", "exporters")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get k8s resources: %v", err)
 	}
 
+	myExporters, err := convertToExporters(myResources)
+	if err != nil {
+		return nil, fmt.Errorf("failed to cast resources to exporters: %v", err)
+	}
+
+	return myExporters, nil
+}
+
+func convertToRulesets(resources []api.MetrifugeK8sResource) ([]*rs.RuleSet, error) {
+	var myRulesets []*rs.RuleSet
+	for i, resource := range resources {
+		rs, ok := resource.(*rs.RuleSet)
+		if !ok {
+			return nil, fmt.Errorf("resource at index %d is not a RuleSet", i)
+		}
+		myRulesets = append(myRulesets, rs)
+	}
+	return myRulesets, nil
+}
+
+func convertToLogSources(resources []api.MetrifugeK8sResource) ([]*ls.LogSource, error) {
+	var myLogSources []*ls.LogSource
+	for i, resource := range resources {
+		lsrc, ok := resource.(*ls.LogSource)
+		if !ok {
+			return nil, fmt.Errorf("resource at index %d is not a LogSource", i)
+		}
+		myLogSources = append(myLogSources, lsrc)
+	}
+	return myLogSources, nil
+}
+
+func convertToExporters(resources []api.MetrifugeK8sResource) ([]*e.Exporter, error) {
+	var myExporters []*e.Exporter
+	for i, resource := range resources {
+		exp, ok := resource.(*e.Exporter)
+		if !ok {
+			return nil, fmt.Errorf("resource at index %d is not an Exporter", i)
+		}
+		myExporters = append(myExporters, exp)
+	}
 	return myExporters, nil
 }
