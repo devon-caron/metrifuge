@@ -137,12 +137,22 @@ func getLogSource(crdLogSource unstructured.Unstructured, spec map[string]any) (
 }
 
 func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) (*rs.RuleSet, error) {
-	rulesMap, ok := spec["rules"].(map[string]any)
+	rulesList, ok := spec["rules"].([]any)
 	if !ok {
-		return nil, fmt.Errorf("failed to get rules map: %v", spec)
+		return nil, fmt.Errorf("failed to get rules list: %v", spec)
 	}
 
-	myRules, err := getRules(rulesMap)
+	// Convert []any to []map[string]any
+	rulesMaps := make([]map[string]any, 0, len(rulesList))
+	for i, r := range rulesList {
+		ruleMap, ok := r.(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("rule at index %d is not a map: %v", i, r)
+		}
+		rulesMaps = append(rulesMaps, ruleMap)
+	}
+
+	myRules, err := getRules(rulesMaps)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get rules: %v", err)
 	}
@@ -191,8 +201,98 @@ func marshalPodSource(podSource map[string]any) (*api.PodSource, error) {
 	return sourceSpec, nil
 }
 
-func getRules(_ map[string]any) ([]*api.Rule, error) {
-	panic("getRules function not implemented")
+func getRules(ruleMaps []map[string]any) ([]*api.Rule, error) {
+	var rules []*api.Rule
+	for i, ruleMap := range ruleMaps {
+		rule, err := getRule(ruleMap)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get rule at index %d: %v", i, err)
+		}
+		rules = append(rules, rule)
+	}
+	return rules, nil
+}
+
+func getRule(ruleMap map[string]any) (*api.Rule, error) {
+
+	conditionalMap, ok := ruleMap["conditional"].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("failed to get conditional: %v", ruleMap)
+	}
+
+	conditional, err := marshalConditional(conditionalMap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal conditional: %v", err)
+	}
+
+	return &api.Rule{
+		Pattern:       ruleMap["pattern"].(string),
+		Action:        ruleMap["action"].(string),
+		Conditional:   conditional,
+		CreateMetrics: ruleMap["createMetrics"].(bool),
+		Metrics:       ruleMap["metrics"].([]api.Metric),
+	}, nil
+}
+
+func marshalConditional(conditionalMap map[string]any) (*api.Conditional, error) {
+	field1, err := marshalFieldValues(conditionalMap["field1"].(map[string]any))
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal field1: %v", err)
+	}
+	field2, err := marshalFieldValues(conditionalMap["field2"].(map[string]any))
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal field2: %v", err)
+	}
+	operator, ok := conditionalMap["operator"].(string)
+	if !ok {
+		return nil, fmt.Errorf("failed to get operator: %v", conditionalMap)
+	}
+	actionTrue, ok := conditionalMap["actionTrue"].(string)
+	if !ok {
+		return nil, fmt.Errorf("failed to get actionTrue: %v", conditionalMap)
+	}
+	actionFalse, ok := conditionalMap["actionFalse"].(string)
+	if !ok {
+		return nil, fmt.Errorf("failed to get actionFalse: %v", conditionalMap)
+	}
+	var conditionalTrue *api.Conditional = nil
+	if conditionalMap["conditionalTrue"] != nil {
+		conditionalTrue, err = marshalConditional(conditionalMap["conditionalTrue"].(map[string]any))
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal conditionalTrue: %v", err)
+		}
+	}
+	var conditionalFalse *api.Conditional = nil
+	if conditionalMap["conditionalFalse"] != nil {
+		conditionalFalse, err = marshalConditional(conditionalMap["conditionalFalse"].(map[string]any))
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal conditionalFalse: %v", err)
+		}
+	}
+	return &api.Conditional{
+		Field1:           field1,
+		Operator:         operator,
+		Field2:           field2,
+		ActionTrue:       actionTrue,
+		ActionFalse:      actionFalse,
+		ConditionalTrue:  conditionalTrue,
+		ConditionalFalse: conditionalFalse,
+	}, nil
+}
+
+func marshalFieldValues(fieldValueMap map[string]any) (*api.FieldValue, error) {
+	fvType, ok := fieldValueMap["type"].(string)
+	if !ok {
+		return nil, fmt.Errorf("failed to get field value type: %v", fieldValueMap)
+	}
+	grokKey, ok := fieldValueMap["grokKey"].(string)
+	if !ok {
+		return nil, fmt.Errorf("failed to get field value grok key: %v", fieldValueMap)
+	}
+	return &api.FieldValue{
+		Type:    fvType,
+		GrokKey: grokKey,
+	}, nil
 }
 
 func ValidateResources(restConfig *rest.Config) error {

@@ -56,56 +56,127 @@ spec:
                     pattern:
                       type: string
                       description: Regex pattern to match against log lines
-                    conditionals:
-                      type: array
-                      items:
-                        type: object
-                        required:
-                          - field1
-                          - operator
-                          - actionTrue
-                          - actionFalse
-                        properties:
-                          field1:
-                            type: object
-                            required:
-                              - type
-                            properties:
-                              type:
-                                type: string
-                                enum: ["Int64", "Float64", "String"]
-                                description: Type of the field value
-                              grokKey:
-                                type: string
-                                description: Key to extract from grok pattern matches
-                              manualValue:
-                                type: string
-                                description: Static value to use
-                          operator:
-                            type: string
-                            enum: ["LessThan", "Equals", "DoesNotEqual", "Exists", "DoesNotExist", "GreaterThan", "GreaterThanOrEqualTo"]
-                            description: Comparison operator for the condition
-                          field2:
-                            type: object
-                            required:
-                              - type
-                            properties:
-                              type:
-                                type: string
-                                enum: ["Int64", "Float64", "String"]
-                                description: Type of the field value
-                              grokKey:
-                                type: string
-                                description: Key to extract from grok pattern matches
-                              manualValue:
-                                type: string
-                                description: Static value to use
-                          actionTrue:
-                            type: string
-                            description: Action to take if condition evaluates to true
-                          actionFalse:
-                            type: string
-                            description: Action to take if condition evaluates to false
+                    action:
+                      type: string
+                      enum: ["forward", "discard", "analyze", "conditional"]
+                      description: Action to take for matching logs
+                    conditional:
+                      type: object
+                      description: Conditional rule configuration
+                      required:
+                        - field1
+                        - operator
+                        - actionTrue
+                        - actionFalse
+                      properties:
+                        field1:
+                          type: object
+                          required:
+                            - type
+                          properties:
+                            type:
+                              type: string
+                              enum: ["Int64", "Float64", "String"]
+                              description: Type of the field value
+                            grokKey:
+                              type: string
+                              description: Key to extract from grok pattern matches
+                            manualValue:
+                              type: string
+                              description: Static value to use
+                        operator:
+                          type: string
+                          enum: ["LessThan", "Equals", "DoesNotEqual", "Exists", "DoesNotExist", "GreaterThan", "GreaterThanOrEqualTo"]
+                          description: Comparison operator for the condition
+                        field2:
+                          type: object
+                          required:
+                            - type
+                          properties:
+                            type:
+                              type: string
+                              enum: ["Int64", "Float64", "String"]
+                              description: Type of the field value
+                            grokKey:
+                              type: string
+                              description: Key to extract from grok pattern matches
+                            manualValue:
+                              type: string
+                              description: Static value to use
+                        actionTrue:
+                          type: string
+                          description: Action to take if condition evaluates to true
+                        actionFalse:
+                          type: string
+                          description: Action to take if condition evaluates to false
+                        conditionalTrue:
+                          type: object
+                          properties:
+                            field1:
+                              type: object
+                              required:
+                                - type
+                              properties:
+                                type:
+                                  type: string
+                                  enum: ["Int64", "Float64", "String"]
+                                grokKey:
+                                  type: string
+                                manualValue:
+                                  type: string
+                            operator:
+                              type: string
+                              enum: ["LessThan", "Equals", "DoesNotEqual", "Exists", "DoesNotExist", "GreaterThan", "GreaterThanOrEqualTo"]
+                            field2:
+                              type: object
+                              required:
+                                - type
+                              properties:
+                                type:
+                                  type: string
+                                  enum: ["Int64", "Float64", "String"]
+                                grokKey:
+                                  type: string
+                                manualValue:
+                                  type: string
+                            actionTrue:
+                              type: string
+                            actionFalse:
+                              type: string
+                        conditionalFalse:
+                          type: object
+                          properties:
+                            field1:
+                              type: object
+                              required:
+                                - type
+                              properties:
+                                type:
+                                  type: string
+                                  enum: ["Int64", "Float64", "String"]
+                                grokKey:
+                                  type: string
+                                manualValue:
+                                  type: string
+                            operator:
+                              type: string
+                              enum: ["LessThan", "Equals", "DoesNotEqual", "Exists", "DoesNotExist", "GreaterThan", "GreaterThanOrEqualTo"]
+                            field2:
+                              type: object
+                              required:
+                                - type
+                              properties:
+                                type:
+                                  type: string
+                                  enum: ["Int64", "Float64", "String"]
+                                grokKey:
+                                  type: string
+                                manualValue:
+                                  type: string
+                            actionTrue:
+                              type: string
+                            actionFalse:
+                              type: string
                     metrics:
                       type: array
                       items:
