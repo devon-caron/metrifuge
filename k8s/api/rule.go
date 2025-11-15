@@ -43,6 +43,6 @@ type MetricValue struct {
 
 // Attribute represents a key-value pair for metric attributes
 type Attribute struct {
-	Name  string      `json:"name" yaml:"name"`
-	Value MetricValue `json:"value" yaml:"value"`
+	Key   string `json:"key" yaml:"key"`
+	Value string `json:"value" yaml:"value"`
 }

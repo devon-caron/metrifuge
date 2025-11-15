@@ -178,15 +178,15 @@ func marshalPodSource(podSource map[string]any) (*api.PodSource, error) {
 	}
 	myName, ok := pod["name"].(string)
 	if !ok {
-		return nil, fmt.Errorf("failed to get pod name: %v", pod)
+		return nil, fmt.Errorf("failed to get pod name: %v, podSource: %v", pod, podSource)
 	}
 	myNamespace, ok := pod["namespace"].(string)
 	if !ok {
-		return nil, fmt.Errorf("failed to get pod namespace: %v", pod)
+		return nil, fmt.Errorf("failed to get pod namespace: %v, podSource: %v", pod, podSource)
 	}
 	myContainer, ok := pod["container"].(string)
 	if !ok {
-		return nil, fmt.Errorf("failed to get pod container: %v", pod)
+		return nil, fmt.Errorf("failed to get pod container: %v, podSource: %v", pod, podSource)
 	}
 	var sourceSpec = &api.PodSource{
 		Pod: api.Pod{
@@ -217,7 +217,7 @@ func getRule(ruleMap map[string]any) (*api.Rule, error) {
 
 	conditionalMap, ok := ruleMap["conditional"].(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("failed to get conditional: %v", ruleMap)
+		conditionalMap = nil
 	}
 
 	conditional, err := marshalConditional(conditionalMap)
@@ -225,16 +225,144 @@ func getRule(ruleMap map[string]any) (*api.Rule, error) {
 		return nil, fmt.Errorf("failed to marshal conditional: %v", err)
 	}
 
+	pattern, ok := ruleMap["pattern"].(string)
+	if !ok {
+		return nil, fmt.Errorf("failed to get pattern: %v", ruleMap)
+	}
+
+	action, ok := ruleMap["action"].(string)
+	if !ok {
+		return nil, fmt.Errorf("failed to get action: %v", ruleMap)
+	}
+
+	createMetrics, ok := ruleMap["createMetrics"].(bool)
+	if !ok {
+		return nil, fmt.Errorf("failed to get createMetrics: %v", ruleMap)
+	}
+
+	switch ruleMap["metrics"].(type) {
+	case []map[string]any:
+		log.Infof("metrics is a slice of maps: %v", ruleMap["metrics"])
+	case map[string]any:
+		log.Infof("metrics is a map: %v", ruleMap["metrics"])
+	default:
+		log.Infof("metrics is of type %T", ruleMap["metrics"])
+	}
+
+	metricsMap, ok := ruleMap["metrics"].([]any)
+	if !ok {
+		if ruleMap["metrics"] == nil {
+			metricsMap = []any{}
+		} else {
+			return nil, fmt.Errorf("failed to retrieve metrics: %v", ruleMap)
+		}
+	}
+
+	metrics, err := marshalMetrics(metricsMap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal metrics: %v", err)
+	}
+
 	return &api.Rule{
-		Pattern:       ruleMap["pattern"].(string),
-		Action:        ruleMap["action"].(string),
+		Pattern:       pattern,
+		Action:        action,
 		Conditional:   conditional,
-		CreateMetrics: ruleMap["createMetrics"].(bool),
-		Metrics:       ruleMap["metrics"].([]api.Metric),
+		CreateMetrics: createMetrics,
+		Metrics:       metrics,
 	}, nil
 }
 
+func marshalMetrics(metricsMap []any) ([]api.Metric, error) {
+	var metrics []api.Metric
+	for i, metricMap := range metricsMap {
+		metric, err := marshalMetric(metricMap.(map[string]any))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get metric at index %d: %v", i, err)
+		}
+		metrics = append(metrics, metric)
+	}
+	return metrics, nil
+}
+
+func marshalMetric(metricMap map[string]any) (api.Metric, error) {
+	name, ok := metricMap["name"].(string)
+	if !ok {
+		return api.Metric{}, fmt.Errorf("failed to get name: %v", metricMap)
+	}
+	kind, ok := metricMap["kind"].(string)
+	if !ok {
+		return api.Metric{}, fmt.Errorf("failed to get kind: %v", metricMap)
+	}
+	value, err := marshalMetricValue(metricMap["value"].(map[string]any))
+	if err != nil {
+		return api.Metric{}, fmt.Errorf("failed to get value: %v", err)
+	}
+	attributes, err := marshalAttributes(metricMap["attributes"].([]any))
+	if err != nil {
+		return api.Metric{}, fmt.Errorf("failed to get attributes: %v", err)
+	}
+	return api.Metric{
+		Name:       name,
+		Kind:       kind,
+		Value:      value,
+		Attributes: attributes,
+	}, nil
+}
+
+func marshalMetricValue(metricValueMap map[string]any) (api.MetricValue, error) {
+	metricType, ok := metricValueMap["type"].(string)
+	if !ok {
+		return api.MetricValue{}, fmt.Errorf("failed to get type: %v", metricValueMap)
+	}
+	grokKey, ok := metricValueMap["grokKey"].(string)
+	if !ok {
+		log.Debugf("grok key not found in metric value: %v", metricValueMap)
+	}
+	manualValue, ok := metricValueMap["manualValue"].(string)
+	if !ok {
+		log.Debugf("manual value not found in metric value: %v", metricValueMap)
+	}
+	return api.MetricValue{
+		Type:        metricType,
+		GrokKey:     grokKey,
+		ManualValue: &manualValue,
+	}, nil
+}
+
+func marshalAttributes(attributesMap []any) ([]api.Attribute, error) {
+	var attributes []api.Attribute
+	for i, attributeMap := range attributesMap {
+		attribute, err := marshalAttribute(attributeMap.(map[string]any))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get attribute at index %d: %v", i, err)
+		}
+		attributes = append(attributes, attribute)
+	}
+	return attributes, nil
+}
+
+func marshalAttribute(attributeMap map[string]any) (api.Attribute, error) {
+	key, ok := attributeMap["key"].(string)
+	if !ok {
+		return api.Attribute{}, fmt.Errorf("failed to get key: %v", attributeMap)
+	}
+	value, ok := attributeMap["value"].(string)
+	if !ok {
+		return api.Attribute{}, fmt.Errorf("failed to get value: %v", attributeMap)
+	}
+	return api.Attribute{
+		Key:   key,
+		Value: value,
+	}, nil
+}
+
+// marshalConditional marshals a conditional map into an api.Conditional.
+// If the conditional map is nil, it returns nil.
 func marshalConditional(conditionalMap map[string]any) (*api.Conditional, error) {
+	if conditionalMap == nil {
+		return nil, nil
+	}
+
 	field1, err := marshalFieldValues(conditionalMap["field1"].(map[string]any))
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal field1: %v", err)
@@ -287,11 +415,16 @@ func marshalFieldValues(fieldValueMap map[string]any) (*api.FieldValue, error) {
 	}
 	grokKey, ok := fieldValueMap["grokKey"].(string)
 	if !ok {
-		return nil, fmt.Errorf("failed to get field value grok key: %v", fieldValueMap)
+		log.Debugf("field value grok key not present: %v", fieldValueMap)
+	}
+	manualValue, ok := fieldValueMap["manualValue"].(string)
+	if !ok {
+		log.Debugf("field value manual value not present: %v", fieldValueMap)
 	}
 	return &api.FieldValue{
-		Type:    fvType,
-		GrokKey: grokKey,
+		Type:        fvType,
+		GrokKey:     grokKey,
+		ManualValue: &manualValue,
 	}, nil
 }
 

@@ -118,7 +118,7 @@ func updateResources() error {
 	go func() {
 		defer wg.Done()
 		if ruleSets, myErr := updateRuleSets(isK8s, res.GetK8sClient()); myErr != nil {
-			err = fmt.Errorf("%v{error updating rulesets 😔: %v}\n", err, myErr)
+			err = fmt.Errorf("%v{error updating rulesets : %v}\n", err, myErr)
 		} else {
 			res.SetRuleSets(ruleSets)
 		}
@@ -128,7 +128,7 @@ func updateResources() error {
 	go func() {
 		defer wg.Done()
 		if logSources, myErr := updateLogSources(isK8s, res.GetK8sClient()); myErr != nil {
-			err = fmt.Errorf("%v{error updating log sources 😔: %v}\n", err, myErr)
+			err = fmt.Errorf("%v{error updating log sources : %v}\n", err, myErr)
 		} else {
 			res.SetLogSources(logSources)
 		}
@@ -138,7 +138,7 @@ func updateResources() error {
 	go func() {
 		defer wg.Done()
 		if exporters, myErr := updateExporters(isK8s, res.GetK8sClient()); myErr != nil {
-			err = fmt.Errorf("%v{error updating exporters 😔: %v}\n", err, myErr)
+			err = fmt.Errorf("%v{error updating exporters : %v}\n", err, myErr)
 		} else {
 			res.SetExporters(exporters)
 		}

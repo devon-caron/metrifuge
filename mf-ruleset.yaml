@@ -12,6 +12,7 @@ spec:
       description: Parse debug level logs from metrifuge application
       pattern: 'time="%{TIMESTAMP_ISO8601:timestamp}"\s+level=%{WORD:log_level}\s+msg="%{GREEDYDATA:message}"(?:\s+func=%{GREEDYDATA:function})?(?:\s+file="%{GREEDYDATA:source_file}")?'
       action: analyze
+      createMetrics: true
       metrics:
         - name: metrifuge_debug_logs_total
           kind: Int64Counter
@@ -23,11 +24,22 @@ spec:
               value: "debug"
             - key: component
               value: "metrifuge"
+        - name: metrifuge_warn_logs_total
+          kind: Int64Counter
+          value:
+            type: Int64
+            manualValue: "1"
+          attributes:
+            - key: log_level
+              value: "warn"
+            - key: component
+              value: "metrifuge"
     
     - name: detect_crd_validation
       description: Detect CRD validation debug messages
       pattern: 'time="%{TIMESTAMP_ISO8601:timestamp}"\s+level=debug\s+msg="\s*%{WORD:field_name}:\s*%{GREEDYDATA:field_value}"'
       action: conditional
+      createMetrics: true
       conditional:
         field1:
           type: String
@@ -51,13 +63,5 @@ spec:
     - name: log_level_distribution
       description: Track distribution of log levels
       pattern: 'time="%{TIMESTAMP_ISO8601:timestamp}"\s+level=%{WORD:log_level}'
-      action: analyze
-      metrics:
-        - name: metrifuge_log_level_total
-          kind: Int64Counter
-          value:
-            type: Int64
-            manualValue: "1"
-          attributes:
-            - key: level
-              value: "debug"
+      action: discard
+      createMetrics: false

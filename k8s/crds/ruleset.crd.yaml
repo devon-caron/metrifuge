@@ -56,6 +56,9 @@ spec:
                     pattern:
                       type: string
                       description: Regex pattern to match against log lines
+                    createMetrics:
+                      type: boolean
+                      description: Whether to create metrics for the rule
                     action:
                       type: string
                       enum: ["forward", "discard", "analyze", "conditional"]
