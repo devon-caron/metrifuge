@@ -6,4 +6,5 @@ mftagname=$(echo "$mftagtbl" | grep metrifuge | grep -v "latest" | awk '{print $
 mftagtime=$(echo "$mftagtbl" | grep metrifuge | grep -v "latest" | awk '{print $2}')
 minikube image load "$mftagname:$mftagtime"
 yq eval --inplace ".spec.containers[0].image = \"$mftagname:$mftagtime\"" mf-pod.yaml
+kubectl delete po -n metrifuge mf-log-pod && kubectl apply -f mf-log-pod.yaml
 kubectl apply -f mf-pod.yaml
