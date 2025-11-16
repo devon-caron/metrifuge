@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -34,12 +33,12 @@ func Run() {
 	log.Info("starting api")
 	exapi.StartApi()
 
-	if err := updateResources(); err != nil {
-		log.Fatalf("failed to load program resources: %v", err)
-		os.Exit(1)
+	if err := validateK8sResources(); err != nil {
+		log.Fatalf("failed to validate k8s resource definitions: %v", err)
+		// os.Exit(1)
 	}
 
-	log.Info("ruleset and exporter resources loaded")
+	log.Info("k8s resource definitions validated")
 	log.Info("initializing log and inline sources...")
 
 	res := resources.GetInstance()
@@ -52,6 +51,7 @@ func Run() {
 		refresh = 60
 	}
 
+	log.Info("log/inline sources intialized")
 	log.Info("initializing exporter manager...")
 
 	// First collect all exporters into a single slice
@@ -67,7 +67,7 @@ func Run() {
 	curRetries := 0
 	for {
 		log.Info("updating resources...")
-		if err := updateResources(); err != nil {
+		if err := getResourceUpdates(); err != nil {
 			log.Errorf("retrying due to failure to update resources: %v", err)
 			time.Sleep(3 * time.Second)
 			curRetries++
@@ -82,9 +82,7 @@ func Run() {
 	}
 }
 
-func updateResources() error {
-	var err error
-	wg.Add(3)
+func validateK8sResources() error {
 
 	isK8s, err := strconv.ParseBool(global.RUNNING_IN_K8S)
 	if err != nil {
@@ -113,11 +111,23 @@ func updateResources() error {
 		}
 	}
 
-	err = nil
+	return nil
+}
+
+func getResourceUpdates() error {
+	var err error = nil
+	wg.Add(3)
+
+	isK8s, err := strconv.ParseBool(global.RUNNING_IN_K8S)
+	if err != nil {
+		return fmt.Errorf("failed to parse environment variable MF_RUNNING_IN_K8S:%v", err)
+	}
+
+	res := resources.GetInstance()
 
 	go func() {
 		defer wg.Done()
-		if ruleSets, myErr := updateRuleSets(isK8s, res.GetK8sClient()); myErr != nil {
+		if ruleSets, myErr := getRuleSetUpdates(isK8s, res.GetK8sClient()); myErr != nil {
 			err = fmt.Errorf("%v{error updating rulesets : %v}\n", err, myErr)
 		} else {
 			res.SetRuleSets(ruleSets)
@@ -127,7 +137,7 @@ func updateResources() error {
 
 	go func() {
 		defer wg.Done()
-		if logSources, myErr := updateLogSources(isK8s, res.GetK8sClient()); myErr != nil {
+		if logSources, myErr := getLogSourceUpdates(isK8s, res.GetK8sClient()); myErr != nil {
 			err = fmt.Errorf("%v{error updating log sources : %v}\n", err, myErr)
 		} else {
 			res.SetLogSources(logSources)
@@ -137,7 +147,7 @@ func updateResources() error {
 
 	go func() {
 		defer wg.Done()
-		if exporters, myErr := updateExporters(isK8s, res.GetK8sClient()); myErr != nil {
+		if exporters, myErr := getExporterUpdates(isK8s, res.GetK8sClient()); myErr != nil {
 			err = fmt.Errorf("%v{error updating exporters : %v}\n", err, myErr)
 		} else {
 			res.SetExporters(exporters)
