@@ -36,6 +36,8 @@ func (lr *LogReceiver) Initialize(initialSources []*ls.LogSource, log *logrus.Lo
 }
 
 func (lr *LogReceiver) Update(sources []*ls.LogSource, k8sClient *api.K8sClientWrapper) error {
+	lr.log.Debug("logreceiver update func called")
+
 	// Create a set of current exporter names
 	currentSources := make(map[string]bool)
 	for _, source := range sources {
@@ -54,6 +56,9 @@ func (lr *LogReceiver) Update(sources []*ls.LogSource, k8sClient *api.K8sClientW
 
 	// Start new exporters or update existing ones
 	for _, source := range sources {
+
+		lr.log.Debugf("checking source: %v", source)
+
 		lr.mu.Lock()
 		// If exporter already exists, skip or restart it
 		if _, exists := lr.sourceStopChans[source.Metadata.Name]; exists {
@@ -69,6 +74,7 @@ func (lr *LogReceiver) Update(sources []*ls.LogSource, k8sClient *api.K8sClientW
 		lr.wg.Add(1)
 		go func(name string, src ls.LogSource, ch chan struct{}) {
 			defer lr.wg.Done()
+			lr.log.Debugf("beginning receipt of logs for chan with name %v", name)
 			lr.receiveLogs(src, k8sClient, ch)
 		}(source.Metadata.Name, *source, stopCh)
 	}
