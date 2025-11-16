@@ -111,6 +111,10 @@ func validateK8sResources() error {
 		}
 	}
 
+	if err := getResourceUpdates(); err != nil {
+		return fmt.Errorf("error updating resources after initialization: %v", err)
+	}
+
 	return nil
 }
 
