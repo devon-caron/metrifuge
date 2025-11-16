@@ -325,7 +325,7 @@ func marshalMetricValue(metricValueMap map[string]any) (api.MetricValue, error) 
 	return api.MetricValue{
 		Type:        metricType,
 		GrokKey:     grokKey,
-		ManualValue: &manualValue,
+		ManualValue: manualValue,
 	}, nil
 }
 
@@ -424,7 +424,7 @@ func marshalFieldValues(fieldValueMap map[string]any) (*api.FieldValue, error) {
 	return &api.FieldValue{
 		Type:        fvType,
 		GrokKey:     grokKey,
-		ManualValue: &manualValue,
+		ManualValue: manualValue,
 	}, nil
 }
 

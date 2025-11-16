@@ -21,9 +21,9 @@ type Conditional struct {
 
 // FieldValue represents a field value that can come from a grok match or be a manual value
 type FieldValue struct {
-	Type        string  `json:"type" yaml:"type"` // Int64, Float64, String
-	GrokKey     string  `json:"grokKey,omitempty" yaml:"grokKey,omitempty"`
-	ManualValue *string `json:"manualValue,omitempty" yaml:"manualValue,omitempty"`
+	Type        string `json:"type" yaml:"type"` // Int64, Float64, String
+	GrokKey     string `json:"grokKey,omitempty" yaml:"grokKey,omitempty"`
+	ManualValue string `json:"manualValue,omitempty" yaml:"manualValue,omitempty"`
 }
 
 // Metric defines a metric to be emitted
@@ -36,9 +36,9 @@ type Metric struct {
 
 // MetricValue represents the value of a metric
 type MetricValue struct {
-	Type        string  `json:"type" yaml:"type"` // Int64, Float64, String
-	GrokKey     string  `json:"grokKey,omitempty" yaml:"grokKey,omitempty"`
-	ManualValue *string `json:"manualValue,omitempty" yaml:"manualValue,omitempty"`
+	Type        string `json:"type" yaml:"type"` // Int64, Float64, String
+	GrokKey     string `json:"grokKey,omitempty" yaml:"grokKey,omitempty"`
+	ManualValue string `json:"manualValue,omitempty" yaml:"manualValue,omitempty"`
 }
 
 // Attribute represents a key-value pair for metric attributes
