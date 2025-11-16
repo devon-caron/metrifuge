@@ -108,7 +108,7 @@ func (lr *LogReceiver) StopExporter(name string) bool {
 
 func (lr *LogReceiver) receiveLogs(sourceObj ls.LogSource, kClient *api.K8sClientWrapper, stopCh <-chan struct{}) {
 	// Create a ticker for periodic processing
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
 	var source api.Source
@@ -127,23 +127,18 @@ func (lr *LogReceiver) receiveLogs(sourceObj ls.LogSource, kClient *api.K8sClien
 		return
 	}
 
-	source.StartLogStream(kClient, nil, stopCh)
+	go source.StartLogStream(kClient, nil, stopCh)
 
-	debugCounter := 0
 	for {
 		select {
 		case <-stopCh:
 			return
 		case <-ticker.C:
-			lr.log.Infof("Processing logs from source: %s\n", source.GetSourceInfo())
 			logs := source.GetNewLogs()
-			for range logs {
-				debugCounter++
-				if debugCounter > 20 {
-					lr.log.Debugf("RECEIVED 20 LOGS")
-				}
-			}
-			debugCounter = 0
+			lr.log.Infof("Processing %v logs from source: %s\n", len(logs), source.GetSourceInfo())
+			// for _, log := range logs {
+			// 	lr.log.Infof("received log: %v", log)
+			// }
 		}
 	}
 }

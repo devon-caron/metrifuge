@@ -71,6 +71,7 @@ func (pod *PodSource) StartLogStream(kClient *K8sClientWrapper, nonK8sConfig map
 
 	stream, err := kClient.Clientset().CoreV1().Pods(pod.Pod.Namespace).GetLogs(pod.Pod.Name, &v1.PodLogOptions{
 		Container: pod.Pod.Container,
+		Follow:    true,
 	}).Stream(stopChContext)
 	if err != nil {
 		logrus.Error(err)
@@ -81,10 +82,18 @@ func (pod *PodSource) StartLogStream(kClient *K8sClientWrapper, nonK8sConfig map
 	// Create a scanner to read line by line
 	scanner := bufio.NewScanner(stream)
 
+	debugCounter := 0
 	for scanner.Scan() {
 		logLine := scanner.Text()
 		pod.buffer = append(pod.buffer, logLine)
+		debugCounter++
+		if debugCounter > 10 {
+			logrus.Infof("received 10 logs from pod: %v", pod.GetSourceInfo())
+			debugCounter = 0
+		}
 	}
+
+	logrus.Infof("finished reading logs from pod: %v", pod.GetSourceInfo())
 
 	if err := scanner.Err(); err != nil {
 		return err
