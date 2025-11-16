@@ -11,6 +11,7 @@ import (
 	"github.com/devon-caron/metrifuge/k8s"
 	"github.com/devon-caron/metrifuge/k8s/api"
 	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
+	"github.com/devon-caron/metrifuge/log_processor"
 	"github.com/devon-caron/metrifuge/resources"
 
 	"github.com/devon-caron/metrifuge/global"
@@ -23,6 +24,7 @@ var (
 	log *logrus.Logger
 	wg  sync.WaitGroup
 	lr  *receiver.LogReceiver
+	lp  *log_processor.LogProcessor
 	em  *exporter_manager.ExporterManager
 )
 
@@ -52,6 +54,11 @@ func Run() {
 	}
 
 	log.Info("log/inline sources intialized")
+	log.Info("initializing log processor...")
+
+	lp = &log_processor.LogProcessor{}
+	lp.Initialize(res.GetLogSources(), res.GetRuleSets(), log)
+
 	log.Info("initializing exporter manager...")
 
 	// First collect all exporters into a single slice

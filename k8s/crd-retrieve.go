@@ -156,6 +156,16 @@ func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) (*rs.
 	if err != nil {
 		return nil, fmt.Errorf("failed to get rules: %v", err)
 	}
+
+	// Parse selector if present
+	var selector *api.Selector
+	if selectorMap, ok := spec["selector"].(map[string]any); ok {
+		selector, err = marshalSelector(selectorMap)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal selector: %v", err)
+		}
+	}
+
 	myRuleSet := &rs.RuleSet{
 		APIVersion: crdRuleSet.GetAPIVersion(),
 		Kind:       crdRuleSet.GetKind(),
@@ -165,10 +175,32 @@ func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) (*rs.
 			Labels:    crdRuleSet.GetLabels(),
 		},
 		Spec: rs.RuleSetSpec{
-			Rules: myRules,
+			Selector: selector,
+			Rules:    myRules,
 		},
 	}
 	return myRuleSet, nil
+}
+
+func marshalSelector(selectorMap map[string]any) (*api.Selector, error) {
+	matchLabels, ok := selectorMap["matchLabels"].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("failed to get matchLabels: %v", selectorMap)
+	}
+
+	// Convert map[string]any to map[string]string
+	matchLabelsStr := make(map[string]string)
+	for k, v := range matchLabels {
+		strValue, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("matchLabel value for key %s is not a string: %v", k, v)
+		}
+		matchLabelsStr[k] = strValue
+	}
+
+	return &api.Selector{
+		MatchLabels: matchLabelsStr,
+	}, nil
 }
 
 func marshalPodSource(podSource map[string]any) (*api.PodSource, error) {
