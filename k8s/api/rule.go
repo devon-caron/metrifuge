@@ -1,11 +1,11 @@
 package api
 
 type Rule struct {
-	Pattern       string       `json:"pattern" yaml:"pattern"`
-	Action        string       `json:"action" yaml:"action"` // forward, discard, analyze, conditional
-	Conditional   *Conditional `json:"conditional,omitempty" yaml:"conditional,omitempty"`
-	CreateMetrics bool         `json:"create_metrics,omitempty" yaml:"create_metrics,omitempty"`
-	Metrics       []Metric     `json:"metrics,omitempty" yaml:"metrics,omitempty"`
+	Pattern       string           `json:"pattern" yaml:"pattern"`
+	Action        string           `json:"action" yaml:"action"` // forward, discard, analyze, conditional
+	Conditional   *Conditional     `json:"conditional,omitempty" yaml:"conditional,omitempty"`
+	CreateMetrics bool             `json:"create_metrics,omitempty" yaml:"create_metrics,omitempty"`
+	Metrics       []MetricTemplate `json:"metrics,omitempty" yaml:"metrics,omitempty"`
 }
 
 // Conditional defines a condition for capturegroup evaluation
@@ -26,8 +26,8 @@ type FieldValue struct {
 	ManualValue string `json:"manualValue,omitempty" yaml:"manualValue,omitempty"`
 }
 
-// Metric defines a metric to be emitted
-type Metric struct {
+// MetricTemplate defines a metric to be emitted
+type MetricTemplate struct {
 	Name       string      `json:"name" yaml:"name"`
 	Kind       string      `json:"kind" yaml:"kind"` // Int64Counter, etc.
 	Value      MetricValue `json:"value" yaml:"value"`

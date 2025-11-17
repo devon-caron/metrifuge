@@ -6,6 +6,8 @@ import (
 
 	"github.com/devon-caron/metrifuge/k8s/api"
 	ls "github.com/devon-caron/metrifuge/k8s/api/log_source"
+	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
+	"github.com/devon-caron/metrifuge/log_handler/log_processor"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/rest"
 )
@@ -15,6 +17,7 @@ import (
  * all log exporters in the cluster/system.
  */
 type LogHandler struct {
+	lp              *log_processor.LogProcessor
 	log             *logrus.Logger
 	wg              sync.WaitGroup
 	once            sync.Once
@@ -22,13 +25,14 @@ type LogHandler struct {
 	mu              sync.RWMutex             // Protects the exporters map
 }
 
-func (lh *LogHandler) Initialize(initialSources []*ls.LogSource, log *logrus.Logger, kubeConfig *rest.Config, k8sClient *api.K8sClientWrapper) error {
+func (lh *LogHandler) Initialize(initialSources []*ls.LogSource, initialRuleSets []*ruleset.RuleSet, log *logrus.Logger, kubeConfig *rest.Config, k8sClient *api.K8sClientWrapper) error {
 	lh.once.Do(func() {
 		lh.log = log
 		log.Info("initialized log handler")
 		lh.sourceStopChans = make(map[string]chan struct{})
 		log.Info("initialized log handler sources")
-		lh.Update(initialSources, k8sClient)
+		lh.lp = &log_processor.LogProcessor{}
+		lh.lp.Initialize(initialSources, initialRuleSets, log)
 		log.Info("log handler updated successfully")
 	})
 
@@ -141,7 +145,15 @@ func (lh *LogHandler) receiveLogs(sourceObj ls.LogSource, kClient *api.K8sClient
 			return
 		case <-ticker.C:
 			logs := source.GetNewLogs()
-			lh.log.Infof("Processing %v logs from source: %s\n", len(logs), source.GetSourceInfo())
+			lh.log.Infof("Processing %v logs from source: %s", len(logs), source.GetSourceInfo())
+
+			logSet, err := lh.lp.FindLogSet(source)
+			if err != nil {
+				lh.log.Errorf("failed to find log set for source: %v", err)
+				continue
+			}
+			logSet.ProcessLogs(logs)
+
 			// for _, log := range logs {
 			// 	lr.log.Infof("received log: %v", log)
 			// }

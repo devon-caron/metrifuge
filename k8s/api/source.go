@@ -58,7 +58,7 @@ func (pvc *PVCSource) GetNewLogs() []string {
 }
 
 func (pod *PodSource) GetSourceInfo() string {
-	return fmt.Sprintf("Pod: %s, Container: %s", pod.Pod.Name, pod.Pod.Container)
+	return fmt.Sprintf("Pod: %s, Container: %s, Namespace: %s", pod.Pod.Name, pod.Pod.Container, pod.Pod.Namespace)
 }
 
 func (pod *PodSource) StartLogStream(kClient *K8sClientWrapper, nonK8sConfig map[string]interface{}, stopCh <-chan struct{}) error {

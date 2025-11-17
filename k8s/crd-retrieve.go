@@ -304,8 +304,8 @@ func getRule(ruleMap map[string]any) (*api.Rule, error) {
 	}, nil
 }
 
-func marshalMetrics(metricsMap []any) ([]api.Metric, error) {
-	var metrics []api.Metric
+func marshalMetrics(metricsMap []any) ([]api.MetricTemplate, error) {
+	var metrics []api.MetricTemplate
 	for i, metricMap := range metricsMap {
 		metric, err := marshalMetric(metricMap.(map[string]any))
 		if err != nil {
@@ -316,24 +316,24 @@ func marshalMetrics(metricsMap []any) ([]api.Metric, error) {
 	return metrics, nil
 }
 
-func marshalMetric(metricMap map[string]any) (api.Metric, error) {
+func marshalMetric(metricMap map[string]any) (api.MetricTemplate, error) {
 	name, ok := metricMap["name"].(string)
 	if !ok {
-		return api.Metric{}, fmt.Errorf("failed to get name: %v", metricMap)
+		return api.MetricTemplate{}, fmt.Errorf("failed to get name: %v", metricMap)
 	}
 	kind, ok := metricMap["kind"].(string)
 	if !ok {
-		return api.Metric{}, fmt.Errorf("failed to get kind: %v", metricMap)
+		return api.MetricTemplate{}, fmt.Errorf("failed to get kind: %v", metricMap)
 	}
 	value, err := marshalMetricValue(metricMap["value"].(map[string]any))
 	if err != nil {
-		return api.Metric{}, fmt.Errorf("failed to get value: %v", err)
+		return api.MetricTemplate{}, fmt.Errorf("failed to get value: %v", err)
 	}
 	attributes, err := marshalAttributes(metricMap["attributes"].([]any))
 	if err != nil {
-		return api.Metric{}, fmt.Errorf("failed to get attributes: %v", err)
+		return api.MetricTemplate{}, fmt.Errorf("failed to get attributes: %v", err)
 	}
-	return api.Metric{
+	return api.MetricTemplate{
 		Name:       name,
 		Kind:       kind,
 		Value:      value,
