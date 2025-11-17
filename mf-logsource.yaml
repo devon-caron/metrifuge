@@ -3,6 +3,8 @@ kind: LogSource
 metadata:
   name: mf-logsource
   namespace: metrifuge
+  labels:
+    app: metrifuge
 spec:
   source:
     type: PodSource

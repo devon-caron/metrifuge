@@ -5,7 +5,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strconv"
+	"time"
 
+	"github.com/devon-caron/metrifuge/global"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 )
@@ -69,15 +72,39 @@ func (pod *PodSource) StartLogStream(kClient *K8sClientWrapper, nonK8sConfig map
 		cancel()
 	}()
 
-	stream, err := kClient.Clientset().CoreV1().Pods(pod.Pod.Namespace).GetLogs(pod.Pod.Name, &v1.PodLogOptions{
-		Container: pod.Pod.Container,
-		Follow:    true,
-	}).Stream(stopChContext)
+	logrus.Infof("attempting to start log stream for pod: %v", pod.GetSourceInfo())
+
+	var stream io.ReadCloser
+	maxRetries, err := strconv.Atoi(global.LOG_SOURCE_RETRIES)
 	if err != nil {
-		logrus.Error(err)
-		return err
+		return fmt.Errorf("failed to convert log source retries to int: %v", err)
 	}
-	pod.stream = stream
+	delay, err := strconv.Atoi(global.LOG_SOURCE_DELAY)
+	if err != nil {
+		return fmt.Errorf("failed to convert log source delay to int: %v", err)
+	}
+	for retries := 0; retries < maxRetries; retries++ {
+		logrus.Errorf("attempting to start log stream for pod, attempt %v: %v", retries+1, pod.GetSourceInfo())
+
+		stream, err = kClient.Clientset().CoreV1().Pods(pod.Pod.Namespace).GetLogs(pod.Pod.Name, &v1.PodLogOptions{
+			Container: pod.Pod.Container,
+			Follow:    true,
+		}).Stream(stopChContext)
+		if err != nil {
+			logrus.Errorf("failed to get log stream: %v", err)
+			time.Sleep(time.Duration(delay) * time.Second)
+			continue
+		}
+		pod.stream = stream
+		break
+	}
+	if err != nil {
+		return fmt.Errorf("failed to get log stream: %v", err)
+	}
+
+	if stream == nil {
+		return fmt.Errorf("log stream is nil")
+	}
 
 	// Create a scanner to read line by line
 	scanner := bufio.NewScanner(stream)

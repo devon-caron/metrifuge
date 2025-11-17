@@ -11,6 +11,8 @@ var (
 	DEFAULT_RUNNING_IN_K8S          = "true"
 	DEFAULT_EXPORTER_CRD_NAME       = "Exporter"
 	DEFAULT_REFRESH_INTERVAL        = "60"
+	DEFAULT_LOG_SOURCE_RETRIES      = "5"
+	DEFAULT_LOG_SOURCE_DELAY        = "5"
 )
 
 var (
@@ -21,6 +23,8 @@ var (
 	RUNNING_IN_K8S          = DEFAULT_RUNNING_IN_K8S
 	EXPORTER_CRD_NAME       = DEFAULT_EXPORTER_CRD_NAME
 	REFRESH_INTERVAL        = DEFAULT_REFRESH_INTERVAL
+	LOG_SOURCE_RETRIES      = DEFAULT_LOG_SOURCE_RETRIES
+	LOG_SOURCE_DELAY        = DEFAULT_LOG_SOURCE_DELAY
 )
 
 func InitConfig() {
@@ -51,5 +55,13 @@ func InitConfig() {
 	maybeExporterCRDName := os.Getenv("MF_EXPORTER_CRD_NAME")
 	if maybeExporterCRDName != "" {
 		EXPORTER_CRD_NAME = maybeExporterCRDName
+	}
+	maybeLogSourceRetries := os.Getenv("MF_LOG_SOURCE_RETRIES")
+	if maybeLogSourceRetries != "" {
+		LOG_SOURCE_RETRIES = maybeLogSourceRetries
+	}
+	maybeLogSourceDelay := os.Getenv("MF_LOG_SOURCE_DELAY")
+	if maybeLogSourceDelay != "" {
+		LOG_SOURCE_DELAY = maybeLogSourceDelay
 	}
 }
