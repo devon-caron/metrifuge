@@ -1,4 +1,4 @@
-package receiver
+package log_handler
 
 import (
 	"sync"
@@ -11,10 +11,10 @@ import (
 )
 
 /**
- * LogReceiver is an internal type that handles the ingestion of logs from
+ * LogHandler is an internal type that handles the ingestion of logs from
  * all log exporters in the cluster/system.
  */
-type LogReceiver struct {
+type LogHandler struct {
 	log             *logrus.Logger
 	wg              sync.WaitGroup
 	once            sync.Once
@@ -22,21 +22,21 @@ type LogReceiver struct {
 	mu              sync.RWMutex             // Protects the exporters map
 }
 
-func (lr *LogReceiver) Initialize(initialSources []*ls.LogSource, log *logrus.Logger, kubeConfig *rest.Config, k8sClient *api.K8sClientWrapper) error {
-	lr.once.Do(func() {
-		lr.log = log
-		log.Info("initialized log receiver")
-		lr.sourceStopChans = make(map[string]chan struct{})
-		log.Info("initialized log receiver sources")
-		lr.Update(initialSources, k8sClient)
-		log.Info("log receiver updated successfully")
+func (lh *LogHandler) Initialize(initialSources []*ls.LogSource, log *logrus.Logger, kubeConfig *rest.Config, k8sClient *api.K8sClientWrapper) error {
+	lh.once.Do(func() {
+		lh.log = log
+		log.Info("initialized log handler")
+		lh.sourceStopChans = make(map[string]chan struct{})
+		log.Info("initialized log handler sources")
+		lh.Update(initialSources, k8sClient)
+		log.Info("log handler updated successfully")
 	})
 
 	return nil
 }
 
-func (lr *LogReceiver) Update(sources []*ls.LogSource, k8sClient *api.K8sClientWrapper) error {
-	lr.log.Debug("logreceiver update func called")
+func (lh *LogHandler) Update(sources []*ls.LogSource, k8sClient *api.K8sClientWrapper) error {
+	lh.log.Debug("loghandler update func called")
 
 	// Create a set of current exporter names
 	currentSources := make(map[string]bool)
@@ -45,37 +45,37 @@ func (lr *LogReceiver) Update(sources []*ls.LogSource, k8sClient *api.K8sClientW
 	}
 
 	// Stop and remove any exporters that are no longer present
-	lr.mu.Lock()
-	for name, stopCh := range lr.sourceStopChans {
+	lh.mu.Lock()
+	for name, stopCh := range lh.sourceStopChans {
 		if !currentSources[name] {
 			close(stopCh)
-			delete(lr.sourceStopChans, name)
+			delete(lh.sourceStopChans, name)
 		}
 	}
-	lr.mu.Unlock()
+	lh.mu.Unlock()
 
 	// Start new exporters or update existing ones
 	for _, source := range sources {
 
-		lr.log.Debugf("checking source: %v", source)
+		lh.log.Debugf("checking source: %v", source)
 
-		lr.mu.Lock()
+		lh.mu.Lock()
 		// If exporter already exists, skip or restart it
-		if _, exists := lr.sourceStopChans[source.Metadata.Name]; exists {
-			lr.mu.Unlock()
+		if _, exists := lh.sourceStopChans[source.Metadata.Name]; exists {
+			lh.mu.Unlock()
 			continue
 		}
 
 		// Create a new stop channel for this exporter
 		stopCh := make(chan struct{})
-		lr.sourceStopChans[source.Metadata.Name] = stopCh
-		lr.mu.Unlock()
+		lh.sourceStopChans[source.Metadata.Name] = stopCh
+		lh.mu.Unlock()
 
-		lr.wg.Add(1)
+		lh.wg.Add(1)
 		go func(name string, src ls.LogSource, ch chan struct{}) {
-			defer lr.wg.Done()
-			lr.log.Debugf("beginning receipt of logs for chan with name %v", name)
-			lr.receiveLogs(src, k8sClient, ch)
+			defer lh.wg.Done()
+			lh.log.Debugf("beginning receipt of logs for source with name %v", name)
+			lh.receiveLogs(src, k8sClient, ch)
 		}(source.Metadata.Name, *source, stopCh)
 	}
 
@@ -83,36 +83,36 @@ func (lr *LogReceiver) Update(sources []*ls.LogSource, k8sClient *api.K8sClientW
 }
 
 // ShutDown signals all goroutines to stop and waits for them to complete
-func (lr *LogReceiver) ShutDown() {
-	lr.mu.Lock()
-	defer lr.mu.Unlock()
+func (lh *LogHandler) ShutDown() {
+	lh.mu.Lock()
+	defer lh.mu.Unlock()
 
 	// Close all stop channels
-	for _, stopCh := range lr.sourceStopChans {
+	for _, stopCh := range lh.sourceStopChans {
 		close(stopCh)
 	}
 
 	// Clear the exporters map
-	lr.sourceStopChans = make(map[string]chan struct{})
+	lh.sourceStopChans = make(map[string]chan struct{})
 
 	// Wait for all goroutines to complete
-	lr.wg.Wait()
+	lh.wg.Wait()
 }
 
 // StopExporter stops a specific exporter by name
-func (lr *LogReceiver) StopExporter(name string) bool {
-	lr.mu.Lock()
-	defer lr.mu.Unlock()
+func (lh *LogHandler) StopExporter(name string) bool {
+	lh.mu.Lock()
+	defer lh.mu.Unlock()
 
-	if stopCh, exists := lr.sourceStopChans[name]; exists {
+	if stopCh, exists := lh.sourceStopChans[name]; exists {
 		close(stopCh)
-		delete(lr.sourceStopChans, name)
+		delete(lh.sourceStopChans, name)
 		return true
 	}
 	return false
 }
 
-func (lr *LogReceiver) receiveLogs(sourceObj ls.LogSource, kClient *api.K8sClientWrapper, stopCh <-chan struct{}) {
+func (lh *LogHandler) receiveLogs(sourceObj ls.LogSource, kClient *api.K8sClientWrapper, stopCh <-chan struct{}) {
 	// Create a ticker for periodic processing
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
@@ -129,7 +129,7 @@ func (lr *LogReceiver) receiveLogs(sourceObj ls.LogSource, kClient *api.K8sClien
 	case "CmdSource":
 		source = sourceObj.Spec.Source.CmdSource
 	default:
-		lr.log.Errorf("unknown log source type: %s", sourceObj.Spec.Type)
+		lh.log.Errorf("unknown log source type: %s", sourceObj.Spec.Type)
 		return
 	}
 
@@ -141,7 +141,7 @@ func (lr *LogReceiver) receiveLogs(sourceObj ls.LogSource, kClient *api.K8sClien
 			return
 		case <-ticker.C:
 			logs := source.GetNewLogs()
-			lr.log.Infof("Processing %v logs from source: %s\n", len(logs), source.GetSourceInfo())
+			lh.log.Infof("Processing %v logs from source: %s\n", len(logs), source.GetSourceInfo())
 			// for _, log := range logs {
 			// 	lr.log.Infof("received log: %v", log)
 			// }

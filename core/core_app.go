@@ -15,15 +15,15 @@ import (
 	"github.com/devon-caron/metrifuge/resources"
 
 	"github.com/devon-caron/metrifuge/global"
+	"github.com/devon-caron/metrifuge/log_handler"
 	"github.com/devon-caron/metrifuge/logger"
-	"github.com/devon-caron/metrifuge/receiver"
 	"github.com/sirupsen/logrus"
 )
 
 var (
 	log *logrus.Logger
 	wg  sync.WaitGroup
-	lr  *receiver.LogReceiver
+	lh  *log_handler.LogHandler
 	lp  *log_processor.LogProcessor
 	em  *exporter_manager.ExporterManager
 )
@@ -44,8 +44,8 @@ func Run() {
 	log.Info("initializing log and inline sources...")
 
 	res := resources.GetInstance()
-	lr = &receiver.LogReceiver{}
-	lr.Initialize(res.GetLogSources(), log, res.GetKubeConfig(), res.GetK8sClient())
+	lh = &log_handler.LogHandler{}
+	lh.Initialize(res.GetLogSources(), log, res.GetKubeConfig(), res.GetK8sClient())
 	refresh, err := strconv.Atoi(global.REFRESH_INTERVAL)
 	if err != nil {
 		log.Warnf("failed to parse environment variable MF_REFRESH_INTERVAL: %v", err)
@@ -85,7 +85,7 @@ func Run() {
 		}
 		curRetries = 0
 		time.Sleep(time.Duration(refresh) * time.Second)
-		lr.Update(res.GetLogSources(), res.GetK8sClient())
+		lh.Update(res.GetLogSources(), res.GetK8sClient())
 	}
 }
 
