@@ -33,6 +33,7 @@ func (lh *LogHandler) Initialize(initialSources []*ls.LogSource, initialRuleSets
 		log.Info("initialized log handler sources")
 		lh.lp = &log_processor.LogProcessor{}
 		lh.lp.Initialize(initialSources, initialRuleSets, log)
+		lh.Update(initialSources, k8sClient)
 		log.Info("log handler updated successfully")
 	})
 
