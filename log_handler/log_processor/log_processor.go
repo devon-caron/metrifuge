@@ -116,7 +116,7 @@ func (ls *LogSet) ProcessLogs(logs []string) []ProcessedData {
 
 // TODO needs implementation
 func processLog(log string, rule *api.Rule) (ProcessedData, error) {
-	logrus.Infof("fake processing log: %v", log)
-	logrus.Infof("fake processing rule: %v", rule)
+	// logrus.Infof("fake processing log: %v", log)
+	// logrus.Infof("fake processing rule: %v", rule)
 	return ProcessedData{}, nil
 }
