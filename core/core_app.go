@@ -120,6 +120,9 @@ func validateK8sResources() error {
 }
 
 func getResourceUpdates() error {
+
+	log.Info("retrieving resources from cluster...")
+
 	var err error = nil
 	wg.Add(3)
 
@@ -131,6 +134,7 @@ func getResourceUpdates() error {
 	res := resources.GetInstance()
 
 	go func() {
+		log.Info("retrieving rulesets from cluster...")
 		defer wg.Done()
 		if ruleSets, myErr := getRuleSetUpdates(isK8s, res.GetK8sClient()); myErr != nil {
 			err = fmt.Errorf("%v{error updating rulesets : %v}\n", err, myErr)
@@ -141,6 +145,7 @@ func getResourceUpdates() error {
 	}()
 
 	go func() {
+		log.Info("retrieving log sources from cluster...")
 		defer wg.Done()
 		if logSources, myErr := getLogSourceUpdates(isK8s, res.GetK8sClient()); myErr != nil {
 			err = fmt.Errorf("%v{error updating log sources : %v}\n", err, myErr)
@@ -151,6 +156,7 @@ func getResourceUpdates() error {
 	}()
 
 	go func() {
+		log.Info("retrieving exporters from cluster...")
 		defer wg.Done()
 		if exporters, myErr := getExporterUpdates(isK8s, res.GetK8sClient()); myErr != nil {
 			err = fmt.Errorf("%v{error updating exporters : %v}\n", err, myErr)
