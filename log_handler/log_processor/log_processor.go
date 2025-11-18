@@ -88,10 +88,10 @@ func (lp *LogProcessor) Update(logSources []*logsource.LogSource, ruleSets []*ru
 }
 
 func (lp *LogProcessor) FindLogSet(source api.Source) (*LogSet, error) {
-	for _, set := range lp.sourceSets {
+	for i, set := range lp.sourceSets {
 		// TODO this is a costly operation, needs improvement
-		lp.log.Infof("checking source: %v", set.source.GetSourceInfo())
-		lp.log.Infof("against source: %v", source.GetSourceInfo())
+		lp.log.Infof("checking source #%v: %v", i, set.source.GetSourceInfo())
+		lp.log.Infof("against desired source: %v", source.GetSourceInfo())
 		if set.source.GetSourceInfo() == source.GetSourceInfo() {
 			return set, nil
 		}
