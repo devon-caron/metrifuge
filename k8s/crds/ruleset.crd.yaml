@@ -217,13 +217,31 @@ spec:
                               required:
                                 - key
                                 - value
+                                - type
                               properties:
                                 key:
                                   type: string
                                   description: Attribute key
                                 value:
+                                  type: object
+                                  description: Attribute value as a FieldValue
+                                  required:
+                                    - type
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum: ["Int64", "Float64", "String"]
+                                      description: Type of the field value
+                                    grokKey:
+                                      type: string
+                                      description: Key to extract from grok pattern matches
+                                    manualValue:
+                                      type: string
+                                      description: Static value to use
+                                type:
                                   type: string
-                                  description: Attribute value
+                                  enum: ["Int64", "Float64", "String"]
+                                  description: Type of the attribute value
                             description: Key-value pairs to attach to the metric
     subresources:
       status: {}

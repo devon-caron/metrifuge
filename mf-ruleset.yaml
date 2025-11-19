@@ -21,9 +21,15 @@ spec:
             manualValue: "1"
           attributes:
             - key: log_level
-              value: "debug"
+              value:
+                type: String
+                manualValue: "debug"
+              type: String
             - key: component
-              value: "metrifuge"
+              value:
+                type: String
+                manualValue: "metrifuge"
+              type: String
         - name: metrifuge_warn_logs_total
           kind: Int64Counter
           value:
@@ -31,9 +37,15 @@ spec:
             manualValue: "1"
           attributes:
             - key: log_level
-              value: "warn"
+              value:
+                type: String
+                manualValue: "warn"
+              type: String
             - key: component
-              value: "metrifuge"
+              value:
+                type: String
+                manualValue: "metrifuge"
+              type: String
     
     - name: detect_crd_validation
       description: Detect CRD validation debug messages
@@ -58,10 +70,41 @@ spec:
             manualValue: "1"
           attributes:
             - key: field
-              value: "Name"
+              value:
+                type: String
+                manualValue: "Name"
+              type: String
     
     - name: log_level_distribution
       description: Track distribution of log levels
       pattern: 'time="%{TIMESTAMP_ISO8601:timestamp}"\s+level=%{WORD:log_level}'
       action: discard
       createMetrics: false
+
+    - name: function_call_tracker
+      description: Track function calls with dynamic attributes from grok captures
+      pattern: 'time="%{TIMESTAMP_ISO8601:timestamp}"\s+level=%{WORD:log_level}\s+msg="%{GREEDYDATA:message}"\s+func=%{DATA:function}\s+file="%{DATA:source_file}"'
+      action: analyze
+      createMetrics: true
+      metrics:
+        - name: metrifuge_function_calls_total
+          kind: Int64Counter
+          value:
+            type: Int64
+            manualValue: "1"
+          attributes:
+            - key: function_name
+              value:
+                type: String
+                grokKey: "function"
+              type: String
+            - key: source_file
+              value:
+                type: String
+                grokKey: "source_file"
+              type: String
+            - key: log_level
+              value:
+                type: String
+                grokKey: "log_level"
+              type: String

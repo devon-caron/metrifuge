@@ -378,13 +378,29 @@ func marshalAttribute(attributeMap map[string]any) (api.Attribute, error) {
 	if !ok {
 		return api.Attribute{}, fmt.Errorf("failed to get key: %v", attributeMap)
 	}
-	value, ok := attributeMap["value"].(string)
+	valueMap, ok := attributeMap["value"].(map[string]any)
 	if !ok {
 		return api.Attribute{}, fmt.Errorf("failed to get value: %v", attributeMap)
 	}
+	valueType, ok := valueMap["type"].(string)
+	if !ok {
+		return api.Attribute{}, fmt.Errorf("failed to get type: %v", valueMap)
+	}
+	valueGrokKey, ok := valueMap["grokKey"].(string)
+	if !ok {
+		log.Debugf("grok key not found in attribute value: %v", valueMap)
+	}
+	valueManualValue, ok := valueMap["manualValue"].(string)
+	if !ok {
+		log.Debugf("manual value not found in attribute value: %v", valueMap)
+	}
 	return api.Attribute{
-		Key:   key,
-		Value: value,
+		Key: key,
+		Value: api.FieldValue{
+			Type:        valueType,
+			GrokKey:     valueGrokKey,
+			ManualValue: valueManualValue,
+		},
 	}, nil
 }
 
