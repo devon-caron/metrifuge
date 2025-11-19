@@ -6,6 +6,7 @@ toolchain go1.24.5
 
 require (
 	github.com/sirupsen/logrus v1.9.3
+	github.com/vjeantet/grok v1.0.1
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.38.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.38.0
 	go.opentelemetry.io/otel/sdk/metric v1.38.0
