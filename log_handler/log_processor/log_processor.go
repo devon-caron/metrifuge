@@ -2,6 +2,7 @@ package log_processor
 
 import (
 	"fmt"
+	"math/rand/v2"
 
 	"github.com/devon-caron/metrifuge/k8s/api"
 	logsource "github.com/devon-caron/metrifuge/k8s/api/log_source"
@@ -35,8 +36,16 @@ type MetricData struct {
 }
 
 func (lp *LogProcessor) Initialize(logSources []*logsource.LogSource, ruleSets []*ruleset.RuleSet, log *logrus.Logger) {
-	if logSources == nil || ruleSets == nil || log == nil {
-		logrus.Fatalf("log processor initialization failed: logSources: %v, ruleSets: %v, log: %v", logSources, ruleSets, log)
+	if logSources == nil {
+		logrus.Fatalf("log processor initialization failed, logSources triggered nil: logSources: %v, ruleSets: %v, log: %v", logSources, ruleSets, log)
+	}
+
+	if ruleSets == nil {
+		logrus.Fatalf("log processor initialization failed, ruleSets triggered nil: logSources: %v, ruleSets: %v, log: %v", logSources, ruleSets, log)
+	}
+
+	if log == nil {
+		logrus.Fatalf("log processor initialization failed, log triggered nil: logSources: %v, ruleSets: %v, log: %v", logSources, ruleSets, log)
 	}
 
 	lp.log = log
@@ -123,16 +132,22 @@ func (lp *LogProcessor) ProcessLogsWithSRU(sru *SourceRuleUnion, logs []string) 
 }
 
 // TODO needs implementation
-func (lp *LogProcessor) processLog(log string, rule *api.Rule) (ProcessedData, error) {
-	values, err := lp.g.Parse(rule.Pattern, log)
+func (lp *LogProcessor) processLog(logMsg string, rule *api.Rule) (ProcessedData, error) {
+	values, err := lp.g.Parse(rule.Pattern, logMsg)
 	if err != nil {
 		return ProcessedData{}, err
 	}
 
-	lp.log.Infof("parsed log: %+v", values)
+	if rand.IntN(10) == 0 {
+		lp.log.Infof("parsed log: %v", logMsg)
+		lp.log.Infof("pattern: %v", rule.Pattern)
+		for k, v := range values {
+			lp.log.Infof("%v: %v", k, v)
+		}
+	}
 
 	return ProcessedData{
-		ForwardLog: log,
+		ForwardLog: logMsg,
 		Metric: &MetricData{
 			Name:       "",
 			Value:      "",
