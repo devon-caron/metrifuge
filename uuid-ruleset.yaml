@@ -11,7 +11,7 @@ spec:
   rules:
     - name: parse-uuid-log
       description: Parse UUID and date information from test log messages
-      pattern: '\[%{DAY:day} %{MONTH:month} %{MONTHDAY:monthday} %{TIME:time} %{TZ:timezone} %{YEAR:year}\] Hello World! This is a test log message, random UUID: %{UUID:uuid_full}'
+      pattern: '\[%{DAY:day} %{MONTH:month} %{MONTHDAY:monthday} %{TIME:time} %{TZ:timezone} %{YEAR:year}\] Hello World! This is a test log message, random UUID: %{DATA:uuid_part1}-%{DATA:uuid_part2}-%{DATA:uuid_part3}-%{DATA:uuid_part4}-%{DATA:uuid_part5}'
       action: analyze
       createMetrics: true
       metrics:
@@ -51,8 +51,28 @@ spec:
                 type: String
                 grokKey: "year"
               type: String
-            - key: uuid_full
+            - key: uuid_segment_1
               value:
                 type: String
-                grokKey: "uuid_full"
+                grokKey: "uuid_part1"
+              type: String
+            - key: uuid_segment_2
+              value:
+                type: String
+                grokKey: "uuid_part2"
+              type: String
+            - key: uuid_segment_3
+              value:
+                type: String
+                grokKey: "uuid_part3"
+              type: String
+            - key: uuid_segment_4
+              value:
+                type: String
+                grokKey: "uuid_part4"
+              type: String
+            - key: uuid_segment_5
+              value:
+                type: String
+                grokKey: "uuid_part5"
               type: String
