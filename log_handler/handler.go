@@ -148,12 +148,12 @@ func (lh *LogHandler) receiveLogs(sourceObj ls.LogSource, kClient *api.K8sClient
 			logs := source.GetNewLogs()
 			lh.log.Infof("Processing %v logs from source: %s", len(logs), source.GetSourceInfo())
 
-			logSet, err := lh.lp.FindLogSet(source)
+			sru, err := lh.lp.FindSRU(source)
 			if err != nil {
 				lh.log.Errorf("failed to find log set for source: %v", err)
 				continue
 			}
-			lh.lp.ProcessLogsWithSRU(logSet, logs)
+			lh.lp.ProcessLogsWithSRU(sru, logs)
 		}
 	}
 }

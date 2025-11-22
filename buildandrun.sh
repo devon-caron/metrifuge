@@ -15,3 +15,7 @@ echo "==== Updating pods..."
 yq eval --inplace ".spec.containers[0].image = \"$mftagname:$mftagtime\"" mf-pod.yaml
 kubectl apply -f mf-log-pod.yaml
 kubectl apply -f mf-pod.yaml
+sleep 2
+
+echo "==== Following logs..."
+kubectl logs -n metrifuge po/metrifuge-test -f
