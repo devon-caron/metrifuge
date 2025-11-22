@@ -156,10 +156,25 @@ func (lp *LogProcessor) processLog(logMsg string, rule *api.Rule) ([]ProcessedDa
 		return []ProcessedDataItem{}, err
 	}
 
+	processedLogMsg := ""
+	switch rule.Action {
+	case "Forward":
+		processedLogMsg = logMsg
+	case "Discard":
+		// processedLogMsg = ""
+	case "Conditional":
+		processedLogMsg, err = lp.processConditional(logMsg, values, rule)
+		if err != nil {
+			return []ProcessedDataItem{}, err
+		}
+	default:
+		return []ProcessedDataItem{}, fmt.Errorf("unknown action: %v", rule.Action)
+	}
+
 	processedDataItems := make([]ProcessedDataItem, 0)
 	for _, metric := range metricData {
 		processedDataItems = append(processedDataItems, ProcessedDataItem{
-			ForwardLog: logMsg,
+			ForwardLog: processedLogMsg,
 			Metric:     metric,
 		})
 	}
@@ -241,4 +256,9 @@ func (lp *LogProcessor) createMetricData(values map[string]string, rule *api.Rul
 		}
 	}
 	return myMetricDataList, nil
+}
+
+func (lp *LogProcessor) processConditional(logMsg string, values map[string]string, rule *api.Rule) (string, error) {
+	panic("need 2 implement processConditional")
+	return "", nil
 }

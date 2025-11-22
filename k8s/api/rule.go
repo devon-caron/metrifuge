@@ -2,7 +2,7 @@ package api
 
 type Rule struct {
 	Pattern       string           `json:"pattern" yaml:"pattern"`
-	Action        string           `json:"action" yaml:"action"` // forward, discard, analyze, conditional
+	Action        string           `json:"action" yaml:"action"` // forward, discard, conditional
 	Conditional   *Conditional     `json:"conditional,omitempty" yaml:"conditional,omitempty"`
 	CreateMetrics bool             `json:"create_metrics,omitempty" yaml:"create_metrics,omitempty"`
 	Metrics       []MetricTemplate `json:"metrics,omitempty" yaml:"metrics,omitempty"`
@@ -36,7 +36,7 @@ type MetricTemplate struct {
 
 // MetricValue represents the value of a metric
 type MetricValue struct {
-	Type        string `json:"type" yaml:"type"` // Int64, Float64, String
+	Type        string `json:"type" yaml:"type"` // Int64, Float64
 	GrokKey     string `json:"grokKey,omitempty" yaml:"grokKey,omitempty"`
 	ManualValue string `json:"manualValue,omitempty" yaml:"manualValue,omitempty"`
 }
