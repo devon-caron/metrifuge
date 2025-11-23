@@ -12,7 +12,29 @@ spec:
     - name: parse-uuid-log
       description: Parse UUID and date information from test log messages
       pattern: '\[%{DAY:day} %{MONTH:month} %{MONTHDAY:monthday} %{TIME:time} %{TZ:timezone} %{YEAR:year}\] Hello World! This is a test log message, random UUID: %{DATA:uuid_part1}-%{DATA:uuid_part2}-%{DATA:uuid_part3}-%{DATA:uuid_part4}-%{GREEDYDATA:uuid_part5}'
-      action: analyze
+      action: conditional
+      conditional:
+        field1:
+          type: String
+          grokKey: "uuid_part1"
+        operator: Equals
+        field2:
+          type: String
+          manualValue: "0000"
+        actionTrue: forward
+        actionFalse: forward
+        metricsTrue:
+          - name: uuid_0000_check
+            kind: Int64Counter
+            value:
+              type: Int64
+              manualValue: "1"
+        metricsFalse:
+          - name: uuid_0000_check
+            kind: Int64Counter
+            value:
+              type: Int64
+              manualValue: "-1"
       createMetrics: true
       metrics:
         - name: uuid_logs_total

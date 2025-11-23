@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"strconv"
+	"strings"
 
 	"github.com/devon-caron/metrifuge/k8s/api"
 	logsource "github.com/devon-caron/metrifuge/k8s/api/log_source"
@@ -157,13 +158,15 @@ func (lp *LogProcessor) processLog(logMsg string, rule *api.Rule) ([]ProcessedDa
 	}
 
 	processedLogMsg := ""
-	switch rule.Action {
-	case "Forward":
+	processedDataItems := make([]ProcessedDataItem, 0)
+	switch strings.ToLower(rule.Action) {
+	case "forward":
 		processedLogMsg = logMsg
-	case "Discard":
+	case "discard":
 		// processedLogMsg = ""
-	case "Conditional":
-		processedLogMsg, err = lp.processConditional(logMsg, values, rule)
+		lp.log.Debugf("Discard Action No-Op")
+	case "conditional":
+		processedLogMsg, processedDataItems, err = lp.processConditional(logMsg, values, rule)
 		if err != nil {
 			return []ProcessedDataItem{}, err
 		}
@@ -171,7 +174,6 @@ func (lp *LogProcessor) processLog(logMsg string, rule *api.Rule) ([]ProcessedDa
 		return []ProcessedDataItem{}, fmt.Errorf("unknown action: %v", rule.Action)
 	}
 
-	processedDataItems := make([]ProcessedDataItem, 0)
 	for _, metric := range metricData {
 		processedDataItems = append(processedDataItems, ProcessedDataItem{
 			ForwardLog: processedLogMsg,
@@ -196,8 +198,8 @@ func (lp *LogProcessor) createMetricData(values map[string]string, rule *api.Rul
 		}
 		var err error
 		// TODO improve shitty implementation
-		switch metricTemplate.Value.Type {
-		case "Int64":
+		switch strings.ToLower(metricTemplate.Value.Type) {
+		case "int64":
 			if metricTemplate.Value.GrokKey == "" {
 				metricData.ValueInt, err = strconv.ParseInt(metricTemplate.Value.ManualValue, 10, 64)
 			} else {
@@ -206,7 +208,7 @@ func (lp *LogProcessor) createMetricData(values map[string]string, rule *api.Rul
 			if err != nil {
 				return []*MetricData{}, fmt.Errorf("failed to parse int64 metric value: %v", err)
 			}
-		case "Float64":
+		case "float64":
 			if metricTemplate.Value.GrokKey == "" {
 				metricData.ValueFloat, err = strconv.ParseFloat(metricTemplate.Value.ManualValue, 64)
 			} else {
@@ -220,8 +222,8 @@ func (lp *LogProcessor) createMetricData(values map[string]string, rule *api.Rul
 		}
 
 		for _, attribute := range metricTemplate.Attributes {
-			switch attribute.Value.Type {
-			case "Int64":
+			switch strings.ToLower(attribute.Value.Type) {
+			case "int64":
 				if attribute.Value.GrokKey == "" {
 					metricData.AttributesInt[attribute.Key], err = strconv.ParseInt(attribute.Value.ManualValue, 10, 64)
 				} else {
@@ -230,7 +232,7 @@ func (lp *LogProcessor) createMetricData(values map[string]string, rule *api.Rul
 				if err != nil {
 					return []*MetricData{}, fmt.Errorf("failed to parse int64 metric attribute value: %v", err)
 				}
-			case "Float64":
+			case "float64":
 				if attribute.Value.GrokKey == "" {
 					metricData.AttributesFloat[attribute.Key], err = strconv.ParseFloat(attribute.Value.ManualValue, 64)
 				} else {
@@ -239,7 +241,7 @@ func (lp *LogProcessor) createMetricData(values map[string]string, rule *api.Rul
 				if err != nil {
 					return []*MetricData{}, fmt.Errorf("failed to parse float64 metric attribute value: %v", err)
 				}
-			case "String":
+			case "string":
 				if attribute.Value.GrokKey == "" {
 					metricData.AttributesString[attribute.Key] = attribute.Value.ManualValue
 				} else {
@@ -258,7 +260,7 @@ func (lp *LogProcessor) createMetricData(values map[string]string, rule *api.Rul
 	return myMetricDataList, nil
 }
 
-func (lp *LogProcessor) processConditional(logMsg string, values map[string]string, rule *api.Rule) (string, error) {
+func (lp *LogProcessor) processConditional(logMsg string, values map[string]string, rule *api.Rule) (string, []ProcessedDataItem, error) {
 	panic("need 2 implement processConditional")
-	return "", nil
+	return "", nil, nil
 }

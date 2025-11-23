@@ -62,6 +62,40 @@ spec:
           manualValue: "Name"
         actionTrue: "process_crd_validation"
         actionFalse: "continue"
+        metricsTrue:
+          - name: metrifuge_crd_validation_name_field_total
+            kind: Int64Counter
+            value:
+              type: Int64
+              manualValue: "1"
+            attributes:
+              - key: field
+                value:
+                  type: String
+                  manualValue: "Name"
+                type: String
+              - key: condition_result
+                value:
+                  type: String
+                  manualValue: "true"
+                type: String
+        metricsFalse:
+          - name: metrifuge_crd_validation_other_field_total
+            kind: Int64Counter
+            value:
+              type: Int64
+              manualValue: "1"
+            attributes:
+              - key: field
+                value:
+                  type: String
+                  grokKey: "field_name"
+                type: String
+              - key: condition_result
+                value:
+                  type: String
+                  manualValue: "false"
+                type: String
       metrics:
         - name: metrifuge_crd_validation_total
           kind: Int64Counter

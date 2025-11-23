@@ -61,7 +61,7 @@ spec:
                       description: Whether to create metrics for the rule
                     action:
                       type: string
-                      enum: ["forward", "discard", "analyze", "conditional"]
+                      enum: ["forward", "discard", "conditional"]
                       description: Action to take for matching logs
                     conditional:
                       type: object
@@ -112,6 +112,134 @@ spec:
                         actionFalse:
                           type: string
                           description: Action to take if condition evaluates to false
+                        metricsTrue:
+                          type: array
+                          description: Metrics to emit when condition is true
+                          items:
+                            type: object
+                            required:
+                              - name
+                              - kind
+                              - value
+                            properties:
+                              name:
+                                type: string
+                                description: Name of the metric
+                              kind:
+                                type: string
+                                enum: ["Int64Counter", "Float64Counter", "Int64Gauge", "Float64Gauge"]
+                                description: Type of metric
+                              value:
+                                type: object
+                                required:
+                                  - type
+                                properties:
+                                  type:
+                                    type: string
+                                    enum: ["Int64", "Float64", "String"]
+                                  grokKey:
+                                    type: string
+                                    description: Key to extract from grok pattern matches
+                                  manualValue:
+                                    type: string
+                                    description: Static value to use
+                              attributes:
+                                type: array
+                                items:
+                                  type: object
+                                  required:
+                                    - key
+                                    - value
+                                    - type
+                                  properties:
+                                    key:
+                                      type: string
+                                      description: Attribute key
+                                    value:
+                                      type: object
+                                      description: Attribute value as a FieldValue
+                                      required:
+                                        - type
+                                      properties:
+                                        type:
+                                          type: string
+                                          enum: ["Int64", "Float64", "String"]
+                                          description: Type of the field value
+                                        grokKey:
+                                          type: string
+                                          description: Key to extract from grok pattern matches
+                                        manualValue:
+                                          type: string
+                                          description: Static value to use
+                                    type:
+                                      type: string
+                                      enum: ["Int64", "Float64", "String"]
+                                      description: Type of the attribute value
+                                description: Key-value pairs to attach to the metric
+                        metricsFalse:
+                          type: array
+                          description: Metrics to emit when condition is false
+                          items:
+                            type: object
+                            required:
+                              - name
+                              - kind
+                              - value
+                            properties:
+                              name:
+                                type: string
+                                description: Name of the metric
+                              kind:
+                                type: string
+                                enum: ["Int64Counter", "Float64Counter", "Int64Gauge", "Float64Gauge"]
+                                description: Type of metric
+                              value:
+                                type: object
+                                required:
+                                  - type
+                                properties:
+                                  type:
+                                    type: string
+                                    enum: ["Int64", "Float64", "String"]
+                                  grokKey:
+                                    type: string
+                                    description: Key to extract from grok pattern matches
+                                  manualValue:
+                                    type: string
+                                    description: Static value to use
+                              attributes:
+                                type: array
+                                items:
+                                  type: object
+                                  required:
+                                    - key
+                                    - value
+                                    - type
+                                  properties:
+                                    key:
+                                      type: string
+                                      description: Attribute key
+                                    value:
+                                      type: object
+                                      description: Attribute value as a FieldValue
+                                      required:
+                                        - type
+                                      properties:
+                                        type:
+                                          type: string
+                                          enum: ["Int64", "Float64", "String"]
+                                          description: Type of the field value
+                                        grokKey:
+                                          type: string
+                                          description: Key to extract from grok pattern matches
+                                        manualValue:
+                                          type: string
+                                          description: Static value to use
+                                    type:
+                                      type: string
+                                      enum: ["Int64", "Float64", "String"]
+                                      description: Type of the attribute value
+                                description: Key-value pairs to attach to the metric
                         conditionalTrue:
                           type: object
                           properties:
