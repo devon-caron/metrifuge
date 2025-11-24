@@ -10,9 +10,9 @@ type Rule struct {
 
 // Conditional defines a condition for capturegroup evaluation
 type Conditional struct {
-	Field1           *FieldValue      `json:"field1" yaml:"field1"`
+	Field1           FieldValue       `json:"field1" yaml:"field1"`
 	Operator         string           `json:"operator" yaml:"operator"` // LessThan, Equals, DoesNotEqual, Exists, DoesNotExist, GreaterThan, GreaterThanOrEqualTo, etc.
-	Field2           *FieldValue      `json:"field2,omitempty" yaml:"field2,omitempty"`
+	Field2           FieldValue       `json:"field2,omitempty" yaml:"field2,omitempty"`
 	ActionTrue       string           `json:"actionTrue" yaml:"actionTrue"`
 	ActionFalse      string           `json:"actionFalse" yaml:"actionFalse"`
 	MetricsTrue      []MetricTemplate `json:"metricsTrue,omitempty" yaml:"metricsTrue,omitempty"`

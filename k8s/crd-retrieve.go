@@ -456,10 +456,10 @@ func marshalConditional(conditionalMap map[string]any) (*api.Conditional, error)
 	}, nil
 }
 
-func marshalFieldValues(fieldValueMap map[string]any) (*api.FieldValue, error) {
+func marshalFieldValues(fieldValueMap map[string]any) (api.FieldValue, error) {
 	fvType, ok := fieldValueMap["type"].(string)
 	if !ok {
-		return nil, fmt.Errorf("failed to get field value type: %v", fieldValueMap)
+		return api.FieldValue{}, fmt.Errorf("failed to get field value type: %v", fieldValueMap)
 	}
 	grokKey, ok := fieldValueMap["grokKey"].(string)
 	if !ok {
@@ -469,7 +469,7 @@ func marshalFieldValues(fieldValueMap map[string]any) (*api.FieldValue, error) {
 	if !ok {
 		log.Debugf("field value manual value not present: %v", fieldValueMap)
 	}
-	return &api.FieldValue{
+	return api.FieldValue{
 		Type:        fvType,
 		GrokKey:     grokKey,
 		ManualValue: manualValue,
