@@ -152,7 +152,7 @@ func (lp *LogProcessor) processLog(logMsg string, rule *api.Rule) ([]ProcessedDa
 		}
 	}
 
-	metricData, err := lp.createMetricData(values, rule)
+	metricData, err := lp.createMetricData(values, rule.Metrics)
 	if err != nil {
 		return []ProcessedDataItem{}, err
 	}
@@ -166,7 +166,7 @@ func (lp *LogProcessor) processLog(logMsg string, rule *api.Rule) ([]ProcessedDa
 		// processedLogMsg = ""
 		lp.log.Debugf("Discard Action No-Op")
 	case "conditional":
-		processedLogMsg, processedDataItems, err = lp.processConditional(logMsg, values, rule)
+		processedLogMsg, processedDataItems, err = lp.processConditional(logMsg, values, rule, rule.Conditional)
 		if err != nil {
 			return []ProcessedDataItem{}, err
 		}
@@ -184,11 +184,11 @@ func (lp *LogProcessor) processLog(logMsg string, rule *api.Rule) ([]ProcessedDa
 	return processedDataItems, nil
 }
 
-func (lp *LogProcessor) createMetricData(values map[string]string, rule *api.Rule) ([]*MetricData, error) {
+func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api.MetricTemplate) ([]*MetricData, error) {
 
 	myMetricDataList := make([]*MetricData, 0)
 
-	for _, metricTemplate := range rule.Metrics {
+	for _, metricTemplate := range metrics {
 		metricData := &MetricData{
 			Name:             metricTemplate.Name,
 			Kind:             metricTemplate.Kind,
@@ -260,7 +260,177 @@ func (lp *LogProcessor) createMetricData(values map[string]string, rule *api.Rul
 	return myMetricDataList, nil
 }
 
-func (lp *LogProcessor) processConditional(logMsg string, values map[string]string, rule *api.Rule) (string, []ProcessedDataItem, error) {
-	panic("need 2 implement processConditional")
-	return "", nil, nil
+func (lp *LogProcessor) processConditional(logMsg string, values map[string]string, rule *api.Rule, conditional *api.Conditional) (string, []ProcessedDataItem, error) {
+
+	lp.log.Debugf("Evaluating conditional rule with pattern %s with field1: %v, operator: %s", rule.Pattern, conditional.Field1, conditional.Operator)
+
+	var f1Str, f2Str string
+
+	// Extract string values from FieldValue structs
+	if conditional.Field1.GrokKey != "" {
+		f1Str = values[conditional.Field1.GrokKey]
+	} else {
+		f1Str = conditional.Field1.ManualValue
+	}
+
+	if conditional.Field2.GrokKey != "" {
+		f2Str = values[conditional.Field2.GrokKey]
+	} else {
+		f2Str = conditional.Field2.ManualValue
+	}
+
+	op := conditional.Operator
+
+	lp.log.Debugf("validating conditional: field1='%s', field2='%s', operator='%s'", f1Str, f2Str, op)
+
+	var err error
+	if err = validateFields(f1Str, f2Str, op); err != nil {
+		return "", nil, fmt.Errorf("conditional validation failed: %w", err)
+	}
+
+	lp.log.Debugf("evaluating conditional result")
+
+	var result bool
+	if result, err = evaluateConditional(f1Str, f2Str, op); err != nil {
+		return "", nil, fmt.Errorf("conditional evaluation failed: %w", err)
+	}
+
+	lp.log.Debugf("conditional result: %t", result)
+
+	var selectedAction string
+	if result {
+		selectedAction = conditional.ActionTrue
+	} else {
+		selectedAction = conditional.ActionFalse
+	}
+
+	var fwdLog string
+	var extraDataItems []ProcessedDataItem
+	switch strings.ToLower(selectedAction) {
+	case "forward":
+		fwdLog = logMsg
+	case "discard":
+		fwdLog = ""
+	case "conditional":
+		var resultConditional *api.Conditional
+		if result {
+			resultConditional = conditional.ConditionalTrue
+		} else {
+			resultConditional = conditional.ConditionalFalse
+		}
+		fwdLog, extraDataItems, err = lp.processConditional(logMsg, values, rule, resultConditional)
+		if err != nil {
+			return "", nil, fmt.Errorf("nested conditional processing failed: %w", err)
+		}
+	default:
+		return "", nil, fmt.Errorf("unknown action: %s", selectedAction)
+	}
+
+	lp.log.Debugf("selected action: %s, result: %t", selectedAction, result)
+
+	var resultMetrics []api.MetricTemplate
+	if result {
+		resultMetrics = conditional.MetricsTrue
+	} else {
+		resultMetrics = conditional.MetricsFalse
+	}
+
+	metricData, err := lp.createMetricData(values, resultMetrics)
+	if err != nil {
+		return "", nil, fmt.Errorf("metric data creation failed: %w", err)
+	}
+
+	lp.log.Debugf("created %d metric data items", len(metricData))
+
+	var processedDataItems = make([]ProcessedDataItem, 0)
+	for _, metric := range metricData {
+		processedDataItems = append(processedDataItems, ProcessedDataItem{
+			ForwardLog: fwdLog,
+			Metric:     metric,
+		})
+	}
+
+	processedDataItems = append(processedDataItems, extraDataItems...)
+
+	return fwdLog, processedDataItems, nil
+}
+
+func validateFields(field1, field2, op string) error {
+	// Check that field1 and field2 are valid based on the operator
+	switch op {
+	case "Equals", "DoesNotEqual":
+		// These operators require both fields to be present and comparable
+		if field1 == "" {
+			return fmt.Errorf("field1 is required for operator %s", op)
+		}
+		if field2 == "" {
+			return fmt.Errorf("field2 is required for operator %s", op)
+		}
+	case "Exists", "DoesNotExist":
+		// These operators only require field1
+		if field1 == "" {
+			return fmt.Errorf("field1 is required for operator %s", op)
+		}
+	case "LessThan", "GreaterThan", "GreaterThanOrEqualTo", "LessThanOrEqualTo":
+		// These operators require both fields to be present, parseable as integers, and comparable
+		if field1 == "" {
+			return fmt.Errorf("field1 is required for operator %s", op)
+		}
+		if field2 == "" {
+			return fmt.Errorf("field2 is required for operator %s", op)
+		}
+		// Try to parse as integers for comparison
+		_, err1 := strconv.Atoi(field1)
+		_, err2 := strconv.Atoi(field2)
+		if err1 != nil || err2 != nil {
+			return fmt.Errorf("field1 and field2 must be parseable as integers for operator %s", op)
+		}
+	default:
+		return fmt.Errorf("unsupported operator: %s", op)
+	}
+
+	return nil
+}
+
+func evaluateConditional(f1Str, f2Str, op string) (bool, error) {
+	switch op {
+	case "Equals":
+		return f1Str == f2Str, nil
+	case "DoesNotEqual":
+		return f1Str != f2Str, nil
+	case "Exists":
+		return f1Str != "", nil
+	case "DoesNotExist":
+		return f1Str == "", nil
+	case "LessThan":
+		i1, err1 := strconv.Atoi(f1Str)
+		i2, err2 := strconv.Atoi(f2Str)
+		if err1 != nil || err2 != nil {
+			panic(fmt.Errorf("cannot compare non-numeric values: %s and %s", f1Str, f2Str))
+		}
+		return i1 < i2, nil
+	case "GreaterThan":
+		i1, err1 := strconv.Atoi(f1Str)
+		i2, err2 := strconv.Atoi(f2Str)
+		if err1 != nil || err2 != nil {
+			panic(fmt.Errorf("cannot compare non-numeric values: %s and %s", f1Str, f2Str))
+		}
+		return i1 > i2, nil
+	case "GreaterThanOrEqualTo":
+		i1, err1 := strconv.Atoi(f1Str)
+		i2, err2 := strconv.Atoi(f2Str)
+		if err1 != nil || err2 != nil {
+			panic(fmt.Errorf("cannot compare non-numeric values: %s and %s", f1Str, f2Str))
+		}
+		return i1 >= i2, nil
+	case "LessThanOrEqualTo":
+		i1, err1 := strconv.Atoi(f1Str)
+		i2, err2 := strconv.Atoi(f2Str)
+		if err1 != nil || err2 != nil {
+			panic(fmt.Errorf("cannot compare non-numeric values: %s and %s", f1Str, f2Str))
+		}
+		return i1 <= i2, nil
+	default:
+		panic(fmt.Errorf("unsupported operator: %s", op))
+	}
 }
