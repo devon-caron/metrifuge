@@ -133,6 +133,11 @@ func (lp *LogProcessor) ProcessLogsWithSRU(sru *SourceRuleUnion, logs []string) 
 			totalProcessedDataItems = append(totalProcessedDataItems, processedDataItems...)
 		}
 	}
+
+	lp.log.Debugf("processed %d logs into %d data items", len(logs), len(totalProcessedDataItems))
+	if len(totalProcessedDataItems) > 0 {
+		lp.log.Debugf("first data item: %+v", totalProcessedDataItems[0])
+	}
 	return totalProcessedDataItems
 }
 
@@ -156,6 +161,8 @@ func (lp *LogProcessor) processLog(logMsg string, rule *api.Rule) ([]ProcessedDa
 	if err != nil {
 		return []ProcessedDataItem{}, err
 	}
+
+	lp.log.Debugf("created %d metric data items", len(metricData))
 
 	processedLogMsg := ""
 	processedDataItems := make([]ProcessedDataItem, 0)
@@ -189,6 +196,8 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 	myMetricDataList := make([]*MetricData, 0)
 
 	for _, metricTemplate := range metrics {
+		lp.log.Debugf("processing metric template: %s", metricTemplate.Name)
+		lp.log.Debugf("metric template details: %+v", metricTemplate)
 		metricData := &MetricData{
 			Name:             metricTemplate.Name,
 			Kind:             metricTemplate.Kind,
@@ -200,6 +209,7 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 		// TODO improve shitty implementation
 		switch strings.ToLower(metricTemplate.Value.Type) {
 		case "int64":
+			lp.log.Debugf("processing int64 metric: %s", metricTemplate.Name)
 			if metricTemplate.Value.GrokKey == "" {
 				metricData.ValueInt, err = strconv.ParseInt(metricTemplate.Value.ManualValue, 10, 64)
 			} else {
@@ -209,6 +219,7 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 				return []*MetricData{}, fmt.Errorf("failed to parse int64 metric value: %v", err)
 			}
 		case "float64":
+			lp.log.Debugf("processing float64 metric: %s", metricTemplate.Name)
 			if metricTemplate.Value.GrokKey == "" {
 				metricData.ValueFloat, err = strconv.ParseFloat(metricTemplate.Value.ManualValue, 64)
 			} else {
@@ -224,6 +235,7 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 		for _, attribute := range metricTemplate.Attributes {
 			switch strings.ToLower(attribute.Value.Type) {
 			case "int64":
+				lp.log.Debugf("processing int64 attribute: %s", attribute.Key)
 				if attribute.Value.GrokKey == "" {
 					metricData.AttributesInt[attribute.Key], err = strconv.ParseInt(attribute.Value.ManualValue, 10, 64)
 				} else {
@@ -233,6 +245,7 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 					return []*MetricData{}, fmt.Errorf("failed to parse int64 metric attribute value: %v", err)
 				}
 			case "float64":
+				lp.log.Debugf("processing float64 attribute: %s", attribute.Key)
 				if attribute.Value.GrokKey == "" {
 					metricData.AttributesFloat[attribute.Key], err = strconv.ParseFloat(attribute.Value.ManualValue, 64)
 				} else {
@@ -242,6 +255,7 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 					return []*MetricData{}, fmt.Errorf("failed to parse float64 metric attribute value: %v", err)
 				}
 			case "string":
+				lp.log.Debugf("processing string attribute: %s", attribute.Key)
 				if attribute.Value.GrokKey == "" {
 					metricData.AttributesString[attribute.Key] = attribute.Value.ManualValue
 				} else {
@@ -253,9 +267,9 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 		}
 
 		myMetricDataList = append(myMetricDataList, metricData)
-		if rand.IntN(20) == 0 {
-			lp.log.Debugf("metric data: %+v", metricData)
-		}
+		// if rand.IntN(20) == 0 {
+		lp.log.Debugf("metric data: %+v", metricData)
+		// }
 	}
 	return myMetricDataList, nil
 }
@@ -284,9 +298,11 @@ func (lp *LogProcessor) processConditional(logMsg string, values map[string]stri
 	lp.log.Debugf("validating conditional: field1='%s', field2='%s', operator='%s'", f1Str, f2Str, op)
 
 	var err error
-	if err = validateFields(f1Str, f2Str, op); err != nil {
+	if err = lp.validateFields(f1Str, f2Str, op); err != nil {
 		return "", nil, fmt.Errorf("conditional validation failed: %w", err)
 	}
+
+	lp.log.Debugf("fields validation passed")
 
 	lp.log.Debugf("evaluating conditional result")
 
@@ -355,7 +371,7 @@ func (lp *LogProcessor) processConditional(logMsg string, values map[string]stri
 	return fwdLog, processedDataItems, nil
 }
 
-func validateFields(field1, field2, op string) error {
+func (lp *LogProcessor) validateFields(field1, field2, op string) error {
 	// Check that field1 and field2 are valid based on the operator
 	switch op {
 	case "Equals", "DoesNotEqual":
@@ -367,10 +383,7 @@ func validateFields(field1, field2, op string) error {
 			return fmt.Errorf("field2 is required for operator %s", op)
 		}
 	case "Exists", "DoesNotExist":
-		// These operators only require field1
-		if field1 == "" {
-			return fmt.Errorf("field1 is required for operator %s", op)
-		}
+		lp.log.Debugf("Exists/DoesNotExist operators don't require field validation")
 	case "LessThan", "GreaterThan", "GreaterThanOrEqualTo", "LessThanOrEqualTo":
 		// These operators require both fields to be present, parseable as integers, and comparable
 		if field1 == "" {
