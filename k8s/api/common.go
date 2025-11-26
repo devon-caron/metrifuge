@@ -1,5 +1,7 @@
 package api
 
+import "go.opentelemetry.io/otel/attribute"
+
 type MetrifugeK8sResource interface {
 	GetMetadata() Metadata
 }
@@ -68,6 +70,19 @@ type SourceSpec struct {
 	PodSource   *PodSource   `json:"podSource,omitempty" yaml:"podSource,omitempty"`
 	LocalSource *LocalSource `json:"localSource,omitempty" yaml:"localSource,omitempty"`
 	CmdSource   *CmdSource   `json:"cmdSource,omitempty" yaml:"cmdSource,omitempty"`
+}
+
+type ProcessedDataItem struct {
+	ForwardLog string
+	Metric     *MetricData
+}
+
+type MetricData struct {
+	Name       string
+	Kind       string
+	ValueInt   int64
+	ValueFloat float64
+	Attributes []attribute.KeyValue
 }
 
 func MatchLabels(requiredMatchingLabels map[string]string, labels map[string]string) bool {

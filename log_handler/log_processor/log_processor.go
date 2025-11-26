@@ -26,19 +26,6 @@ type SourceRuleUnion struct {
 	rules  []*api.Rule
 }
 
-type ProcessedDataItem struct {
-	ForwardLog string
-	Metric     *MetricData
-}
-
-type MetricData struct {
-	Name       string
-	Kind       string
-	ValueInt   int64
-	ValueFloat float64
-	Attributes []attribute.KeyValue
-}
-
 func (lp *LogProcessor) Initialize(logSources []*logsource.LogSource, ruleSets []*ruleset.RuleSet, log *logrus.Logger) {
 	if logSources == nil {
 		logrus.Fatalf("log processor initialization failed, logSources triggered nil: logSources: %v, ruleSets: %v, log: %v", logSources, ruleSets, log)
@@ -119,8 +106,8 @@ func (lp *LogProcessor) FindSRU(source api.Source) (*SourceRuleUnion, error) {
 	return nil, fmt.Errorf("log set not found for source: %v", source.GetSourceInfo())
 }
 
-func (lp *LogProcessor) ProcessLogsWithSRU(sru *SourceRuleUnion, logs []string) []ProcessedDataItem {
-	totalProcessedDataItems := make([]ProcessedDataItem, 0)
+func (lp *LogProcessor) ProcessLogsWithSRU(sru *SourceRuleUnion, logs []string) []api.ProcessedDataItem {
+	totalProcessedDataItems := make([]api.ProcessedDataItem, 0)
 	for _, log := range logs {
 		for _, rule := range sru.rules {
 			processedDataItems, err := lp.processLog(log, rule)
@@ -140,10 +127,10 @@ func (lp *LogProcessor) ProcessLogsWithSRU(sru *SourceRuleUnion, logs []string) 
 }
 
 // TODO needs implementation
-func (lp *LogProcessor) processLog(logMsg string, rule *api.Rule) ([]ProcessedDataItem, error) {
+func (lp *LogProcessor) processLog(logMsg string, rule *api.Rule) ([]api.ProcessedDataItem, error) {
 	values, err := lp.g.Parse(rule.Pattern, logMsg)
 	if err != nil {
-		return []ProcessedDataItem{}, err
+		return []api.ProcessedDataItem{}, err
 	}
 
 	// debug
@@ -157,13 +144,13 @@ func (lp *LogProcessor) processLog(logMsg string, rule *api.Rule) ([]ProcessedDa
 
 	metricData, err := lp.createMetricData(values, rule.Metrics)
 	if err != nil {
-		return []ProcessedDataItem{}, err
+		return []api.ProcessedDataItem{}, err
 	}
 
 	lp.log.Debugf("created %d metric data items", len(metricData))
 
 	processedLogMsg := ""
-	processedDataItems := make([]ProcessedDataItem, 0)
+	processedDataItems := make([]api.ProcessedDataItem, 0)
 	switch strings.ToLower(rule.Action) {
 	case "forward":
 		processedLogMsg = logMsg
@@ -173,14 +160,14 @@ func (lp *LogProcessor) processLog(logMsg string, rule *api.Rule) ([]ProcessedDa
 	case "conditional":
 		processedLogMsg, processedDataItems, err = lp.processConditional(logMsg, values, rule, rule.Conditional)
 		if err != nil {
-			return []ProcessedDataItem{}, err
+			return []api.ProcessedDataItem{}, err
 		}
 	default:
-		return []ProcessedDataItem{}, fmt.Errorf("unknown action: %v", rule.Action)
+		return []api.ProcessedDataItem{}, fmt.Errorf("unknown action: %v", rule.Action)
 	}
 
 	for _, metric := range metricData {
-		processedDataItems = append(processedDataItems, ProcessedDataItem{
+		processedDataItems = append(processedDataItems, api.ProcessedDataItem{
 			ForwardLog: processedLogMsg,
 			Metric:     metric,
 		})
@@ -189,14 +176,14 @@ func (lp *LogProcessor) processLog(logMsg string, rule *api.Rule) ([]ProcessedDa
 	return processedDataItems, nil
 }
 
-func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api.MetricTemplate) ([]*MetricData, error) {
+func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api.MetricTemplate) ([]*api.MetricData, error) {
 
-	myMetricDataList := make([]*MetricData, 0)
+	myMetricDataList := make([]*api.MetricData, 0)
 
 	for _, metricTemplate := range metrics {
 		lp.log.Debugf("processing metric template: %s", metricTemplate.Name)
 		lp.log.Debugf("metric template details: %+v", metricTemplate)
-		metricData := &MetricData{
+		metricData := &api.MetricData{
 			Name:       metricTemplate.Name,
 			Kind:       metricTemplate.Kind,
 			Attributes: make([]attribute.KeyValue, 0),
@@ -212,7 +199,7 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 				metricData.ValueInt, err = strconv.ParseInt(values[metricTemplate.Value.GrokKey], 10, 64)
 			}
 			if err != nil {
-				return []*MetricData{}, fmt.Errorf("failed to parse int64 metric value: %v", err)
+				return []*api.MetricData{}, fmt.Errorf("failed to parse int64 metric value: %v", err)
 			}
 		case "float64":
 			lp.log.Debugf("processing float64 metric: %s", metricTemplate.Name)
@@ -222,10 +209,10 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 				metricData.ValueFloat, err = strconv.ParseFloat(values[metricTemplate.Value.GrokKey], 64)
 			}
 			if err != nil {
-				return []*MetricData{}, fmt.Errorf("failed to parse float64 metric value: %v", err)
+				return []*api.MetricData{}, fmt.Errorf("failed to parse float64 metric value: %v", err)
 			}
 		default:
-			return []*MetricData{}, fmt.Errorf("unknown metric value type: %v", metricTemplate.Value.Type)
+			return []*api.MetricData{}, fmt.Errorf("unknown metric value type: %v", metricTemplate.Value.Type)
 		}
 
 		for _, currAttribute := range metricTemplate.Attributes {
@@ -235,36 +222,36 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 				if currAttribute.Value.GrokKey == "" {
 					attrValue, parseErr := strconv.ParseInt(currAttribute.Value.ManualValue, 10, 64)
 					if parseErr != nil {
-						return []*MetricData{}, fmt.Errorf("failed to parse int64 attribute value: %v", parseErr)
+						return []*api.MetricData{}, fmt.Errorf("failed to parse int64 attribute value: %v", parseErr)
 					}
 					metricData.Attributes = append(metricData.Attributes, attribute.Int64(currAttribute.Key, attrValue))
 				} else {
 					attrValue, parseErr := strconv.ParseInt(values[currAttribute.Value.GrokKey], 10, 64)
 					if parseErr != nil {
-						return []*MetricData{}, fmt.Errorf("failed to parse int64 attribute value: %v", parseErr)
+						return []*api.MetricData{}, fmt.Errorf("failed to parse int64 attribute value: %v", parseErr)
 					}
 					metricData.Attributes = append(metricData.Attributes, attribute.Int64(currAttribute.Key, int64(attrValue)))
 				}
 				if err != nil {
-					return []*MetricData{}, fmt.Errorf("failed to parse int64 metric attribute value: %v", err)
+					return []*api.MetricData{}, fmt.Errorf("failed to parse int64 metric attribute value: %v", err)
 				}
 			case "float64":
 				lp.log.Debugf("processing float64 attribute: %s", currAttribute.Key)
 				if currAttribute.Value.GrokKey == "" {
 					attrValue, parseErr := strconv.ParseFloat(currAttribute.Value.ManualValue, 64)
 					if parseErr != nil {
-						return []*MetricData{}, fmt.Errorf("failed to parse float64 attribute value: %v", parseErr)
+						return []*api.MetricData{}, fmt.Errorf("failed to parse float64 attribute value: %v", parseErr)
 					}
 					metricData.Attributes = append(metricData.Attributes, attribute.Float64(currAttribute.Key, attrValue))
 				} else {
 					attrValue, parseErr := strconv.ParseFloat(values[currAttribute.Value.GrokKey], 64)
 					if parseErr != nil {
-						return []*MetricData{}, fmt.Errorf("failed to parse float64 attribute value: %v", parseErr)
+						return []*api.MetricData{}, fmt.Errorf("failed to parse float64 attribute value: %v", parseErr)
 					}
 					metricData.Attributes = append(metricData.Attributes, attribute.Float64(currAttribute.Key, attrValue))
 				}
 				if err != nil {
-					return []*MetricData{}, fmt.Errorf("failed to parse float64 metric attribute value: %v", err)
+					return []*api.MetricData{}, fmt.Errorf("failed to parse float64 metric attribute value: %v", err)
 				}
 			case "string":
 				lp.log.Debugf("processing string attribute: %s", currAttribute.Key)
@@ -276,7 +263,7 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 					metricData.Attributes = append(metricData.Attributes, attribute.String(currAttribute.Key, attrValue))
 				}
 			default:
-				return []*MetricData{}, fmt.Errorf("unknown metric attribute value type: %v", currAttribute.Value.Type)
+				return []*api.MetricData{}, fmt.Errorf("unknown metric attribute value type: %v", currAttribute.Value.Type)
 			}
 		}
 
@@ -288,7 +275,7 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 	return myMetricDataList, nil
 }
 
-func (lp *LogProcessor) processConditional(logMsg string, values map[string]string, rule *api.Rule, conditional *api.Conditional) (string, []ProcessedDataItem, error) {
+func (lp *LogProcessor) processConditional(logMsg string, values map[string]string, rule *api.Rule, conditional *api.Conditional) (string, []api.ProcessedDataItem, error) {
 
 	lp.log.Debugf("Evaluating conditional rule with pattern %s with field1: %v, operator: %s", rule.Pattern, conditional.Field1, conditional.Operator)
 	lp.log.Debugf("conditional: %+v", conditional)
@@ -336,7 +323,7 @@ func (lp *LogProcessor) processConditional(logMsg string, values map[string]stri
 	}
 
 	var fwdLog string
-	var extraDataItems []ProcessedDataItem
+	var extraDataItems []api.ProcessedDataItem
 	switch strings.ToLower(selectedAction) {
 	case "forward":
 		fwdLog = logMsg
@@ -374,9 +361,9 @@ func (lp *LogProcessor) processConditional(logMsg string, values map[string]stri
 
 	lp.log.Debugf("created %d metric data items", len(metricData))
 
-	var processedDataItems = make([]ProcessedDataItem, 0)
+	var processedDataItems = make([]api.ProcessedDataItem, 0)
 	for _, metric := range metricData {
-		processedDataItems = append(processedDataItems, ProcessedDataItem{
+		processedDataItems = append(processedDataItems, api.ProcessedDataItem{
 			ForwardLog: fwdLog,
 			Metric:     metric,
 		})
