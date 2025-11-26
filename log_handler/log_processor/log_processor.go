@@ -11,6 +11,7 @@ import (
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
 	"github.com/sirupsen/logrus"
 	"github.com/vjeantet/grok"
+	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -31,13 +32,11 @@ type ProcessedDataItem struct {
 }
 
 type MetricData struct {
-	Name             string
-	Kind             string
-	ValueInt         int64
-	ValueFloat       float64
-	AttributesInt    map[string]int64
-	AttributesFloat  map[string]float64
-	AttributesString map[string]string
+	Name       string
+	Kind       string
+	ValueInt   int64
+	ValueFloat float64
+	Attributes []attribute.KeyValue
 }
 
 func (lp *LogProcessor) Initialize(logSources []*logsource.LogSource, ruleSets []*ruleset.RuleSet, log *logrus.Logger) {
@@ -67,7 +66,6 @@ func (lp *LogProcessor) Initialize(logSources []*logsource.LogSource, ruleSets [
 }
 
 func (lp *LogProcessor) Update(logSources []*logsource.LogSource, ruleSets []*ruleset.RuleSet) {
-
 	for _, rs := range ruleSets {
 		lp.log.Infof("processing rule set: %v", rs)
 
@@ -199,11 +197,9 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 		lp.log.Debugf("processing metric template: %s", metricTemplate.Name)
 		lp.log.Debugf("metric template details: %+v", metricTemplate)
 		metricData := &MetricData{
-			Name:             metricTemplate.Name,
-			Kind:             metricTemplate.Kind,
-			AttributesInt:    make(map[string]int64),
-			AttributesFloat:  make(map[string]float64),
-			AttributesString: make(map[string]string),
+			Name:       metricTemplate.Name,
+			Kind:       metricTemplate.Kind,
+			Attributes: make([]attribute.KeyValue, 0),
 		}
 		var err error
 		// TODO improve shitty implementation
@@ -232,37 +228,55 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 			return []*MetricData{}, fmt.Errorf("unknown metric value type: %v", metricTemplate.Value.Type)
 		}
 
-		for _, attribute := range metricTemplate.Attributes {
-			switch strings.ToLower(attribute.Value.Type) {
+		for _, currAttribute := range metricTemplate.Attributes {
+			switch strings.ToLower(currAttribute.Value.Type) {
 			case "int64":
-				lp.log.Debugf("processing int64 attribute: %s", attribute.Key)
-				if attribute.Value.GrokKey == "" {
-					metricData.AttributesInt[attribute.Key], err = strconv.ParseInt(attribute.Value.ManualValue, 10, 64)
+				lp.log.Debugf("processing int64 attribute: %s", currAttribute.Key)
+				if currAttribute.Value.GrokKey == "" {
+					attrValue, parseErr := strconv.ParseInt(currAttribute.Value.ManualValue, 10, 64)
+					if parseErr != nil {
+						return []*MetricData{}, fmt.Errorf("failed to parse int64 attribute value: %v", parseErr)
+					}
+					metricData.Attributes = append(metricData.Attributes, attribute.Int64(currAttribute.Key, attrValue))
 				} else {
-					metricData.AttributesInt[attribute.Key], err = strconv.ParseInt(values[attribute.Value.GrokKey], 10, 64)
+					attrValue, parseErr := strconv.ParseInt(values[currAttribute.Value.GrokKey], 10, 64)
+					if parseErr != nil {
+						return []*MetricData{}, fmt.Errorf("failed to parse int64 attribute value: %v", parseErr)
+					}
+					metricData.Attributes = append(metricData.Attributes, attribute.Int64(currAttribute.Key, int64(attrValue)))
 				}
 				if err != nil {
 					return []*MetricData{}, fmt.Errorf("failed to parse int64 metric attribute value: %v", err)
 				}
 			case "float64":
-				lp.log.Debugf("processing float64 attribute: %s", attribute.Key)
-				if attribute.Value.GrokKey == "" {
-					metricData.AttributesFloat[attribute.Key], err = strconv.ParseFloat(attribute.Value.ManualValue, 64)
+				lp.log.Debugf("processing float64 attribute: %s", currAttribute.Key)
+				if currAttribute.Value.GrokKey == "" {
+					attrValue, parseErr := strconv.ParseFloat(currAttribute.Value.ManualValue, 64)
+					if parseErr != nil {
+						return []*MetricData{}, fmt.Errorf("failed to parse float64 attribute value: %v", parseErr)
+					}
+					metricData.Attributes = append(metricData.Attributes, attribute.Float64(currAttribute.Key, attrValue))
 				} else {
-					metricData.AttributesFloat[attribute.Key], err = strconv.ParseFloat(values[attribute.Value.GrokKey], 64)
+					attrValue, parseErr := strconv.ParseFloat(values[currAttribute.Value.GrokKey], 64)
+					if parseErr != nil {
+						return []*MetricData{}, fmt.Errorf("failed to parse float64 attribute value: %v", parseErr)
+					}
+					metricData.Attributes = append(metricData.Attributes, attribute.Float64(currAttribute.Key, attrValue))
 				}
 				if err != nil {
 					return []*MetricData{}, fmt.Errorf("failed to parse float64 metric attribute value: %v", err)
 				}
 			case "string":
-				lp.log.Debugf("processing string attribute: %s", attribute.Key)
-				if attribute.Value.GrokKey == "" {
-					metricData.AttributesString[attribute.Key] = attribute.Value.ManualValue
+				lp.log.Debugf("processing string attribute: %s", currAttribute.Key)
+				if currAttribute.Value.GrokKey == "" {
+					attrValue := currAttribute.Value.ManualValue
+					metricData.Attributes = append(metricData.Attributes, attribute.String(currAttribute.Key, attrValue))
 				} else {
-					metricData.AttributesString[attribute.Key] = values[attribute.Value.GrokKey]
+					attrValue := values[currAttribute.Value.GrokKey]
+					metricData.Attributes = append(metricData.Attributes, attribute.String(currAttribute.Key, attrValue))
 				}
 			default:
-				return []*MetricData{}, fmt.Errorf("unknown metric attribute value type: %v", attribute.Value.Type)
+				return []*MetricData{}, fmt.Errorf("unknown metric attribute value type: %v", currAttribute.Value.Type)
 			}
 		}
 
