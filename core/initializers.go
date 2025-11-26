@@ -105,7 +105,13 @@ func convertToRulesets(resources []api.MetrifugeK8sResource) ([]*rs.RuleSet, err
 		if !ok {
 			return nil, fmt.Errorf("resource at index %d is not a RuleSet", i)
 		}
-		logrus.Infof("Converting RuleSet %s/%+v", rs.GetMetadata().Name, rs.Spec.Rules[0].Conditional)
+
+		if len(rs.Spec.Rules) > 0 {
+			logrus.Debugf("Converting RuleSet %s/%+v", rs.GetMetadata().Name, rs.Spec.Rules[0].Conditional)
+		} else {
+			logrus.Debugf("Converting RuleSet %s with no rules", rs.GetMetadata().Name)
+		}
+
 		myRulesets = append(myRulesets, rs)
 	}
 	return myRulesets, nil
