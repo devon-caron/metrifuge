@@ -62,6 +62,8 @@ func GetK8sResources(k8sClient *api.K8sClientWrapper, kind, version, kindPlural 
 			continue
 		}
 
+		log.Debugf("Resource spec: %+v", spec)
+
 		resource, err := getResource(crdResource, kind, spec)
 		if err != nil {
 			log.Warnf("failed to get resource: %v", err)
@@ -329,9 +331,12 @@ func marshalMetric(metricMap map[string]any) (api.MetricTemplate, error) {
 	if err != nil {
 		return api.MetricTemplate{}, fmt.Errorf("failed to get value: %v", err)
 	}
-	attributes, err := marshalAttributes(metricMap["attributes"].([]any))
-	if err != nil {
-		return api.MetricTemplate{}, fmt.Errorf("failed to get attributes: %v", err)
+	var attributes []api.Attribute = nil
+	if metricMap["attributes"] != nil {
+		attributes, err = marshalAttributes(metricMap["attributes"].([]any))
+		if err != nil {
+			return api.MetricTemplate{}, fmt.Errorf("failed to get attributes: %v", err)
+		}
 	}
 	return api.MetricTemplate{
 		Name:       name,
@@ -431,6 +436,20 @@ func marshalConditional(conditionalMap map[string]any) (*api.Conditional, error)
 	if !ok {
 		return nil, fmt.Errorf("failed to get actionFalse: %v", conditionalMap)
 	}
+	var metricsTrue []api.MetricTemplate = nil
+	if conditionalMap["metricsTrue"] != nil {
+		metricsTrue, err = marshalMetrics(conditionalMap["metricsTrue"].([]any))
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal metricsTrue: %v", err)
+		}
+	}
+	var metricsFalse []api.MetricTemplate = nil
+	if conditionalMap["metricsFalse"] != nil {
+		metricsFalse, err = marshalMetrics(conditionalMap["metricsFalse"].([]any))
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal metricsFalse: %v", err)
+		}
+	}
 	var conditionalTrue *api.Conditional = nil
 	if conditionalMap["conditionalTrue"] != nil {
 		conditionalTrue, err = marshalConditional(conditionalMap["conditionalTrue"].(map[string]any))
@@ -451,6 +470,8 @@ func marshalConditional(conditionalMap map[string]any) (*api.Conditional, error)
 		Field2:           field2,
 		ActionTrue:       actionTrue,
 		ActionFalse:      actionFalse,
+		MetricsTrue:      metricsTrue,
+		MetricsFalse:     metricsFalse,
 		ConditionalTrue:  conditionalTrue,
 		ConditionalFalse: conditionalFalse,
 	}, nil

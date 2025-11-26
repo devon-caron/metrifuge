@@ -277,6 +277,7 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 func (lp *LogProcessor) processConditional(logMsg string, values map[string]string, rule *api.Rule, conditional *api.Conditional) (string, []ProcessedDataItem, error) {
 
 	lp.log.Debugf("Evaluating conditional rule with pattern %s with field1: %v, operator: %s", rule.Pattern, conditional.Field1, conditional.Operator)
+	lp.log.Debugf("conditional: %+v", conditional)
 
 	var f1Str, f2Str string
 
@@ -351,6 +352,7 @@ func (lp *LogProcessor) processConditional(logMsg string, values map[string]stri
 		resultMetrics = conditional.MetricsFalse
 	}
 
+	lp.log.Debugf("selected metrics for result %t: %v", result, resultMetrics)
 	metricData, err := lp.createMetricData(values, resultMetrics)
 	if err != nil {
 		return "", nil, fmt.Errorf("metric data creation failed: %w", err)

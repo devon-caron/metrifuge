@@ -10,6 +10,7 @@ import (
 	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
 	ls "github.com/devon-caron/metrifuge/k8s/api/log_source"
 	rs "github.com/devon-caron/metrifuge/k8s/api/ruleset"
+	"github.com/sirupsen/logrus"
 )
 
 func getRuleSetUpdates(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*rs.RuleSet, error) {
@@ -20,6 +21,7 @@ func getRuleSetUpdates(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*rs.RuleS
 			return nil, fmt.Errorf("failed to read myRuleSets file: %v", err)
 		}
 
+		logrus.Info("Parsing rules from file")
 		myRuleSets, err := k8s.ParseRules(data)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse myRuleSets file: %v", err)
@@ -103,6 +105,7 @@ func convertToRulesets(resources []api.MetrifugeK8sResource) ([]*rs.RuleSet, err
 		if !ok {
 			return nil, fmt.Errorf("resource at index %d is not a RuleSet", i)
 		}
+		logrus.Infof("Converting RuleSet %s/%+v", rs.GetMetadata().Name, rs.Spec.Rules[0].Conditional)
 		myRulesets = append(myRulesets, rs)
 	}
 	return myRulesets, nil

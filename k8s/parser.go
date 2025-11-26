@@ -7,6 +7,7 @@ import (
 	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
 	ls "github.com/devon-caron/metrifuge/k8s/api/log_source"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
+	"github.com/sirupsen/logrus"
 
 	"gopkg.in/yaml.v3"
 )
@@ -41,6 +42,7 @@ func parseDocuments(data []byte) ([][]byte, error) {
 }
 
 func ParseRules(data []byte) ([]*ruleset.RuleSet, error) {
+	logrus.Info("Parsing rules")
 	documents, err := parseDocuments(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse YAML documents: %w", err)
@@ -50,6 +52,7 @@ func ParseRules(data []byte) ([]*ruleset.RuleSet, error) {
 
 	for i, doc := range documents {
 		var rule ruleset.RuleSet
+		logrus.Debugf("Parsing ruleset document %d, doc: %s", i+1, string(doc))
 		if err := yaml.Unmarshal(doc, &rule); err != nil {
 			return nil, fmt.Errorf("failed to parse capturegroup document %d: %w", i+1, err)
 		}
