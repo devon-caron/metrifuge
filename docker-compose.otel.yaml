@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: metrifuge-otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+      - otel-logs:/var/log/otel
+    ports:
+      # OTLP gRPC receiver
+      - "4317:4317"
+      # OTLP HTTP receiver
+      - "4318:4318"
+      # Prometheus metrics exporter
+      - "8889:8889"
+      # Collector internal metrics
+      - "8888:8888"
+    environment:
+      - BACKEND_API_KEY=${BACKEND_API_KEY:-}
+    restart: unless-stopped
+    networks:
+      - metrifuge-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8888/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Metrifuge application (optional - for local development)
+  # Uncomment if you want to run metrifuge alongside the collector
+  # metrifuge:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: metrifuge-app
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - MF_LOG_LEVEL=info
+  #     - MF_LOG_REPORTCALLER_STATUS=true
+  #     - MF_RUNNING_IN_K8S=false
+  #   volumes:
+  #     - ./default.env:/app/default.env:ro
+  #   depends_on:
+  #     - otel-collector
+  #   networks:
+  #     - metrifuge-network
+
+volumes:
+  otel-logs:
+    driver: local
+
+networks:
+  metrifuge-network:
+    driver: bridge
