@@ -86,19 +86,15 @@ spec:
   # or localhost:4317 for local development
 ```
 
-#### Logs Export (New)
+#### Logs Export
 
-Log export support has been added via the new `otel_log_exporter_client` package. Configure log exporters:
+The OpenTelemetry Collector is configured to receive logs via OTLP. To implement log export from Metrifuge, you can:
 
-```yaml
-apiVersion: metrifuge.devon-caron.dev/v1
-kind: Exporter
-metadata:
-  name: otel-logs-exporter
-spec:
-  destinationType: otel_log_exporter
-  endpoint: otel-collector:4317
-```
+1. Use the existing Logrus logging and forward to the collector via a log shipper (e.g., Fluentd, Filebeat)
+2. Implement OTLP log export using the OpenTelemetry Go SDK when the logs API becomes stable
+3. Use the processed logs from the log_handler and send them via HTTP to the collector's OTLP HTTP endpoint (port 4318)
+
+Note: The OpenTelemetry Go logs API is currently experimental. Once it stabilizes, direct OTLP log export can be added to Metrifuge.
 
 ## Accessing Telemetry Data
 
