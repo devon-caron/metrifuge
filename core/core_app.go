@@ -78,7 +78,9 @@ func Run() {
 
 	// Then pass the combined slice
 	em = &exporter_manager.ExporterManager{}
-	em.Initialize(ctx, res.GetExporters())
+	if err := em.Initialize(ctx, res.GetExporters()); err != nil {
+		log.Fatalf("failed to initialize exporter manager: %v", err)
+	}
 
 	time.Sleep(1 * time.Hour)
 }
