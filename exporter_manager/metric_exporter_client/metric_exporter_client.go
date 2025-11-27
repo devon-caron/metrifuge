@@ -1,4 +1,4 @@
-package otelmetricexporterclient
+package metric_exporter_client
 
 import (
 	"context"
@@ -18,16 +18,16 @@ type MetricExporterClient struct {
 
 func (me *MetricExporterClient) Initialize(ctx context.Context, exporters []e.Exporter) error {
 	for _, exporter := range exporters {
-		if exporter.GetDestinationType() == "otel_metric_exporter" {
+		if exporter.GetDestinationType() == "OtelCollector" {
 			// Create OTLP gRPC exporter for OTEL collector
-			if err := me.addOtelMetricExporter(ctx, exporter); err != nil {
+			if err := me.addOtelCollector(ctx, exporter); err != nil {
 				return err
 			}
-		} else if exporter.GetDestinationType() == "honeycomb" {
-			// Create OTLP gRPC exporter for Honeycomb collector
-			if err := me.addHoneycombMetricExporter(ctx, exporter); err != nil {
-				return err
-			}
+			// } else if exporter.GetDestinationType() == "honeycomb" {
+			// 	// Create OTLP gRPC exporter for Honeycomb collector
+			// 	if err := me.addHoneycombMetricExporter(ctx, exporter); err != nil {
+			// 		return err
+			// 	}
 			// } else if exporter.GetDestinationType() == "prometheus" {
 			// 	// Create OTLP gRPC exporter for Prometheus collector
 			// 	if err := me.addPrometheusMetricExporter(ctx, exporter); err != nil {
@@ -42,13 +42,22 @@ func (me *MetricExporterClient) Initialize(ctx context.Context, exporters []e.Ex
 	return nil
 }
 
-func (me *MetricExporterClient) addOtelMetricExporter(ctx context.Context, exporter e.Exporter) error {
-	otlpExporter, err := otlpmetricgrpc.New(ctx,
-		otlpmetricgrpc.WithEndpoint("localhost:4317"),
-		otlpmetricgrpc.WithInsecure(),
-	)
+func (me *MetricExporterClient) addOtelCollector(ctx context.Context, exporter e.Exporter) error {
+
+	endpoint := exporter.Spec.Destination.OtelCollector.Endpoint
+	if endpoint == "" {
+		return fmt.Errorf("otel collector endpoint is required")
+	}
+	insecure := exporter.Spec.Destination.OtelCollector.Insecure
+
+	options := []otlpmetricgrpc.Option{otlpmetricgrpc.WithEndpoint(endpoint)}
+	if insecure {
+		options = append(options, otlpmetricgrpc.WithInsecure())
+	}
+
+	otlpExporter, err := otlpmetricgrpc.New(ctx, options...)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create OTLP gRPC exporter: %w", err)
 	}
 	me.destinations = append(me.destinations,
 		sdkmetric.WithReader(
@@ -68,7 +77,7 @@ func (me *MetricExporterClient) addHoneycombMetricExporter(ctx context.Context, 
 		}),
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create Honeycomb OTLP HTTP exporter: %w", err)
 	}
 
 	me.destinations = append(me.destinations,
