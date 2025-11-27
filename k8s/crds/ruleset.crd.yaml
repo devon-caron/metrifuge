@@ -61,7 +61,7 @@ spec:
                       description: Whether to create metrics for the rule
                     action:
                       type: string
-                      enum: ["forward", "discard", "conditional"]
+                      enum: ["Forward", "Discard", "Conditional"]
                       description: Action to take for matching logs
                     conditional:
                       type: object

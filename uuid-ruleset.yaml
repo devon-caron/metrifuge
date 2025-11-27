@@ -12,7 +12,7 @@ spec:
     - name: parse-uuid-log
       description: Parse UUID and date information from test log messages
       pattern: '\[%{DAY:day} %{MONTH:month} %{MONTHDAY:monthday} %{TIME:time} %{TZ:timezone} %{YEAR:year}\] Hello World! This is a test log message, random UUID: %{DATA:uuid_part1}-%{DATA:uuid_part2}-%{DATA:uuid_part3}-%{DATA:uuid_part4}-%{GREEDYDATA:uuid_part5}'
-      action: conditional
+      action: Conditional
       conditional:
         field1:
           type: String
@@ -21,8 +21,8 @@ spec:
         field2:
           type: String
           manualValue: "0000"
-        actionTrue: forward
-        actionFalse: forward
+        actionTrue: Forward
+        actionFalse: Forward
         metricsTrue:
           - name: uuid_0000_check
             kind: Int64Counter

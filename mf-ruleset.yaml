@@ -11,7 +11,7 @@ spec:
     - name: parse_debug_logs
       description: Parse debug level logs from metrifuge application
       pattern: 'time="%{TIMESTAMP_ISO8601:timestamp}"\s+level=%{WORD:log_level}\s+msg="%{GREEDYDATA:message}"(?:\s+func=%{GREEDYDATA:function})?(?:\s+file="%{GREEDYDATA:source_file}")?'
-      action: analyze
+      action: Forward
       createMetrics: true
       metrics:
         - name: metrifuge_debug_logs_total
@@ -60,8 +60,8 @@ spec:
         field2:
           type: String
           manualValue: "Name"
-        actionTrue: "process_crd_validation"
-        actionFalse: "continue"
+        actionTrue: Forward
+        actionFalse: Discard
         metricsTrue:
           - name: metrifuge_crd_validation_name_field_total
             kind: Int64Counter
@@ -112,13 +112,13 @@ spec:
     - name: log_level_distribution
       description: Track distribution of log levels
       pattern: 'time="%{TIMESTAMP_ISO8601:timestamp}"\s+level=%{WORD:log_level}'
-      action: discard
+      action: Discard
       createMetrics: false
 
     - name: function_call_tracker
       description: Track function calls with dynamic attributes from grok captures
       pattern: 'time="%{TIMESTAMP_ISO8601:timestamp}"\s+level=%{WORD:log_level}\s+msg="%{GREEDYDATA:message}"\s+func=%{DATA:function}\s+file="%{DATA:source_file}"'
-      action: analyze
+      action: Forward
       createMetrics: true
       metrics:
         - name: metrifuge_function_calls_total
