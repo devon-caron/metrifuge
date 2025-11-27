@@ -52,7 +52,7 @@ spec:
               properties:
                 type:
                   type: string
-                  enum: [metric, log, dual]
+                  enum: [Metric, Log, Dual]
                 refreshInterval:
                   type: string
                   pattern: '^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$'
@@ -73,7 +73,7 @@ spec:
                   properties:
                     type:
                       type: string
-                      enum: [honeycomb, prometheus, elasticsearch, splunk, datadog, loki, otelCollector]
+                      enum: [Honeycomb, Prometheus, Elasticsearch, Splunk, Datadog, Loki, OtelCollector]
                     honeycomb:
                       type: object
                       required:
