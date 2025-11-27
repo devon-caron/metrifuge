@@ -21,4 +21,34 @@ func (em *ExporterManager) Initialize(exporters []e.Exporter, logSources []ls.Lo
 		em.exporters[exporter.GetMetadata().Name] = exporter
 	}
 
+	em.initializeConnections()
+}
+
+func (em *ExporterManager) initializeConnections() {
+	for _, exporter := range em.exporters {
+		switch exporter.Spec.Destination.Type {
+		case "otelCollector":
+			// Initialize OpenTelemetry connection
+			// TODO: Implement OTLP connection logic
+		case "honeycomb":
+			// Initialize Honeycomb connection
+			// TODO: Implement Honeycomb connection logic
+
+		case "prometheus":
+			// Initialize Prometheus connection
+			// TODO: Implement Prometheus connection logic
+		case "elasticsearch":
+			// Initialize Elasticsearch connection
+			// TODO: Implement Elasticsearch connection logic
+		case "splunk":
+			// Initialize Splunk connection
+			// TODO: Implement Splunk connection logic
+		case "datadog":
+			// Initialize Datadog connection
+			// TODO: Implement Datadog connection logic
+		case "loki":
+			// Initialize Loki connection
+			// TODO: Implement Loki connection logic
+		}
+	}
 }
