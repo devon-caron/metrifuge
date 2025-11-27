@@ -10,7 +10,6 @@ import (
 	"github.com/devon-caron/metrifuge/exporter_manager"
 	"github.com/devon-caron/metrifuge/k8s"
 	"github.com/devon-caron/metrifuge/k8s/api"
-	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
 	"github.com/devon-caron/metrifuge/resources"
 
 	"github.com/devon-caron/metrifuge/global"
@@ -74,15 +73,9 @@ func Run() {
 
 	log.Info("initializing exporter manager...")
 
-	// First collect all exporters into a single slice
-	allExporters := make([]e.Exporter, 0)
-	for _, e := range res.GetExporters() {
-		allExporters = append(allExporters, *e)
-	}
-
 	// Then pass the combined slice
 	em = &exporter_manager.ExporterManager{}
-	em.Initialize(res.GetRuleSets(), res.GetKubeConfig(), res.GetK8sClient(), allExporters)
+	em.Initialize(res.GetExporters(), res.GetLogSources(), res.GetKubeConfig(), res.GetK8sClient(), lh)
 
 	time.Sleep(1 * time.Hour)
 }

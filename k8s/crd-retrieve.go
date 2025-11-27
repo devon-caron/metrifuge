@@ -103,23 +103,23 @@ func getResource(crdResource unstructured.Unstructured, kind string, spec map[st
 	return resource, nil
 }
 
-func getExporter(crdExporter unstructured.Unstructured, spec map[string]any) (*e.Exporter, error) {
+func getExporter(crdExporter unstructured.Unstructured, spec map[string]any) (e.Exporter, error) {
 	panic("getExporter is not implemented yet")
 }
 
-func getLogSource(crdLogSource unstructured.Unstructured, spec map[string]any) (*ls.LogSource, error) {
+func getLogSource(crdLogSource unstructured.Unstructured, spec map[string]any) (ls.LogSource, error) {
 	lsSpec, ok := spec["source"].(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("failed to get log source spec: %v", spec)
+		return ls.LogSource{}, fmt.Errorf("failed to get log source spec: %v", spec)
 	}
 	lsType := lsSpec["type"].(string)
 	switch lsType {
 	case "PodSource":
 		lsSource, err := marshalPodSource(lsSpec["podSource"].(map[string]any))
 		if err != nil {
-			return nil, fmt.Errorf("failed to marshal pod source: %v", err)
+			return ls.LogSource{}, fmt.Errorf("failed to marshal pod source: %v", err)
 		}
-		return &ls.LogSource{
+		return ls.LogSource{
 			APIVersion: crdLogSource.GetAPIVersion(),
 			Kind:       crdLogSource.GetKind(),
 			Metadata: api.Metadata{
@@ -135,13 +135,13 @@ func getLogSource(crdLogSource unstructured.Unstructured, spec map[string]any) (
 			},
 		}, nil
 	}
-	return nil, fmt.Errorf("unknown log source type: %s", lsType)
+	return ls.LogSource{}, fmt.Errorf("unknown log source type: %s", lsType)
 }
 
-func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) (*rs.RuleSet, error) {
+func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) (rs.RuleSet, error) {
 	rulesList, ok := spec["rules"].([]any)
 	if !ok {
-		return nil, fmt.Errorf("failed to get rules list: %v", spec)
+		return rs.RuleSet{}, fmt.Errorf("failed to get rules list: %v", spec)
 	}
 
 	// Convert []any to []map[string]any
@@ -149,14 +149,14 @@ func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) (*rs.
 	for i, r := range rulesList {
 		ruleMap, ok := r.(map[string]any)
 		if !ok {
-			return nil, fmt.Errorf("rule at index %d is not a map: %v", i, r)
+			return rs.RuleSet{}, fmt.Errorf("rule at index %d is not a map: %v", i, r)
 		}
 		rulesMaps = append(rulesMaps, ruleMap)
 	}
 
 	myRules, err := getRules(rulesMaps)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get rules: %v", err)
+		return rs.RuleSet{}, fmt.Errorf("failed to get rules: %v", err)
 	}
 
 	// Parse selector if present
@@ -164,11 +164,11 @@ func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) (*rs.
 	if selectorMap, ok := spec["selector"].(map[string]any); ok {
 		selector, err = marshalSelector(selectorMap)
 		if err != nil {
-			return nil, fmt.Errorf("failed to marshal selector: %v", err)
+			return rs.RuleSet{}, fmt.Errorf("failed to marshal selector: %v", err)
 		}
 	}
 
-	myRuleSet := &rs.RuleSet{
+	myRuleSet := rs.RuleSet{
 		APIVersion: crdRuleSet.GetAPIVersion(),
 		Kind:       crdRuleSet.GetKind(),
 		Metadata: api.Metadata{

@@ -26,7 +26,7 @@ type LogHandler struct {
 	mu                   sync.RWMutex                       // Protects the source maps
 }
 
-func (lh *LogHandler) Initialize(initialSources []*ls.LogSource, initialRuleSets []*ruleset.RuleSet, log *logrus.Logger, kubeConfig *rest.Config, k8sClient *api.K8sClientWrapper) error {
+func (lh *LogHandler) Initialize(initialSources []ls.LogSource, initialRuleSets []ruleset.RuleSet, log *logrus.Logger, kubeConfig *rest.Config, k8sClient *api.K8sClientWrapper) error {
 	lh.once.Do(func() {
 		lh.log = log
 		log.Info("initialized log handler")
@@ -42,7 +42,7 @@ func (lh *LogHandler) Initialize(initialSources []*ls.LogSource, initialRuleSets
 	return nil
 }
 
-func (lh *LogHandler) Update(sources []*ls.LogSource, k8sClient *api.K8sClientWrapper) error {
+func (lh *LogHandler) Update(sources []ls.LogSource, k8sClient *api.K8sClientWrapper) error {
 	lh.log.Debug("loghandler update func called")
 
 	// Create a set of current source names
@@ -88,7 +88,7 @@ func (lh *LogHandler) Update(sources []*ls.LogSource, k8sClient *api.K8sClientWr
 			defer lh.wg.Done()
 			lh.log.Debugf("beginning receipt of logs for source with name %v", name)
 			lh.receiveLogs(src, k8sClient, ch)
-		}(source.Metadata.Name, *source, stopCh)
+		}(source.Metadata.Name, source, stopCh)
 	}
 
 	return nil

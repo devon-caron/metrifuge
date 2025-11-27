@@ -9,7 +9,7 @@ metadata:
 spec:
   containers:
     - image: |-
-        metrifuge:20251126-1543
+        metrifuge:20251126-2137
       name: metrifuge-test
       resources: {}
   dnsPolicy: ClusterFirst

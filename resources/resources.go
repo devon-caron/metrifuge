@@ -17,9 +17,9 @@ var (
 
 type Resources struct {
 	mu         sync.RWMutex
-	ruleSets   []*rs.RuleSet
-	logSources []*ls.LogSource
-	exporters  []*e.Exporter
+	ruleSets   []rs.RuleSet
+	logSources []ls.LogSource
+	exporters  []e.Exporter
 	kubeConfig *rest.Config
 	k8sClient  *api.K8sClientWrapper
 }
@@ -33,19 +33,19 @@ func GetInstance() *Resources {
 }
 
 // Getters with read locks
-func (r *Resources) GetRuleSets() []*rs.RuleSet {
+func (r *Resources) GetRuleSets() []rs.RuleSet {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.ruleSets
 }
 
-func (r *Resources) GetLogSources() []*ls.LogSource {
+func (r *Resources) GetLogSources() []ls.LogSource {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.logSources
 }
 
-func (r *Resources) GetExporters() []*e.Exporter {
+func (r *Resources) GetExporters() []e.Exporter {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.exporters
@@ -64,19 +64,19 @@ func (r *Resources) GetK8sClient() *api.K8sClientWrapper {
 }
 
 // Setters with write locks
-func (r *Resources) SetRuleSets(ruleSets []*rs.RuleSet) {
+func (r *Resources) SetRuleSets(ruleSets []rs.RuleSet) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.ruleSets = ruleSets
 }
 
-func (r *Resources) SetLogSources(logSources []*ls.LogSource) {
+func (r *Resources) SetLogSources(logSources []ls.LogSource) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.logSources = logSources
 }
 
-func (r *Resources) SetExporters(exporters []*e.Exporter) {
+func (r *Resources) SetExporters(exporters []e.Exporter) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.exporters = exporters

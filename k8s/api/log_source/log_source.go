@@ -1,4 +1,4 @@
-package logsource
+package log_source
 
 import (
 	"github.com/devon-caron/metrifuge/k8s/api"

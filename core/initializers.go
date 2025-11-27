@@ -13,7 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func getRuleSetUpdates(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*rs.RuleSet, error) {
+func getRuleSetUpdates(isK8s bool, k8sClient *api.K8sClientWrapper) ([]rs.RuleSet, error) {
 	if !isK8s {
 		ruleFilePath := os.Getenv("MF_RULES_FILEPATH")
 		data, err := os.ReadFile(ruleFilePath)
@@ -42,7 +42,7 @@ func getRuleSetUpdates(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*rs.RuleS
 	return myRulesets, nil
 }
 
-func getLogSourceUpdates(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ls.LogSource, error) {
+func getLogSourceUpdates(isK8s bool, k8sClient *api.K8sClientWrapper) ([]ls.LogSource, error) {
 	if !isK8s {
 		logSourceFilePath := os.Getenv("MF_LOG_SOURCES_FILEPATH")
 		data, err := os.ReadFile(logSourceFilePath)
@@ -70,7 +70,7 @@ func getLogSourceUpdates(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*ls.Log
 	return myLogSources, nil
 }
 
-func getExporterUpdates(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*e.Exporter, error) {
+func getExporterUpdates(isK8s bool, k8sClient *api.K8sClientWrapper) ([]e.Exporter, error) {
 	if !isK8s {
 		exporterFilePath := os.Getenv("MF_EXPORTERS_FILEPATH")
 		data, err := os.ReadFile(exporterFilePath)
@@ -98,12 +98,12 @@ func getExporterUpdates(isK8s bool, k8sClient *api.K8sClientWrapper) ([]*e.Expor
 	return myExporters, nil
 }
 
-func convertToRulesets(resources []api.MetrifugeK8sResource) ([]*rs.RuleSet, error) {
-	var myRulesets []*rs.RuleSet
+func convertToRulesets(resources []api.MetrifugeK8sResource) ([]rs.RuleSet, error) {
+	var myRulesets []rs.RuleSet
 	for i, resource := range resources {
-		rs, ok := resource.(*rs.RuleSet)
+		rs, ok := resource.(rs.RuleSet)
 		if !ok {
-			return nil, fmt.Errorf("resource at index %d is not a RuleSet", i)
+			return nil, fmt.Errorf("resource at index %d is not a RuleSet, type: %T", i, resource)
 		}
 
 		if len(rs.Spec.Rules) > 0 {
@@ -117,24 +117,24 @@ func convertToRulesets(resources []api.MetrifugeK8sResource) ([]*rs.RuleSet, err
 	return myRulesets, nil
 }
 
-func convertToLogSources(resources []api.MetrifugeK8sResource) ([]*ls.LogSource, error) {
-	var myLogSources []*ls.LogSource
+func convertToLogSources(resources []api.MetrifugeK8sResource) ([]ls.LogSource, error) {
+	var myLogSources []ls.LogSource
 	for i, resource := range resources {
-		lsrc, ok := resource.(*ls.LogSource)
+		lsrc, ok := resource.(ls.LogSource)
 		if !ok {
-			return nil, fmt.Errorf("resource at index %d is not a LogSource", i)
+			return nil, fmt.Errorf("resource at index %d is not a LogSource, type: %T", i, resource)
 		}
 		myLogSources = append(myLogSources, lsrc)
 	}
 	return myLogSources, nil
 }
 
-func convertToExporters(resources []api.MetrifugeK8sResource) ([]*e.Exporter, error) {
-	var myExporters []*e.Exporter
+func convertToExporters(resources []api.MetrifugeK8sResource) ([]e.Exporter, error) {
+	var myExporters []e.Exporter
 	for i, resource := range resources {
-		exp, ok := resource.(*e.Exporter)
+		exp, ok := resource.(e.Exporter)
 		if !ok {
-			return nil, fmt.Errorf("resource at index %d is not an Exporter", i)
+			return nil, fmt.Errorf("resource at index %d is not an Exporter, type: %T", i, resource)
 		}
 		myExporters = append(myExporters, exp)
 	}

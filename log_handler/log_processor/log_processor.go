@@ -26,7 +26,7 @@ type SourceRuleUnion struct {
 	rules  []*api.Rule
 }
 
-func (lp *LogProcessor) Initialize(logSources []*logsource.LogSource, ruleSets []*ruleset.RuleSet, log *logrus.Logger) {
+func (lp *LogProcessor) Initialize(logSources []logsource.LogSource, ruleSets []ruleset.RuleSet, log *logrus.Logger) {
 	if logSources == nil {
 		logrus.Fatalf("log processor initialization failed, logSources triggered nil: logSources: %v, ruleSets: %v, log: %v", logSources, ruleSets, log)
 	}
@@ -52,7 +52,7 @@ func (lp *LogProcessor) Initialize(logSources []*logsource.LogSource, ruleSets [
 	}
 }
 
-func (lp *LogProcessor) Update(logSources []*logsource.LogSource, ruleSets []*ruleset.RuleSet) {
+func (lp *LogProcessor) Update(logSources []logsource.LogSource, ruleSets []ruleset.RuleSet) {
 	for _, rs := range ruleSets {
 		lp.log.Infof("processing rule set: %v", rs)
 
