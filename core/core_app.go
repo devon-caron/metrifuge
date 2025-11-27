@@ -51,7 +51,26 @@ func Run() {
 		refresh = 60
 	}
 
-	log.Info("log/inline sources intialized")
+	log.Info("log/inline sources intialized, starting log handler...")
+
+	go func() {
+		curRetries := 0
+		for {
+			log.Info("updating resources...")
+			if err := getResourceUpdates(); err != nil {
+				log.Errorf("retrying due to failure to update resources: %v", err)
+				time.Sleep(3 * time.Second)
+				curRetries++
+				if curRetries > 5 {
+					log.Fatalf("failed to update resources after 5 retries")
+				}
+				continue
+			}
+			curRetries = 0
+			time.Sleep(time.Duration(refresh) * time.Second)
+			lh.Update(res.GetLogSources(), res.GetK8sClient())
+		}
+	}()
 
 	log.Info("initializing exporter manager...")
 
@@ -65,22 +84,7 @@ func Run() {
 	em = &exporter_manager.ExporterManager{}
 	em.Initialize(res.GetRuleSets(), res.GetKubeConfig(), res.GetK8sClient(), allExporters)
 
-	curRetries := 0
-	for {
-		log.Info("updating resources...")
-		if err := getResourceUpdates(); err != nil {
-			log.Errorf("retrying due to failure to update resources: %v", err)
-			time.Sleep(3 * time.Second)
-			curRetries++
-			if curRetries > 5 {
-				log.Fatalf("failed to update resources after 5 retries")
-			}
-			continue
-		}
-		curRetries = 0
-		time.Sleep(time.Duration(refresh) * time.Second)
-		lh.Update(res.GetLogSources(), res.GetK8sClient())
-	}
+	time.Sleep(1 * time.Hour)
 }
 
 func validateK8sResources() error {
