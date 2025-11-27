@@ -1,27 +1,58 @@
 package exporter_manager
 
 import (
+	"context"
+	"fmt"
+
+	"github.com/devon-caron/metrifuge/exporter_manager/log_exporter_client"
+	"github.com/devon-caron/metrifuge/exporter_manager/metric_exporter_client"
 	"github.com/devon-caron/metrifuge/k8s/api"
 	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
-	ls "github.com/devon-caron/metrifuge/k8s/api/log_source"
-	"github.com/devon-caron/metrifuge/log_handler"
-	"k8s.io/client-go/rest"
 )
 
 type ExporterManager struct {
-	exporters map[string]e.Exporter
-	//otelClient *otel.OpenTelemetryClient
+	exporters    map[string]e.Exporter
+	metricClient *metric_exporter_client.MetricExporterClient
+	logClient    *log_exporter_client.LogExporterClient
 }
 
-func (em *ExporterManager) Initialize(exporters []e.Exporter, logSources []ls.LogSource, k8sConfig *rest.Config, k8sClient *api.K8sClientWrapper, lh *log_handler.LogHandler) {
-
+func (em *ExporterManager) Initialize(ctx context.Context, exporters []e.Exporter) error {
 	em.exporters = make(map[string]e.Exporter)
-	// TODO find a better loop, this looks like shit
 	for _, exporter := range exporters {
 		em.exporters[exporter.GetMetadata().Name] = exporter
 	}
 
-	em.initializeConnections()
+	// Initialize the clients
+	em.metricClient = &metric_exporter_client.MetricExporterClient{}
+	if err := em.metricClient.Initialize(ctx, exporters); err != nil {
+		return fmt.Errorf("failed to initialize metric client: %w", err)
+	}
+
+	em.logClient = &log_exporter_client.LogExporterClient{}
+	if err := em.logClient.Initialize(ctx, exporters); err != nil {
+		return fmt.Errorf("failed to initialize log client: %w", err)
+	}
+
+	return nil
+}
+
+func (em *ExporterManager) ProcessItems(ctx context.Context, items []api.ProcessedDataItem) error {
+	for _, item := range items {
+		// Send metric if present
+		if item.Metric != nil {
+			if err := em.metricClient.ExportMetric(ctx, item.Metric); err != nil {
+				return fmt.Errorf("failed to send metric: %w", err)
+			}
+		}
+
+		// Send log if present
+		if item.ForwardLog != "" {
+			if err := em.logClient.ExportLog(ctx, item.ForwardLog); err != nil {
+				return fmt.Errorf("failed to export log: %w", err)
+			}
+		}
+	}
+	return nil
 }
 
 func (em *ExporterManager) initializeConnections() {

@@ -80,3 +80,8 @@ func (le *LogExporterClient) addHoneycombLogExporter(ctx context.Context, export
 	)
 	return nil
 }
+
+func (le *LogExporterClient) ExportLog(ctx context.Context, logMessage string) error {
+	// TODO: Implement actual log export logic
+	return nil
+}

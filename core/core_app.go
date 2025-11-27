@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"sync"
@@ -23,12 +24,14 @@ var (
 	wg  sync.WaitGroup
 	lh  *log_handler.LogHandler
 	em  *exporter_manager.ExporterManager
+	ctx context.Context
 )
 
 func Run() {
 	logrus.Info("fetching config/env variables...")
 	global.InitConfig()
 	log = logger.Get()
+	ctx = context.Background()
 	log.Info("starting api")
 	exapi.StartApi()
 
@@ -75,7 +78,7 @@ func Run() {
 
 	// Then pass the combined slice
 	em = &exporter_manager.ExporterManager{}
-	em.Initialize(res.GetExporters(), res.GetLogSources(), res.GetKubeConfig(), res.GetK8sClient(), lh)
+	em.Initialize(ctx, res.GetExporters())
 
 	time.Sleep(1 * time.Hour)
 }

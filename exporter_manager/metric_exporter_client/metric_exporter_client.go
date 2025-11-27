@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/devon-caron/metrifuge/k8s/api"
 	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
@@ -86,6 +87,11 @@ func (me *MetricExporterClient) addHoneycombMetricExporter(ctx context.Context, 
 				sdkmetric.WithInterval(10*time.Second),
 			)),
 	)
+	return nil
+}
+
+func (me *MetricExporterClient) ExportMetric(ctx context.Context, metric *api.MetricData) error {
+	// TODO: Implement actual metric export logic
 	return nil
 }
 
