@@ -112,7 +112,7 @@ func (lp *LogProcessor) ProcessLogsWithSRU(sru *SourceRuleUnion, logs []string) 
 		for _, rule := range sru.rules {
 			processedDataItems, err := lp.processLog(log, rule)
 			if err != nil {
-				logrus.Errorf("failed to process log: %v", err)
+				lp.log.Errorf("failed to process log: %v", err)
 				continue
 			}
 			totalProcessedDataItems = append(totalProcessedDataItems, processedDataItems...)
