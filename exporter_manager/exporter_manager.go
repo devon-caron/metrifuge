@@ -21,8 +21,4 @@ func (em *ExporterManager) Initialize(exporters []e.Exporter, logSources []ls.Lo
 		em.exporters[exporter.GetMetadata().Name] = exporter
 	}
 
-	// Initialize each exporter
-	// for _, exporter := range em.exporters {
-	// 	exporter.Initialize(k8sConfig, k8sClient)
-	// }
 }

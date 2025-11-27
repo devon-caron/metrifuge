@@ -46,144 +46,26 @@ spec:
               type: object
               required:
                 - type
+                - refreshInterval
                 - destination
+                - logSource
               properties:
                 type:
                   type: string
                   enum: [metric, log, dual]
-                metricExporter:
+                refreshInterval:
+                  type: string
+                  pattern: '^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$'
+                logSource:
                   type: object
+                  required:
+                    - name
+                    - namespace
                   properties:
-                    selector:
-                      type: object
-                      properties:
-                        matchLabels:
-                          type: object
-                          additionalProperties:
-                            type: string
-                    refreshInterval:
+                    name:
                       type: string
-                      pattern: '^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$'
-                    source:
-                      type: object
-                      required:
-                        - type
-                      properties:
-                        type:
-                          type: string
-                          enum: [pvc, pod, local, cmd]
-                        pvcSource:
-                          type: object
-                          required:
-                            - pvc
-                            - logFilePath
-                          properties:
-                            pvc:
-                              type: object
-                              required:
-                                - name
-                              properties:
-                                name:
-                                  type: string
-                            logFilePath:
-                              type: string
-                        podSource:
-                          type: object
-                          required:
-                            - pod
-                          properties:
-                            pod:
-                              type: object
-                              required:
-                                - name
-                                - namespace
-                                - container
-                              properties:
-                                name:
-                                  type: string
-                                namespace:
-                                  type: string
-                                container:
-                                  type: string
-                        localSource:
-                          type: object
-                          required:
-                            - path
-                          properties:
-                            path:
-                              type: string
-                        cmdSource:
-                          type: object
-                          required:
-                            - command
-                          properties:
-                            command:
-                              type: string
-                logExporter:
-                  type: object
-                  properties:
-                    selector:
-                      type: object
-                      properties:
-                        matchLabels:
-                          type: object
-                          additionalProperties:
-                            type: string
-                    source:
-                      type: object
-                      required:
-                        - type
-                      properties:
-                        type:
-                          type: string
-                          enum: [pvc, pod, local, cmd]
-                        pvcSource:
-                          type: object
-                          required:
-                            - pvc
-                            - logFilePath
-                          properties:
-                            pvc:
-                              type: object
-                              required:
-                                - name
-                              properties:
-                                name:
-                                  type: string
-                            logFilePath:
-                              type: string
-                        podSource:
-                          type: object
-                          required:
-                            - pod
-                          properties:
-                            pod:
-                              type: object
-                              required:
-                                - name
-                                - namespace
-                                - container
-                              properties:
-                                name:
-                                  type: string
-                                namespace:
-                                  type: string
-                                container:
-                                  type: string
-                        localSource:
-                          type: object
-                          required:
-                            - path
-                          properties:
-                            path:
-                              type: string
-                        cmdSource:
-                          type: object
-                          required:
-                            - command
-                          properties:
-                            command:
-                              type: string
+                    namespace:
+                      type: string
                 destination:
                   type: object
                   required:
@@ -191,7 +73,7 @@ spec:
                   properties:
                     type:
                       type: string
-                      enum: [honeycomb, prometheus, elasticsearch, splunk, datadog, loki]
+                      enum: [honeycomb, prometheus, elasticsearch, splunk, datadog, loki, otelCollector]
                     honeycomb:
                       type: object
                       required:
@@ -269,6 +151,15 @@ spec:
                           type: string
                         password:
                           type: string
+                    otelCollector:
+                      type: object
+                      required:
+                        - endpoint
+                      properties:
+                        endpoint:
+                          type: string
+                        insecure:
+                          type: boolean
       subresources:
         status: {}
       additionalPrinterColumns:

@@ -25,6 +25,14 @@ type Source interface {
 	GetNewLogs() []string
 }
 
+type SourceSpec struct {
+	Type        string       `json:"type" yaml:"type"`
+	PVCSource   *PVCSource   `json:"pvcSource,omitempty" yaml:"pvcSource,omitempty"`
+	PodSource   *PodSource   `json:"podSource,omitempty" yaml:"podSource,omitempty"`
+	LocalSource *LocalSource `json:"localSource,omitempty" yaml:"localSource,omitempty"`
+	CmdSource   *CmdSource   `json:"cmdSource,omitempty" yaml:"cmdSource,omitempty"`
+}
+
 type PVCSource struct {
 	PVC struct {
 		Name string `json:"name" yaml:"name"`
