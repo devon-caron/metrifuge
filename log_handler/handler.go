@@ -173,3 +173,17 @@ func (lh *LogHandler) receiveLogs(sourceObj ls.LogSource, kClient *api.K8sClient
 		}
 	}
 }
+
+func (lh *LogHandler) ReceiveLogsForSource(name string) []api.ProcessedDataItem {
+	lh.mu.Lock()
+	defer lh.mu.Unlock()
+
+	if bucket, exists := lh.processedDataBuckets[name]; exists {
+		lh.processedDataBuckets[name] = make([]api.ProcessedDataItem, 0)
+		lh.log.Debugf("Returning %d items for source %s and clearing bucket", len(bucket), name)
+		return bucket
+	}
+
+	lh.log.Debugf("No data found for source %s", name)
+	return []api.ProcessedDataItem{}
+}
