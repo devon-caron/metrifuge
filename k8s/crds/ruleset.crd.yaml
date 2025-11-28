@@ -127,7 +127,7 @@ spec:
                                 description: Name of the metric
                               kind:
                                 type: string
-                                enum: ["Int64Counter", "Float64Counter", "Int64Gauge", "Float64Gauge"]
+                                enum: ["Int64Counter", "Float64Counter", "Int64Gauge", "Float64Gauge", "Int64Histogram", "Float64Histogram"]
                                 description: Type of metric
                               value:
                                 type: object
@@ -191,7 +191,7 @@ spec:
                                 description: Name of the metric
                               kind:
                                 type: string
-                                enum: ["Int64Counter", "Float64Counter", "Int64Gauge", "Float64Gauge"]
+                                enum: ["Int64Counter", "Float64Counter", "Int64Gauge", "Float64Gauge", "Int64Histogram", "Float64Histogram"]
                                 description: Type of metric
                               value:
                                 type: object
