@@ -9,6 +9,7 @@ import (
 	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
+	"go.opentelemetry.io/otel/metric"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 )
 
@@ -22,7 +23,7 @@ func (me *MetricExporterClient) Initialize(ctx context.Context, exporters []e.Ex
 		if exporter.GetDestinationType() == "OtelCollector" {
 			// Create OTLP gRPC exporter for OTEL collector
 			if err := me.addOtelCollector(ctx, exporter); err != nil {
-				return err
+				return fmt.Errorf("failed to add OTLP collector: %w", err)
 			}
 			// } else if exporter.GetDestinationType() == "honeycomb" {
 			// 	// Create OTLP gRPC exporter for Honeycomb collector
@@ -60,10 +61,14 @@ func (me *MetricExporterClient) addOtelCollector(ctx context.Context, exporter e
 	if err != nil {
 		return fmt.Errorf("failed to create OTLP gRPC exporter: %w", err)
 	}
+	refreshInterval, err := time.ParseDuration(exporter.Spec.RefreshInterval)
+	if err != nil {
+		return fmt.Errorf("failed to parse refresh interval: %w", err)
+	}
 	me.destinations = append(me.destinations,
 		sdkmetric.WithReader(
 			sdkmetric.NewPeriodicReader(otlpExporter,
-				sdkmetric.WithInterval(10*time.Second),
+				sdkmetric.WithInterval(refreshInterval),
 			)),
 	)
 	return nil
@@ -90,8 +95,58 @@ func (me *MetricExporterClient) addHoneycombMetricExporter(ctx context.Context, 
 	return nil
 }
 
-func (me *MetricExporterClient) ExportMetric(ctx context.Context, metric *api.MetricData) error {
-	// TODO: Implement actual metric export logic
+func (me *MetricExporterClient) ExportMetric(ctx context.Context, metricData *api.MetricData) error {
+	// Get a meter from the provider
+	meter := me.meterProvider.Meter("metrifuge")
+
+	// Create and record based on metric kind
+	switch metricData.Kind {
+	case "Int64Counter":
+		counter, err := meter.Int64Counter(metricData.Name)
+		if err != nil {
+			return fmt.Errorf("failed to create int64 counter: %w", err)
+		}
+		counter.Add(ctx, metricData.ValueInt, metric.WithAttributes(metricData.Attributes...))
+
+	case "Float64Counter":
+		counter, err := meter.Float64Counter(metricData.Name)
+		if err != nil {
+			return fmt.Errorf("failed to create float64 counter: %w", err)
+		}
+		counter.Add(ctx, metricData.ValueFloat, metric.WithAttributes(metricData.Attributes...))
+
+	case "Int64Gauge":
+		gauge, err := meter.Int64Gauge(metricData.Name)
+		if err != nil {
+			return fmt.Errorf("failed to create int64 gauge: %w", err)
+		}
+		gauge.Record(ctx, metricData.ValueInt, metric.WithAttributes(metricData.Attributes...))
+
+	case "Float64Gauge":
+		gauge, err := meter.Float64Gauge(metricData.Name)
+		if err != nil {
+			return fmt.Errorf("failed to create float64 gauge: %w", err)
+		}
+		gauge.Record(ctx, metricData.ValueFloat, metric.WithAttributes(metricData.Attributes...))
+
+	case "Int64Histogram":
+		histogram, err := meter.Int64Histogram(metricData.Name)
+		if err != nil {
+			return fmt.Errorf("failed to create int64 histogram: %w", err)
+		}
+		histogram.Record(ctx, metricData.ValueInt, metric.WithAttributes(metricData.Attributes...))
+
+	case "Float64Histogram":
+		histogram, err := meter.Float64Histogram(metricData.Name)
+		if err != nil {
+			return fmt.Errorf("failed to create float64 histogram: %w", err)
+		}
+		histogram.Record(ctx, metricData.ValueFloat, metric.WithAttributes(metricData.Attributes...))
+
+	default:
+		return fmt.Errorf("unsupported metric kind: %s", metricData.Kind)
+	}
+
 	return nil
 }
 

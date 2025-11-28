@@ -3,10 +3,12 @@ package log_exporter_client
 import (
 	"context"
 	"fmt"
+	"time"
 
 	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
+	"go.opentelemetry.io/otel/log"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 )
 
@@ -82,6 +84,17 @@ func (le *LogExporterClient) addHoneycombLogExporter(ctx context.Context, export
 }
 
 func (le *LogExporterClient) ExportLog(ctx context.Context, logMessage string) error {
-	// TODO: Implement actual log export logic
+	// Get a logger from the provider
+	logger := le.loggerProvider.Logger("metrifuge")
+
+	// Create a log record
+	var record log.Record
+	record.SetTimestamp(time.Now())
+	record.SetBody(log.StringValue(logMessage))
+	record.SetSeverity(log.SeverityInfo)
+
+	// Emit the log record
+	logger.Emit(ctx, record)
+
 	return nil
 }
