@@ -58,26 +58,26 @@ func (em *ExporterManager) ProcessItems(ctx context.Context, items []api.Process
 func (em *ExporterManager) initializeConnections() {
 	for _, exporter := range em.exporters {
 		switch exporter.Spec.Destination.Type {
-		case "otelCollector":
+		case "OtelCollector":
 			// Initialize OpenTelemetry connection
 			// TODO: Implement OTLP connection logic
-		case "honeycomb":
+		case "Honeycomb":
 			// Initialize Honeycomb connection
 			// TODO: Implement Honeycomb connection logic
 
-		case "prometheus":
+		case "Prometheus":
 			// Initialize Prometheus connection
 			// TODO: Implement Prometheus connection logic
-		case "elasticsearch":
+		case "Elasticsearch":
 			// Initialize Elasticsearch connection
 			// TODO: Implement Elasticsearch connection logic
-		case "splunk":
+		case "Splunk":
 			// Initialize Splunk connection
 			// TODO: Implement Splunk connection logic
-		case "datadog":
+		case "Datadog":
 			// Initialize Datadog connection
 			// TODO: Implement Datadog connection logic
-		case "loki":
+		case "Loki":
 			// Initialize Loki connection
 			// TODO: Implement Loki connection logic
 		}
