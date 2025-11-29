@@ -114,8 +114,8 @@ func (me *MetricExporterClient) addHoneycombMetricExporter(ctx context.Context, 
 
 func (me *MetricExporterClient) ExportMetric(ctx context.Context, metricData *api.MetricData) error {
 	// Get cached meter using the correct namespace and exporter name
-	name := "default"
-	namespace := "default"
+	namespace := ""
+	name := ""
 	// Extract namespace and exporter name from context if available
 	if ns, ok := ctx.Value(global.SOURCE_NAMESPACE_KEY).(string); ok && ns != "" {
 		namespace = ns
@@ -123,8 +123,10 @@ func (me *MetricExporterClient) ExportMetric(ctx context.Context, metricData *ap
 	if expName, ok := ctx.Value(global.SOURCE_NAME_KEY).(string); ok && expName != "" {
 		name = expName
 	}
-
 	meter := me.meters[namespace][name]
+	if meter == nil {
+		return fmt.Errorf("meter not found for namespace %s and name %s", namespace, name)
+	}
 
 	// Create and record based on metric kind
 	switch metricData.Kind {

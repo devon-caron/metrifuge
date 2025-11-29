@@ -112,9 +112,8 @@ func (le *LogExporterClient) addHoneycombLogExporter(ctx context.Context, export
 
 func (le *LogExporterClient) ExportLog(ctx context.Context, logMessage string) error {
 	// Get cached logger using the correct namespace and exporter name
-	namespace := "default"
-	name := "default"
-
+	namespace := ""
+	name := ""
 	// Extract namespace and exporter name from context if available
 	if ns, ok := ctx.Value(global.SOURCE_NAMESPACE_KEY).(string); ok && ns != "" {
 		namespace = ns
@@ -122,8 +121,10 @@ func (le *LogExporterClient) ExportLog(ctx context.Context, logMessage string) e
 	if expName, ok := ctx.Value(global.SOURCE_NAME_KEY).(string); ok && expName != "" {
 		name = expName
 	}
-
 	logger := le.loggers[namespace][name]
+	if logger == nil {
+		return fmt.Errorf("logger not found for namespace %s and name %s", namespace, name)
+	}
 
 	// Create a log record
 	var record log.Record
