@@ -18,7 +18,26 @@ echo "==== Loading image..."
 mftagtbl=$(docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.CreatedAt}}" | head -n 2)
 mftagname=$(echo "$mftagtbl" | grep metrifuge | grep -v "latest" | awk '{print $1}')
 mftagtime=$(echo "$mftagtbl" | grep metrifuge | grep -v "latest" | awk '{print $2}')
+
+# Start timer in background
+start_time=$SECONDS
+(
+  while true; do
+    elapsed=$((SECONDS - start_time))
+    printf "\rElapsed time: %02d:%02d" $((elapsed / 60)) $((elapsed % 60))
+    sleep 1
+  done
+) &
+timer_pid=$!
+
+# Load the image
 minikube image load "$mftagname:$mftagtime"
+
+# Stop the timer and show final time
+kill $timer_pid 2>/dev/null
+wait $timer_pid 2>/dev/null
+final_elapsed=$((SECONDS - start_time))
+printf "\rElapsed time: %02d:%02d\n" $((final_elapsed / 60)) $((final_elapsed % 60))
 
 echo "==== Updating pods..."
 yq eval --inplace ".spec.containers[0].image = \"$mftagname:$mftagtime\"" mf-pod.yaml
