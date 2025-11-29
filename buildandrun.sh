@@ -1,3 +1,12 @@
+#!/bin/bash
+
+# Continue execution even if commands fail (e.g., pod deletion when pod doesn't exist)
+# Only stop on Ctrl+C (SIGINT)
+set +e
+
+# Trap Ctrl+C for clean exit
+trap 'echo -e "\n==== Interrupted by user ===="; exit 130' INT
+
 echo "==== Building..."
 ./build.sh
 
@@ -18,4 +27,9 @@ kubectl apply -f mf-pod.yaml
 sleep 2
 
 echo "==== Following logs..."
-kubectl logs -n metrifuge po/metrifuge-test -f
+if [ -n "$1" ]; then
+  echo "Applying filter: $1"
+  eval "kubectl logs -n metrifuge po/metrifuge-test -f $1"
+else
+  kubectl logs -n metrifuge po/metrifuge-test -f
+fi
