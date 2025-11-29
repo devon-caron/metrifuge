@@ -15,7 +15,7 @@ type ExporterSpec struct {
 	Type            string                  `json:"type" yaml:"type"`
 	RefreshInterval string                  `json:"refreshInterval" yaml:"refreshInterval"`
 	Destination     api.ExporterDestination `json:"destination" yaml:"destination"`
-	LogSource       *api.LogSourceInfo      `json:"logSource" yaml:"logSource"`
+	LogSource       api.LogSourceInfo       `json:"logSource" yaml:"logSource"`
 }
 
 func (e Exporter) GetMetadata() api.Metadata {
@@ -28,4 +28,8 @@ func (e *Exporter) GetDestinationType() string {
 
 func (e *Exporter) GetDestinationConfig() any {
 	return e.Spec.Destination
+}
+
+func (e *Exporter) GetLogSourceInfo() api.LogSourceInfo {
+	return e.Spec.LogSource
 }

@@ -43,9 +43,9 @@ func Run() {
 	log.Info("k8s resource definitions validated")
 	log.Info("initializing log and inline sources...")
 
-	res := resources.GetInstance()
+	rsc := resources.GetInstance()
 	lh = &log_handler.LogHandler{}
-	lh.Initialize(res.GetLogSources(), res.GetRuleSets(), log, res.GetKubeConfig(), res.GetK8sClient())
+	lh.Initialize(rsc.GetLogSources(), rsc.GetRuleSets(), log, rsc.GetKubeConfig(), rsc.GetK8sClient())
 	refresh, err := strconv.Atoi(global.REFRESH_INTERVAL)
 	if err != nil {
 		log.Warnf("failed to parse environment variable MF_REFRESH_INTERVAL: %v", err)
@@ -70,7 +70,7 @@ func Run() {
 			}
 			curRetries = 0
 			time.Sleep(time.Duration(refresh) * time.Second)
-			lh.Update(res.GetLogSources(), res.GetK8sClient())
+			lh.Update(rsc.GetLogSources(), rsc.GetK8sClient())
 		}
 	}()
 
@@ -78,11 +78,11 @@ func Run() {
 
 	// Then pass the combined slice
 	em = &exporter_manager.ExporterManager{}
-	if err := em.Initialize(ctx, res.GetExporters()); err != nil {
+	if err := em.Initialize(ctx, rsc.GetExporters(), lh); err != nil {
 		log.Fatalf("failed to initialize exporter manager: %v", err)
 	}
 
-	time.Sleep(1 * time.Hour)
+	time.Sleep(30 * time.Minute)
 }
 
 func validateK8sResources() error {
@@ -94,20 +94,20 @@ func validateK8sResources() error {
 
 	log.Infof("It is %v that the application is running in k8s", isK8s)
 
-	res := resources.GetInstance()
+	rsc := resources.GetInstance()
 
 	if isK8s {
 		kubeConfig, err := k8s.GetKubeConfig()
 		if err != nil {
 			return fmt.Errorf("failed to retrieve kubernetes config: %v", err)
 		}
-		res.SetKubeConfig(kubeConfig)
+		rsc.SetKubeConfig(kubeConfig)
 
 		k8sClient, err := api.NewK8sClientWrapper(kubeConfig)
 		if err != nil {
 			return fmt.Errorf("failed to retrieve kubernetes client: %v", err)
 		}
-		res.SetK8sClient(k8sClient)
+		rsc.SetK8sClient(k8sClient)
 
 		if err = k8s.ValidateResources(kubeConfig); err != nil {
 			return fmt.Errorf("failed to validate kubernetes resources: %v", err)
@@ -133,15 +133,15 @@ func getResourceUpdates() error {
 		return fmt.Errorf("failed to parse environment variable MF_RUNNING_IN_K8S:%v", err)
 	}
 
-	res := resources.GetInstance()
+	rsc := resources.GetInstance()
 
 	go func() {
 		log.Info("retrieving rulesets from cluster...")
 		defer wg.Done()
-		if ruleSets, myErr := getRuleSetUpdates(isK8s, res.GetK8sClient()); myErr != nil {
+		if ruleSets, myErr := getRuleSetUpdates(isK8s, rsc.GetK8sClient()); myErr != nil {
 			err = fmt.Errorf("%v{error updating rulesets : %v}\n", err, myErr)
 		} else {
-			res.SetRuleSets(ruleSets)
+			rsc.SetRuleSets(ruleSets)
 		}
 		log.Info("rulesets updated")
 	}()
@@ -149,10 +149,10 @@ func getResourceUpdates() error {
 	go func() {
 		log.Info("retrieving log sources from cluster...")
 		defer wg.Done()
-		if logSources, myErr := getLogSourceUpdates(isK8s, res.GetK8sClient()); myErr != nil {
+		if logSources, myErr := getLogSourceUpdates(isK8s, rsc.GetK8sClient()); myErr != nil {
 			err = fmt.Errorf("%v{error updating log sources : %v}\n", err, myErr)
 		} else {
-			res.SetLogSources(logSources)
+			rsc.SetLogSources(logSources)
 		}
 		log.Info("log sources updated")
 	}()
@@ -160,10 +160,10 @@ func getResourceUpdates() error {
 	go func() {
 		log.Info("retrieving exporters from cluster...")
 		defer wg.Done()
-		if exporters, myErr := getExporterUpdates(isK8s, res.GetK8sClient()); myErr != nil {
+		if exporters, myErr := getExporterUpdates(isK8s, rsc.GetK8sClient()); myErr != nil {
 			err = fmt.Errorf("%v{error updating exporters : %v}\n", err, myErr)
 		} else {
-			res.SetExporters(exporters)
+			rsc.SetExporters(exporters)
 		}
 		log.Info("exporters updated")
 	}()

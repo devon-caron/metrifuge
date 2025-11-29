@@ -1,6 +1,7 @@
 package log_processor
 
 import (
+	"context"
 	"fmt"
 	"math/rand/v2"
 	"strconv"
@@ -106,11 +107,13 @@ func (lp *LogProcessor) FindSRU(source api.Source) (*SourceRuleUnion, error) {
 	return nil, fmt.Errorf("log set not found for source: %v", source.GetSourceInfo())
 }
 
-func (lp *LogProcessor) ProcessLogsWithSRU(sru *SourceRuleUnion, logs []string) []api.ProcessedDataItem {
+func (lp *LogProcessor) ProcessLogsWithSRU(sru *SourceRuleUnion, logs []string, lsName string, lsNamespace string) []api.ProcessedDataItem {
 	totalProcessedDataItems := make([]api.ProcessedDataItem, 0)
+	baseCtx := context.WithValue(context.Background(), "name", lsName)
+	baseCtx = context.WithValue(baseCtx, "namespace", lsNamespace)
 	for _, log := range logs {
 		for _, rule := range sru.rules {
-			processedDataItems, err := lp.processLog(log, rule)
+			processedDataItems, err := lp.processLog(baseCtx, log, rule)
 			if err != nil {
 				lp.log.Errorf("failed to process log: %v", err)
 				continue
@@ -127,7 +130,21 @@ func (lp *LogProcessor) ProcessLogsWithSRU(sru *SourceRuleUnion, logs []string) 
 }
 
 // TODO needs implementation
-func (lp *LogProcessor) processLog(logMsg string, rule *api.Rule) ([]api.ProcessedDataItem, error) {
+func (lp *LogProcessor) processLog(ctx context.Context, logMsg string, rule *api.Rule) ([]api.ProcessedDataItem, error) {
+
+	var srcInfo = api.LogSourceInfo{}
+
+	lsName, ok := ctx.Value("name").(string)
+	if !ok {
+		return []api.ProcessedDataItem{}, fmt.Errorf("missing name in context")
+	}
+	lsNamespace, ok := ctx.Value("namespace").(string)
+	if !ok {
+		return []api.ProcessedDataItem{}, fmt.Errorf("missing namespace in context")
+	}
+	srcInfo.Name = lsName
+	srcInfo.Namespace = lsNamespace
+
 	values, err := lp.g.Parse(rule.Pattern, logMsg)
 	if err != nil {
 		return []api.ProcessedDataItem{}, err
@@ -158,7 +175,7 @@ func (lp *LogProcessor) processLog(logMsg string, rule *api.Rule) ([]api.Process
 		// processedLogMsg = ""
 		lp.log.Debugf("Discard Action No-Op")
 	case "conditional":
-		processedLogMsg, processedDataItems, err = lp.processConditional(logMsg, values, rule, rule.Conditional)
+		processedLogMsg, processedDataItems, err = lp.processConditional(ctx, logMsg, values, rule, rule.Conditional)
 		if err != nil {
 			return []api.ProcessedDataItem{}, err
 		}
@@ -168,8 +185,9 @@ func (lp *LogProcessor) processLog(logMsg string, rule *api.Rule) ([]api.Process
 
 	for _, metric := range metricData {
 		processedDataItems = append(processedDataItems, api.ProcessedDataItem{
-			ForwardLog: processedLogMsg,
-			Metric:     metric,
+			ForwardLog:    processedLogMsg,
+			Metric:        metric,
+			LogSourceInfo: srcInfo,
 		})
 	}
 
@@ -275,10 +293,23 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 	return myMetricDataList, nil
 }
 
-func (lp *LogProcessor) processConditional(logMsg string, values map[string]string, rule *api.Rule, conditional *api.Conditional) (string, []api.ProcessedDataItem, error) {
+func (lp *LogProcessor) processConditional(ctx context.Context, logMsg string, values map[string]string, rule *api.Rule, conditional *api.Conditional) (string, []api.ProcessedDataItem, error) {
 
 	lp.log.Debugf("Evaluating conditional rule with pattern %s with field1: %v, operator: %s", rule.Pattern, conditional.Field1, conditional.Operator)
 	lp.log.Debugf("conditional: %+v", conditional)
+
+	var srcInfo = api.LogSourceInfo{}
+
+	lsName, ok := ctx.Value("name").(string)
+	if !ok {
+		return "", []api.ProcessedDataItem{}, fmt.Errorf("missing name in context")
+	}
+	lsNamespace, ok := ctx.Value("namespace").(string)
+	if !ok {
+		return "", []api.ProcessedDataItem{}, fmt.Errorf("missing namespace in context")
+	}
+	srcInfo.Name = lsName
+	srcInfo.Namespace = lsNamespace
 
 	var f1Str, f2Str string
 
@@ -336,7 +367,7 @@ func (lp *LogProcessor) processConditional(logMsg string, values map[string]stri
 		} else {
 			resultConditional = conditional.ConditionalFalse
 		}
-		fwdLog, extraDataItems, err = lp.processConditional(logMsg, values, rule, resultConditional)
+		fwdLog, extraDataItems, err = lp.processConditional(ctx, logMsg, values, rule, resultConditional)
 		if err != nil {
 			return "", nil, fmt.Errorf("nested conditional processing failed: %w", err)
 		}
@@ -364,8 +395,9 @@ func (lp *LogProcessor) processConditional(logMsg string, values map[string]stri
 	var processedDataItems = make([]api.ProcessedDataItem, 0)
 	for _, metric := range metricData {
 		processedDataItems = append(processedDataItems, api.ProcessedDataItem{
-			ForwardLog: fwdLog,
-			Metric:     metric,
+			ForwardLog:    fwdLog,
+			Metric:        metric,
+			LogSourceInfo: srcInfo,
 		})
 	}
 

@@ -24,9 +24,11 @@ type LogHandler struct {
 	sourceStopChans      map[string]chan struct{}           // Map of source names to their stop channels
 	processedDataBuckets map[string][]api.ProcessedDataItem // Map of source names to their processed data buckets
 	mu                   sync.RWMutex                       // Protects the source maps
+	itemBucket           []api.ProcessedDataItem            // Current batch of processed items
 }
 
-func (lh *LogHandler) Initialize(initialSources []ls.LogSource, initialRuleSets []ruleset.RuleSet, log *logrus.Logger, kubeConfig *rest.Config, k8sClient *api.K8sClientWrapper) error {
+func (lh *LogHandler) Initialize(initialSources []ls.LogSource, initialRuleSets []ruleset.RuleSet, log *logrus.Logger,
+	kubeConfig *rest.Config, k8sClient *api.K8sClientWrapper) error {
 	lh.once.Do(func() {
 		lh.log = log
 		log.Info("initialized log handler")
@@ -35,7 +37,9 @@ func (lh *LogHandler) Initialize(initialSources []ls.LogSource, initialRuleSets 
 		log.Info("initialized log handler sources and buckets")
 		lh.lp = &log_processor.LogProcessor{}
 		lh.lp.Initialize(initialSources, initialRuleSets, log)
+		lh.itemBucket = make([]api.ProcessedDataItem, 0)
 		lh.Update(initialSources, k8sClient)
+
 		log.Info("log handler updated successfully")
 	})
 
@@ -161,7 +165,7 @@ func (lh *LogHandler) receiveLogs(sourceObj ls.LogSource, kClient *api.K8sClient
 		case <-ticker.C:
 			logs := source.GetNewLogs()
 			lh.log.Infof("Processing %v logs from source: %s", len(logs), source.GetSourceInfo())
-			data := lh.lp.ProcessLogsWithSRU(sru, logs)
+			data := lh.lp.ProcessLogsWithSRU(sru, logs, sourceObj.Metadata.Name, sourceObj.Metadata.Namespace)
 			lh.log.Infof("Processed %d items with SRU", len(data))
 
 			// Store the processed data in the bucket
@@ -169,7 +173,8 @@ func (lh *LogHandler) receiveLogs(sourceObj ls.LogSource, kClient *api.K8sClient
 			lh.processedDataBuckets[sourceObj.Metadata.Name] = append(lh.processedDataBuckets[sourceObj.Metadata.Name], data...)
 			lh.mu.Unlock()
 
-			lh.log.Debugf("Stored %d items in bucket for source %s, total now: %d", len(data), sourceObj.Metadata.Name, len(lh.processedDataBuckets[sourceObj.Metadata.Name]))
+			lh.log.Debugf("Stored %d items in bucket for source %s, total now: %d",
+				len(data), sourceObj.Metadata.Name, len(lh.processedDataBuckets[sourceObj.Metadata.Name]))
 		}
 	}
 }
@@ -186,4 +191,29 @@ func (lh *LogHandler) ReceiveLogsForSource(name string) []api.ProcessedDataItem 
 
 	lh.log.Debugf("No data found for source %s", name)
 	return []api.ProcessedDataItem{}
+}
+
+func (lh *LogHandler) GetItemBucket() []api.ProcessedDataItem {
+	lh.mu.Lock()
+	defer lh.mu.Unlock()
+
+	items := make([]api.ProcessedDataItem, len(lh.itemBucket))
+	copy(items, lh.itemBucket)
+
+	// Clear the bucket
+	lh.itemBucket = nil
+
+	return items
+}
+
+func (lh *LogHandler) AppendToItemBucket(items []api.ProcessedDataItem) {
+	lh.mu.Lock()
+	defer lh.mu.Unlock()
+	lh.itemBucket = append(lh.itemBucket, items...)
+}
+
+func (lh *LogHandler) ClearItemBucket() {
+	lh.mu.Lock()
+	defer lh.mu.Unlock()
+	lh.itemBucket = nil
 }

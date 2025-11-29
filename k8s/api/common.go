@@ -19,8 +19,9 @@ type Selector struct {
 }
 
 type ProcessedDataItem struct {
-	ForwardLog string
-	Metric     *MetricData
+	ForwardLog    string
+	Metric        *MetricData
+	LogSourceInfo LogSourceInfo
 }
 
 type MetricData struct {

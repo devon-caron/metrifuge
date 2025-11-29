@@ -14,8 +14,8 @@ import (
 )
 
 type MetricExporterClient struct {
-	meterProvider *sdkmetric.MeterProvider
-	destinations  []sdkmetric.Option
+	meterProviders map[string]map[string]*sdkmetric.MeterProvider
+	destinations   []sdkmetric.Option
 }
 
 func (me *MetricExporterClient) Initialize(ctx context.Context, exporters []e.Exporter) error {
@@ -38,8 +38,15 @@ func (me *MetricExporterClient) Initialize(ctx context.Context, exporters []e.Ex
 		} else {
 			return fmt.Errorf("unknown destination type: %s", exporter.GetDestinationType())
 		}
+		if me.meterProviders == nil {
+			me.meterProviders = make(map[string]map[string]*sdkmetric.MeterProvider)
+		}
+		ns := exporter.GetLogSourceInfo().Namespace
+		if me.meterProviders[ns] == nil {
+			me.meterProviders[ns] = make(map[string]*sdkmetric.MeterProvider)
+		}
+		me.meterProviders[ns][exporter.GetLogSourceInfo().Name] = sdkmetric.NewMeterProvider(me.destinations...)
 	}
-	me.meterProvider = sdkmetric.NewMeterProvider(me.destinations...)
 
 	return nil
 }
@@ -96,8 +103,9 @@ func (me *MetricExporterClient) addHoneycombMetricExporter(ctx context.Context, 
 }
 
 func (me *MetricExporterClient) ExportMetric(ctx context.Context, metricData *api.MetricData) error {
-	// Get a meter from the provider
-	meter := me.meterProvider.Meter("metrifuge")
+	// TODO impl rpoperly; Get a meter from the provider using the correct namespace and exporter name
+	// For now, using a default exporter name - this should be improved
+	meter := me.meterProviders["default"]["default"].Meter("metrifuge")
 
 	// Create and record based on metric kind
 	switch metricData.Kind {
