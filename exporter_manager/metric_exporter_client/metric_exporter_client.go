@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/devon-caron/metrifuge/global"
 	"github.com/devon-caron/metrifuge/k8s/api"
 	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
@@ -15,6 +16,7 @@ import (
 
 type MetricExporterClient struct {
 	meterProviders map[string]map[string]*sdkmetric.MeterProvider
+	meters         map[string]map[string]metric.Meter
 	destinations   []sdkmetric.Option
 }
 
@@ -41,11 +43,19 @@ func (me *MetricExporterClient) Initialize(ctx context.Context, exporters []e.Ex
 		if me.meterProviders == nil {
 			me.meterProviders = make(map[string]map[string]*sdkmetric.MeterProvider)
 		}
+		if me.meters == nil {
+			me.meters = make(map[string]map[string]metric.Meter)
+		}
 		ns := exporter.GetLogSourceInfo().Namespace
+		name := exporter.GetLogSourceInfo().Name
 		if me.meterProviders[ns] == nil {
 			me.meterProviders[ns] = make(map[string]*sdkmetric.MeterProvider)
 		}
-		me.meterProviders[ns][exporter.GetLogSourceInfo().Name] = sdkmetric.NewMeterProvider(me.destinations...)
+		if me.meters[ns] == nil {
+			me.meters[ns] = make(map[string]metric.Meter)
+		}
+		me.meterProviders[ns][name] = sdkmetric.NewMeterProvider(me.destinations...)
+		me.meters[ns][name] = me.meterProviders[ns][name].Meter("metrifuge")
 	}
 
 	return nil
@@ -103,9 +113,18 @@ func (me *MetricExporterClient) addHoneycombMetricExporter(ctx context.Context, 
 }
 
 func (me *MetricExporterClient) ExportMetric(ctx context.Context, metricData *api.MetricData) error {
-	// TODO impl rpoperly; Get a meter from the provider using the correct namespace and exporter name
-	// For now, using a default exporter name - this should be improved
-	meter := me.meterProviders["default"]["default"].Meter("metrifuge")
+	// Get cached meter using the correct namespace and exporter name
+	name := "default"
+	namespace := "default"
+	// Extract namespace and exporter name from context if available
+	if ns, ok := ctx.Value(global.SOURCE_NAMESPACE_KEY).(string); ok && ns != "" {
+		namespace = ns
+	}
+	if expName, ok := ctx.Value(global.SOURCE_NAME_KEY).(string); ok && expName != "" {
+		name = expName
+	}
+
+	meter := me.meters[namespace][name]
 
 	// Create and record based on metric kind
 	switch metricData.Kind {

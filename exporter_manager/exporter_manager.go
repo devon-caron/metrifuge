@@ -3,23 +3,28 @@ package exporter_manager
 import (
 	"context"
 	"fmt"
+	"math/rand"
 
 	"github.com/devon-caron/metrifuge/exporter_manager/log_exporter_client"
 	"github.com/devon-caron/metrifuge/exporter_manager/metric_exporter_client"
+	"github.com/devon-caron/metrifuge/global"
 	"github.com/devon-caron/metrifuge/k8s/api"
 	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
 	"github.com/devon-caron/metrifuge/log_handler"
+	"github.com/sirupsen/logrus"
 )
 
 type ExporterManager struct {
 	exporters map[string]e.Exporter
+	log       *logrus.Logger
 	mc        *metric_exporter_client.MetricExporterClient
 	lc        *log_exporter_client.LogExporterClient
 	lh        *log_handler.LogHandler
 }
 
-func (em *ExporterManager) Initialize(ctx context.Context, exporters []e.Exporter, logHandler *log_handler.LogHandler) error {
+func (em *ExporterManager) Initialize(ctx context.Context, exporters []e.Exporter, logHandler *log_handler.LogHandler, log *logrus.Logger) error {
 	em.lh = logHandler
+	em.log = log
 	em.exporters = make(map[string]e.Exporter)
 	for _, exporter := range exporters {
 		em.exporters[exporter.GetMetadata().Name] = exporter
@@ -43,48 +48,33 @@ func (em *ExporterManager) Initialize(ctx context.Context, exporters []e.Exporte
 func (em *ExporterManager) ProcessItems(ctx context.Context, items []api.ProcessedDataItem) error {
 	for _, item := range items {
 		// Send metric if present
-		// myCtx := context.WithValue
+		myCtx := ctx
+		if item.LogSourceInfo.Name != "" {
+			myCtx = context.WithValue(myCtx, global.SOURCE_NAME_KEY, item.LogSourceInfo.Name)
+		}
+		if item.LogSourceInfo.Namespace != "" {
+			myCtx = context.WithValue(myCtx, global.SOURCE_NAMESPACE_KEY, item.LogSourceInfo.Namespace)
+		}
 		if item.Metric != nil {
-			if err := em.mc.ExportMetric(ctx, item.Metric); err != nil {
+			if err := em.mc.ExportMetric(myCtx, item.Metric); err != nil {
 				return fmt.Errorf("failed to send metric: %w", err)
+			}
+		} else {
+			if rand.Intn(100) == 0 {
+				em.log.Debug("empty metric detected (1/100)")
 			}
 		}
 
 		// Send log if present
 		if item.ForwardLog != "" {
-			if err := em.lc.ExportLog(ctx, item.ForwardLog); err != nil {
+			if err := em.lc.ExportLog(myCtx, item.ForwardLog); err != nil {
 				return fmt.Errorf("failed to export log: %w", err)
+			}
+		} else {
+			if rand.Intn(20) == 0 {
+				em.log.Debug("blank log detected (1/20)")
 			}
 		}
 	}
 	return nil
-}
-
-func (em *ExporterManager) initializeConnections() {
-	for _, exporter := range em.exporters {
-		switch exporter.Spec.Destination.Type {
-		case "OtelCollector":
-			// Initialize OpenTelemetry connection
-			// TODO: Implement OTLP connection logic
-		case "Honeycomb":
-			// Initialize Honeycomb connection
-			// TODO: Implement Honeycomb connection logic
-
-		case "Prometheus":
-			// Initialize Prometheus connection
-			// TODO: Implement Prometheus connection logic
-		case "Elasticsearch":
-			// Initialize Elasticsearch connection
-			// TODO: Implement Elasticsearch connection logic
-		case "Splunk":
-			// Initialize Splunk connection
-			// TODO: Implement Splunk connection logic
-		case "Datadog":
-			// Initialize Datadog connection
-			// TODO: Implement Datadog connection logic
-		case "Loki":
-			// Initialize Loki connection
-			// TODO: Implement Loki connection logic
-		}
-	}
 }

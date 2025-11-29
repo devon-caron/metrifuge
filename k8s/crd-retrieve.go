@@ -119,13 +119,29 @@ func getLogSource(crdLogSource unstructured.Unstructured, spec map[string]any) (
 		if err != nil {
 			return ls.LogSource{}, fmt.Errorf("failed to marshal pod source: %v", err)
 		}
+
+		log.Infof("marshaled pod source: %+v", lsSource)
+		log.Infof("log source object: %+v", crdLogSource.Object)
+
+		// Extract metadata directly from the Object map
+		metadata, found, err := unstructured.NestedMap(crdLogSource.Object, "metadata")
+		if !found || err != nil {
+			return ls.LogSource{}, fmt.Errorf("failed to get metadata: %v", err)
+		}
+
+		name, _, _ := unstructured.NestedString(metadata, "name")
+		namespace, _, _ := unstructured.NestedString(metadata, "namespace")
+		labels, _, _ := unstructured.NestedStringMap(metadata, "labels")
+
+		log.Infof("Extracted name: '%s', namespace: '%s', labels: %+v", name, namespace, labels)
+
 		return ls.LogSource{
 			APIVersion: crdLogSource.GetAPIVersion(),
 			Kind:       crdLogSource.GetKind(),
 			Metadata: api.Metadata{
-				Name:      crdLogSource.GetName(),
-				Namespace: crdLogSource.GetNamespace(),
-				Labels:    crdLogSource.GetLabels(),
+				Name:      name,
+				Namespace: namespace,
+				Labels:    labels,
 			},
 			Spec: ls.LogSourceSpec{
 				Type: lsType,
@@ -168,13 +184,23 @@ func getRuleSet(crdRuleSet unstructured.Unstructured, spec map[string]any) (rs.R
 		}
 	}
 
+	// Extract metadata directly from the Object map
+	metadata, found, err := unstructured.NestedMap(crdRuleSet.Object, "metadata")
+	if !found || err != nil {
+		return rs.RuleSet{}, fmt.Errorf("failed to get metadata: %v", err)
+	}
+
+	name, _, _ := unstructured.NestedString(metadata, "name")
+	namespace, _, _ := unstructured.NestedString(metadata, "namespace")
+	labels, _, _ := unstructured.NestedStringMap(metadata, "labels")
+
 	myRuleSet := rs.RuleSet{
 		APIVersion: crdRuleSet.GetAPIVersion(),
 		Kind:       crdRuleSet.GetKind(),
 		Metadata: api.Metadata{
-			Name:      crdRuleSet.GetName(),
-			Namespace: crdRuleSet.GetNamespace(),
-			Labels:    crdRuleSet.GetLabels(),
+			Name:      name,
+			Namespace: namespace,
+			Labels:    labels,
 		},
 		Spec: rs.RuleSetSpec{
 			Selector: selector,

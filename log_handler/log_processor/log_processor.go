@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/devon-caron/metrifuge/global"
 	"github.com/devon-caron/metrifuge/k8s/api"
 	logsource "github.com/devon-caron/metrifuge/k8s/api/log_source"
 	"github.com/devon-caron/metrifuge/k8s/api/ruleset"
@@ -109,8 +110,8 @@ func (lp *LogProcessor) FindSRU(source api.Source) (*SourceRuleUnion, error) {
 
 func (lp *LogProcessor) ProcessLogsWithSRU(sru *SourceRuleUnion, logs []string, lsName string, lsNamespace string) []api.ProcessedDataItem {
 	totalProcessedDataItems := make([]api.ProcessedDataItem, 0)
-	baseCtx := context.WithValue(context.Background(), "name", lsName)
-	baseCtx = context.WithValue(baseCtx, "namespace", lsNamespace)
+	baseCtx := context.WithValue(context.TODO(), global.SOURCE_NAME_KEY, lsName)
+	baseCtx = context.WithValue(baseCtx, global.SOURCE_NAMESPACE_KEY, lsNamespace)
 	for _, log := range logs {
 		for _, rule := range sru.rules {
 			processedDataItems, err := lp.processLog(baseCtx, log, rule)
@@ -134,11 +135,11 @@ func (lp *LogProcessor) processLog(ctx context.Context, logMsg string, rule *api
 
 	var srcInfo = api.LogSourceInfo{}
 
-	lsName, ok := ctx.Value("name").(string)
+	lsName, ok := ctx.Value(global.SOURCE_NAME_KEY).(string)
 	if !ok {
 		return []api.ProcessedDataItem{}, fmt.Errorf("missing name in context")
 	}
-	lsNamespace, ok := ctx.Value("namespace").(string)
+	lsNamespace, ok := ctx.Value(global.SOURCE_NAMESPACE_KEY).(string)
 	if !ok {
 		return []api.ProcessedDataItem{}, fmt.Errorf("missing namespace in context")
 	}
@@ -177,7 +178,7 @@ func (lp *LogProcessor) processLog(ctx context.Context, logMsg string, rule *api
 	case "conditional":
 		processedLogMsg, processedDataItems, err = lp.processConditional(ctx, logMsg, values, rule, rule.Conditional)
 		if err != nil {
-			return []api.ProcessedDataItem{}, err
+			return []api.ProcessedDataItem{}, fmt.Errorf("failed to process conditional: %w", err)
 		}
 	default:
 		return []api.ProcessedDataItem{}, fmt.Errorf("unknown action: %v", rule.Action)
@@ -300,11 +301,11 @@ func (lp *LogProcessor) processConditional(ctx context.Context, logMsg string, v
 
 	var srcInfo = api.LogSourceInfo{}
 
-	lsName, ok := ctx.Value("name").(string)
+	lsName, ok := ctx.Value(global.SOURCE_NAME_KEY).(string)
 	if !ok {
 		return "", []api.ProcessedDataItem{}, fmt.Errorf("missing name in context")
 	}
-	lsNamespace, ok := ctx.Value("namespace").(string)
+	lsNamespace, ok := ctx.Value(global.SOURCE_NAMESPACE_KEY).(string)
 	if !ok {
 		return "", []api.ProcessedDataItem{}, fmt.Errorf("missing namespace in context")
 	}

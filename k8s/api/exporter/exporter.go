@@ -12,7 +12,8 @@ type Exporter struct {
 }
 
 type ExporterSpec struct {
-	Type            string                  `json:"type" yaml:"type"`
+	Type string `json:"type" yaml:"type"`
+	//Priority        int                     `json:"priority" yaml:"priority"` // Must be a value between 1-20 ( = number of allocated exporter resources)
 	RefreshInterval string                  `json:"refreshInterval" yaml:"refreshInterval"`
 	Destination     api.ExporterDestination `json:"destination" yaml:"destination"`
 	LogSource       api.LogSourceInfo       `json:"logSource" yaml:"logSource"`

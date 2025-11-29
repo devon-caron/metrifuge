@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/devon-caron/metrifuge/global"
 	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
@@ -13,8 +14,9 @@ import (
 )
 
 type LogExporterClient struct {
-	loggerProvider *sdklog.LoggerProvider
-	destinations   []sdklog.LoggerProviderOption
+	loggerProviders map[string]map[string]*sdklog.LoggerProvider
+	loggers         map[string]map[string]log.Logger
+	destinations    map[string]map[string][]sdklog.LoggerProviderOption
 }
 
 func (le *LogExporterClient) Initialize(ctx context.Context, exporters []e.Exporter) error {
@@ -22,7 +24,7 @@ func (le *LogExporterClient) Initialize(ctx context.Context, exporters []e.Expor
 		if exporter.GetDestinationType() == "OtelCollector" {
 			// Create OTLP gRPC exporter for OTEL collector
 			if err := le.addOtelCollector(ctx, exporter); err != nil {
-				return err
+				return fmt.Errorf("failed to add Otel collector: %v", err)
 			}
 			// } else if exporter.GetDestinationType() == "honeycomb" {
 			// 	// Create OTLP HTTP exporter for Honeycomb collector
@@ -33,7 +35,6 @@ func (le *LogExporterClient) Initialize(ctx context.Context, exporters []e.Expor
 			return fmt.Errorf("unknown destination type: %s", exporter.GetDestinationType())
 		}
 	}
-	le.loggerProvider = sdklog.NewLoggerProvider(le.destinations...)
 
 	return nil
 }
@@ -55,11 +56,33 @@ func (le *LogExporterClient) addOtelCollector(ctx context.Context, exporter e.Ex
 	if err != nil {
 		return fmt.Errorf("failed to create OTLP gRPC log exporter: %w", err)
 	}
-	le.destinations = append(le.destinations,
+	if le.loggerProviders == nil {
+		le.loggerProviders = make(map[string]map[string]*sdklog.LoggerProvider)
+	}
+	if le.loggers == nil {
+		le.loggers = make(map[string]map[string]log.Logger)
+	}
+	if le.destinations == nil {
+		le.destinations = make(map[string]map[string][]sdklog.LoggerProviderOption)
+	}
+	ns := exporter.GetLogSourceInfo().Namespace
+	name := exporter.GetLogSourceInfo().Name
+	if le.loggerProviders[ns] == nil {
+		le.loggerProviders[ns] = make(map[string]*sdklog.LoggerProvider)
+	}
+	if le.loggers[ns] == nil {
+		le.loggers[ns] = make(map[string]log.Logger)
+	}
+	if le.destinations[ns] == nil {
+		le.destinations[ns] = make(map[string][]sdklog.LoggerProviderOption)
+	}
+	le.destinations[ns][name] = append(le.destinations[ns][name],
 		sdklog.WithProcessor(
 			sdklog.NewBatchProcessor(otlpExporter),
 		),
 	)
+	le.loggerProviders[ns][name] = sdklog.NewLoggerProvider(le.destinations[ns][name]...)
+	le.loggers[ns][name] = le.loggerProviders[ns][name].Logger("metrifuge")
 	return nil
 }
 
@@ -75,7 +98,11 @@ func (le *LogExporterClient) addHoneycombLogExporter(ctx context.Context, export
 		return fmt.Errorf("failed to create Honeycomb OTLP HTTP log exporter: %w", err)
 	}
 
-	le.destinations = append(le.destinations,
+	ns := exporter.GetLogSourceInfo().Namespace
+	if le.destinations[ns] == nil {
+		le.destinations[ns] = make(map[string][]sdklog.LoggerProviderOption)
+	}
+	le.destinations[ns][exporter.GetLogSourceInfo().Name] = append(le.destinations[ns][exporter.GetLogSourceInfo().Name],
 		sdklog.WithProcessor(
 			sdklog.NewBatchProcessor(honeycombExporter),
 		),
@@ -84,8 +111,19 @@ func (le *LogExporterClient) addHoneycombLogExporter(ctx context.Context, export
 }
 
 func (le *LogExporterClient) ExportLog(ctx context.Context, logMessage string) error {
-	// Get a logger from the provider
-	logger := le.loggerProvider.Logger("metrifuge")
+	// Get cached logger using the correct namespace and exporter name
+	namespace := "default"
+	name := "default"
+
+	// Extract namespace and exporter name from context if available
+	if ns, ok := ctx.Value(global.SOURCE_NAMESPACE_KEY).(string); ok && ns != "" {
+		namespace = ns
+	}
+	if expName, ok := ctx.Value(global.SOURCE_NAME_KEY).(string); ok && expName != "" {
+		name = expName
+	}
+
+	logger := le.loggers[namespace][name]
 
 	// Create a log record
 	var record log.Record
