@@ -92,7 +92,9 @@ func Run() {
 		for {
 			items := lh.ReceiveBucketContents()
 			if len(items) > 0 {
-				em.ProcessItems(ctx, items)
+				if err := em.ProcessItems(ctx, items); err != nil {
+					log.Errorf("failed to process items: %v", err)
+				}
 				log.Infof("processed %d items and cleared bucket", len(items))
 			} else {
 				log.Debug("no items to process, bucket empty")
