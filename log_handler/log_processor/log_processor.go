@@ -152,7 +152,7 @@ func (lp *LogProcessor) processLog(ctx context.Context, logMsg string, rule *api
 	}
 
 	// debug
-	if rand.IntN(10) == 0 {
+	if rand.IntN(100) == 0 {
 		lp.log.Debugf("parsed log: %v", logMsg)
 		lp.log.Debugf("pattern: %v", rule.Pattern)
 		for k, v := range values {
@@ -199,9 +199,13 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 
 	myMetricDataList := make([]*api.MetricData, 0)
 
+	random := rand.IntN(100)
+
 	for _, metricTemplate := range metrics {
-		lp.log.Debugf("processing metric template: %s", metricTemplate.Name)
-		lp.log.Debugf("metric template details: %+v", metricTemplate)
+		if random == 0 {
+			lp.log.Debugf("processing metric template: %s", metricTemplate.Name)
+			lp.log.Debugf("metric template details: %+v", metricTemplate)
+		}
 		metricData := &api.MetricData{
 			Name:       metricTemplate.Name,
 			Kind:       metricTemplate.Kind,
@@ -211,7 +215,9 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 		// TODO improve shitty implementation
 		switch strings.ToLower(metricTemplate.Value.Type) {
 		case "int64":
-			lp.log.Debugf("processing int64 metric: %s", metricTemplate.Name)
+			if random == 0 {
+				lp.log.Debugf("processing int64 metric: %s", metricTemplate.Name)
+			}
 			if metricTemplate.Value.GrokKey == "" {
 				metricData.ValueInt, err = strconv.ParseInt(metricTemplate.Value.ManualValue, 10, 64)
 			} else {
@@ -221,7 +227,9 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 				return []*api.MetricData{}, fmt.Errorf("failed to parse int64 metric value: %v", err)
 			}
 		case "float64":
-			lp.log.Debugf("processing float64 metric: %s", metricTemplate.Name)
+			if random == 0 {
+				lp.log.Debugf("processing float64 metric: %s", metricTemplate.Name)
+			}
 			if metricTemplate.Value.GrokKey == "" {
 				metricData.ValueFloat, err = strconv.ParseFloat(metricTemplate.Value.ManualValue, 64)
 			} else {
@@ -237,7 +245,9 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 		for _, currAttribute := range metricTemplate.Attributes {
 			switch strings.ToLower(currAttribute.Value.Type) {
 			case "int64":
-				lp.log.Debugf("processing int64 attribute: %s", currAttribute.Key)
+				if random == 0 {
+					lp.log.Debugf("processing int64 attribute: %s", currAttribute.Key)
+				}
 				if currAttribute.Value.GrokKey == "" {
 					attrValue, parseErr := strconv.ParseInt(currAttribute.Value.ManualValue, 10, 64)
 					if parseErr != nil {
@@ -255,7 +265,9 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 					return []*api.MetricData{}, fmt.Errorf("failed to parse int64 metric attribute value: %v", err)
 				}
 			case "float64":
-				lp.log.Debugf("processing float64 attribute: %s", currAttribute.Key)
+				if random == 0 {
+					lp.log.Debugf("processing float64 attribute: %s", currAttribute.Key)
+				}
 				if currAttribute.Value.GrokKey == "" {
 					attrValue, parseErr := strconv.ParseFloat(currAttribute.Value.ManualValue, 64)
 					if parseErr != nil {
@@ -273,7 +285,9 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 					return []*api.MetricData{}, fmt.Errorf("failed to parse float64 metric attribute value: %v", err)
 				}
 			case "string":
-				lp.log.Debugf("processing string attribute: %s", currAttribute.Key)
+				if random == 0 {
+					lp.log.Debugf("processing string attribute: %s", currAttribute.Key)
+				}
 				if currAttribute.Value.GrokKey == "" {
 					attrValue := currAttribute.Value.ManualValue
 					metricData.Attributes = append(metricData.Attributes, attribute.String(currAttribute.Key, attrValue))
@@ -287,17 +301,21 @@ func (lp *LogProcessor) createMetricData(values map[string]string, metrics []api
 		}
 
 		myMetricDataList = append(myMetricDataList, metricData)
-		// if rand.IntN(20) == 0 {
-		lp.log.Debugf("metric data: %+v", metricData)
-		// }
+		if random == 0 {
+			lp.log.Debugf("metric data: %+v", metricData)
+		}
 	}
 	return myMetricDataList, nil
 }
 
 func (lp *LogProcessor) processConditional(ctx context.Context, logMsg string, values map[string]string, rule *api.Rule, conditional *api.Conditional) (string, []api.ProcessedDataItem, error) {
 
-	lp.log.Debugf("Evaluating conditional rule with pattern %s with field1: %v, operator: %s", rule.Pattern, conditional.Field1, conditional.Operator)
-	lp.log.Debugf("conditional: %+v", conditional)
+	random := rand.IntN(100)
+
+	if random == 0 {
+		lp.log.Debugf("Evaluating conditional rule with pattern %s with field1: %v, operator: %s", rule.Pattern, conditional.Field1, conditional.Operator)
+		lp.log.Debugf("conditional: %+v", conditional)
+	}
 
 	var srcInfo = api.LogSourceInfo{}
 
@@ -329,23 +347,28 @@ func (lp *LogProcessor) processConditional(ctx context.Context, logMsg string, v
 
 	op := conditional.Operator
 
-	lp.log.Debugf("validating conditional: field1='%s', field2='%s', operator='%s'", f1Str, f2Str, op)
+	if random == 0 {
+		lp.log.Debugf("validating conditional: field1='%s', field2='%s', operator='%s'", f1Str, f2Str, op)
+	}
 
 	var err error
 	if err = lp.validateFields(f1Str, f2Str, op); err != nil {
 		return "", nil, fmt.Errorf("conditional validation failed: %w", err)
 	}
 
-	lp.log.Debugf("fields validation passed")
-
-	lp.log.Debugf("evaluating conditional result")
+	if random == 0 {
+		lp.log.Debugf("fields validation passed")
+		lp.log.Debugf("evaluating conditional result")
+	}
 
 	var result bool
 	if result, err = evaluateConditional(f1Str, f2Str, op); err != nil {
 		return "", nil, fmt.Errorf("conditional evaluation failed: %w", err)
 	}
 
-	lp.log.Debugf("conditional result: %t", result)
+	if random == 0 {
+		lp.log.Debugf("conditional result: %t", result)
+	}
 
 	var selectedAction string
 	if result {
@@ -376,7 +399,9 @@ func (lp *LogProcessor) processConditional(ctx context.Context, logMsg string, v
 		return "", nil, fmt.Errorf("unknown action: %s", selectedAction)
 	}
 
-	lp.log.Debugf("selected action: %s, result: %t", selectedAction, result)
+	if random == 0 {
+		lp.log.Debugf("selected action: %s, result: %t", selectedAction, result)
+	}
 
 	var resultMetrics []api.MetricTemplate
 	if result {
@@ -385,13 +410,17 @@ func (lp *LogProcessor) processConditional(ctx context.Context, logMsg string, v
 		resultMetrics = conditional.MetricsFalse
 	}
 
-	lp.log.Debugf("selected metrics for result %t: %v", result, resultMetrics)
+	if random == 0 {
+		lp.log.Debugf("selected metrics for result %t: %v", result, resultMetrics)
+	}
 	metricData, err := lp.createMetricData(values, resultMetrics)
 	if err != nil {
 		return "", nil, fmt.Errorf("metric data creation failed: %w", err)
 	}
 
-	lp.log.Debugf("created %d metric data items", len(metricData))
+	if random == 0 {
+		lp.log.Debugf("created %d metric data items", len(metricData))
+	}
 
 	var processedDataItems = make([]api.ProcessedDataItem, 0)
 	for _, metric := range metricData {

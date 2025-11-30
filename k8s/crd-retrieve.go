@@ -77,21 +77,27 @@ func GetK8sResources(k8sClient *api.K8sClientWrapper, kind, version, kindPlural 
 
 func getResource(crdResource unstructured.Unstructured, kind string, spec map[string]interface{}) (api.MetrifugeK8sResource, error) {
 
+	log.Infof("Processing resource: %s/%s, kind: %s", crdResource.GetNamespace(), crdResource.GetName(), kind)
+
 	var resource api.MetrifugeK8sResource
 	switch kind {
 	case global.RULESET_CRD_NAME:
+
+		log.Infof("Processing RuleSet: %s/%s", crdResource.GetNamespace(), crdResource.GetName())
 		myRuleSet, err := getRuleSet(crdResource, spec)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get rule set: %v", err)
 		}
 		resource = myRuleSet
 	case global.LOGSOURCE_CRD_NAME:
+		log.Infof("Processing LogSource: %s/%s", crdResource.GetNamespace(), crdResource.GetName())
 		myLogSource, err := getLogSource(crdResource, spec)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get log source: %v", err)
 		}
 		resource = myLogSource
 	case global.EXPORTER_CRD_NAME:
+		log.Infof("Processing Exporter: %s/%s", crdResource.GetNamespace(), crdResource.GetName())
 		myExporter, err := getExporter(crdResource, spec)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get exporter: %v", err)
@@ -104,7 +110,77 @@ func getResource(crdResource unstructured.Unstructured, kind string, spec map[st
 }
 
 func getExporter(crdExporter unstructured.Unstructured, spec map[string]any) (e.Exporter, error) {
-	panic("getExporter is not implemented yet")
+	expType, ok := spec["type"].(string)
+	if !ok {
+		return e.Exporter{}, fmt.Errorf("failed to get exporter type")
+	}
+
+	// TODO: If there ends up being a difference, use this
+	// switch expType {
+	// case "Log":
+	// 	// Handle Log exporter type
+	// case "Metric":
+	// 	// Handle Metric exporter type
+	// default:
+	// 	return e.Exporter{}, fmt.Errorf("unsupported exporter type: %s", expType)
+	// }
+
+	refreshInterval, found := spec["refreshInterval"].(string)
+	if !found {
+		return e.Exporter{}, fmt.Errorf("failed to get refreshInterval from spec: %v", spec["refreshInterval"])
+	}
+
+	destMap, ok := spec["destination"].(map[string]any)
+	if !ok {
+		return e.Exporter{}, fmt.Errorf("failed to get destination from spec: %v", spec["destination"])
+	}
+
+	destination, err := marshalDestination(destMap)
+	if err != nil {
+		return e.Exporter{}, fmt.Errorf("failed to get destination from spec: %v", err)
+	}
+
+	logSourceInfo, ok := spec["logSource"].(map[string]any)
+	if !ok {
+		return e.Exporter{}, fmt.Errorf("failed to get logSource from spec: %v", spec["logSource"])
+	}
+
+	lsName, ok := logSourceInfo["name"].(string)
+	if !ok {
+		return e.Exporter{}, fmt.Errorf("failed to get logSource name from spec: %v", logSourceInfo["name"])
+	}
+
+	lsNamespace, ok := logSourceInfo["namespace"].(string)
+	if !ok {
+		return e.Exporter{}, fmt.Errorf("failed to get logSource namespace from spec: %v", logSourceInfo["namespace"])
+	}
+
+	var myExporter = e.Exporter{
+		APIVersion: crdExporter.GetAPIVersion(),
+		Kind:       crdExporter.GetKind(),
+		Metadata: api.Metadata{
+			Name:      crdExporter.GetName(),
+			Namespace: crdExporter.GetNamespace(),
+		},
+		Spec: e.ExporterSpec{
+			Type:            expType,
+			RefreshInterval: refreshInterval,
+			Destination:     destination,
+			LogSource: api.LogSourceInfo{
+				Name:      lsName,
+				Namespace: lsNamespace,
+			},
+		},
+	}
+
+	log.Infof("Exporter spec: %+v", myExporter.Spec)
+	log.Infof("Exporter log source: %+v", myExporter.Spec.LogSource)
+	log.Infof("Exporter log source name: %s", myExporter.Spec.LogSource.Name)
+	log.Infof("Exporter log source namespace: %s", myExporter.Spec.LogSource.Namespace)
+
+	log.Infof("Full exporter object: %+v", myExporter)
+
+	return myExporter, nil
 }
 
 func getLogSource(crdLogSource unstructured.Unstructured, spec map[string]any) (ls.LogSource, error) {
@@ -129,9 +205,18 @@ func getLogSource(crdLogSource unstructured.Unstructured, spec map[string]any) (
 			return ls.LogSource{}, fmt.Errorf("failed to get metadata: %v", err)
 		}
 
-		name, _, _ := unstructured.NestedString(metadata, "name")
-		namespace, _, _ := unstructured.NestedString(metadata, "namespace")
-		labels, _, _ := unstructured.NestedStringMap(metadata, "labels")
+		name, found, err := unstructured.NestedString(metadata, "name")
+		if !found || err != nil {
+			return ls.LogSource{}, fmt.Errorf("failed to get name from metadata: %v", err)
+		}
+		namespace, found, err := unstructured.NestedString(metadata, "namespace")
+		if !found || err != nil {
+			return ls.LogSource{}, fmt.Errorf("failed to get namespace from metadata: %v", err)
+		}
+		labels, found, err := unstructured.NestedStringMap(metadata, "labels")
+		if !found || err != nil {
+			return ls.LogSource{}, fmt.Errorf("failed to get labels from metadata: %v", err)
+		}
 
 		log.Infof("Extracted name: '%s', namespace: '%s', labels: %+v", name, namespace, labels)
 
@@ -521,6 +606,46 @@ func marshalFieldValues(fieldValueMap map[string]any) (api.FieldValue, error) {
 		GrokKey:     grokKey,
 		ManualValue: manualValue,
 	}, nil
+}
+
+func marshalDestination(destMap map[string]any) (api.ExporterDestination, error) {
+	destType, ok := destMap["type"].(string)
+	if !ok {
+		return api.ExporterDestination{}, fmt.Errorf("failed to get destination type: %v", destMap)
+	}
+
+	var destination api.ExporterDestination
+	switch destType {
+	case "OtelCollector":
+
+		otelMap, ok := destMap["otelCollector"].(map[string]any)
+		if !ok {
+			return api.ExporterDestination{}, fmt.Errorf("failed to get otelCollector config: %v", destMap)
+		}
+
+		endpoint, ok := otelMap["endpoint"].(string)
+		if !ok {
+			return api.ExporterDestination{}, fmt.Errorf("failed to get otelCollector endpoint: %v", otelMap)
+		}
+
+		insecure, ok := otelMap["insecure"].(bool)
+		if !ok {
+			insecure = false // default value
+		}
+
+		// Handle OtelCollector destination
+		destination = api.ExporterDestination{
+			Type: "OtelCollector",
+			OtelCollector: &api.OtelCollectorConfig{
+				Endpoint: endpoint,
+				Insecure: insecure,
+			},
+		}
+	default:
+		return api.ExporterDestination{}, fmt.Errorf("unsupported destination type: %s", destType)
+	}
+
+	return destination, nil
 }
 
 func ValidateResources(restConfig *rest.Config) error {

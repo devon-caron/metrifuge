@@ -10,7 +10,6 @@ import (
 	"github.com/devon-caron/metrifuge/global"
 	"github.com/devon-caron/metrifuge/k8s/api"
 	e "github.com/devon-caron/metrifuge/k8s/api/exporter"
-	"github.com/devon-caron/metrifuge/log_handler"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,11 +18,9 @@ type ExporterManager struct {
 	log       *logrus.Logger
 	mc        *metric_exporter_client.MetricExporterClient
 	lc        *log_exporter_client.LogExporterClient
-	lh        *log_handler.LogHandler
 }
 
-func (em *ExporterManager) Initialize(ctx context.Context, exporters []e.Exporter, logHandler *log_handler.LogHandler, log *logrus.Logger) error {
-	em.lh = logHandler
+func (em *ExporterManager) Initialize(ctx context.Context, exporters []e.Exporter, log *logrus.Logger) error {
 	em.log = log
 	em.exporters = make(map[string]e.Exporter)
 	for _, exporter := range exporters {
@@ -60,8 +57,8 @@ func (em *ExporterManager) ProcessItems(ctx context.Context, items []api.Process
 				return fmt.Errorf("failed to send metric: %w", err)
 			}
 		} else {
-			if rand.Intn(100) == 0 {
-				em.log.Debug("empty metric detected (1/100)")
+			if rand.Intn(1000) == 0 {
+				em.log.Debug("empty metric detected (1/1000)")
 			}
 		}
 
@@ -71,8 +68,8 @@ func (em *ExporterManager) ProcessItems(ctx context.Context, items []api.Process
 				return fmt.Errorf("failed to export log: %w", err)
 			}
 		} else {
-			if rand.Intn(20) == 0 {
-				em.log.Debug("blank log detected (1/20)")
+			if rand.Intn(200) == 0 {
+				em.log.Debug("blank log detected (1/200)")
 			}
 		}
 	}

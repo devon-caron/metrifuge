@@ -1,14 +1,14 @@
 package api
 
 type ExporterDestination struct {
-	Type           string                `json:"type" yaml:"type"`
-	Honeycomb      *HoneycombConfig      `json:"honeycomb,omitempty" yaml:"honeycomb,omitempty"`
-	Prometheus     *PrometheusConfig     `json:"prometheus,omitempty" yaml:"prometheus,omitempty"`
-	Elasticsearch  *ElasticsearchConfig  `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
-	Splunk         *SplunkConfig         `json:"splunk,omitempty" yaml:"splunk,omitempty"`
-	Datadog        *DatadogConfig        `json:"datadog,omitempty" yaml:"datadog,omitempty"`
-	Loki           *LokiConfig           `json:"loki,omitempty" yaml:"loki,omitempty"`
-	OtelCollector  *OtelCollectorConfig  `json:"otelCollector,omitempty" yaml:"otelCollector,omitempty"`
+	Type          string               `json:"type" yaml:"type"`
+	Honeycomb     *HoneycombConfig     `json:"honeycomb,omitempty" yaml:"honeycomb,omitempty"`
+	Prometheus    *PrometheusConfig    `json:"prometheus,omitempty" yaml:"prometheus,omitempty"`
+	Elasticsearch *ElasticsearchConfig `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
+	Splunk        *SplunkConfig        `json:"splunk,omitempty" yaml:"splunk,omitempty"`
+	Datadog       *DatadogConfig       `json:"datadog,omitempty" yaml:"datadog,omitempty"`
+	Loki          *LokiConfig          `json:"loki,omitempty" yaml:"loki,omitempty"`
+	OtelCollector *OtelCollectorConfig `json:"otelCollector,omitempty" yaml:"otelCollector,omitempty"`
 }
 
 // HoneycombConfig contains configuration for Honeycomb destination

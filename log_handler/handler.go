@@ -17,14 +17,13 @@ import (
  * all log exporters in the cluster/system.
  */
 type LogHandler struct {
-	lp                   *log_processor.LogProcessor
-	log                  *logrus.Logger
-	wg                   sync.WaitGroup
-	once                 sync.Once
-	sourceStopChans      map[string]chan struct{}           // Map of source names to their stop channels
-	processedDataBuckets map[string][]api.ProcessedDataItem // Map of source names to their processed data buckets
-	mu                   sync.RWMutex                       // Protects the source maps
-	itemBucket           []api.ProcessedDataItem            // Current batch of processed items
+	lp              *log_processor.LogProcessor
+	log             *logrus.Logger
+	wg              sync.WaitGroup
+	once            sync.Once
+	sourceStopChans map[string]chan struct{} // Map of source names to their stop channels
+	mu              sync.RWMutex             // Protects the source maps
+	itemBucket      []api.ProcessedDataItem  // Current batch of processed items
 }
 
 func (lh *LogHandler) Initialize(initialSources []ls.LogSource, initialRuleSets []ruleset.RuleSet, log *logrus.Logger,
@@ -33,7 +32,6 @@ func (lh *LogHandler) Initialize(initialSources []ls.LogSource, initialRuleSets 
 		lh.log = log
 		log.Info("initialized log handler")
 		lh.sourceStopChans = make(map[string]chan struct{})
-		lh.processedDataBuckets = make(map[string][]api.ProcessedDataItem)
 		log.Info("initialized log handler sources and buckets")
 		lh.lp = &log_processor.LogProcessor{}
 		lh.lp.Initialize(initialSources, initialRuleSets, log)
@@ -73,8 +71,7 @@ func (lh *LogHandler) Update(sources []ls.LogSource, k8sClient *api.K8sClientWra
 		lh.mu.Lock()
 		// If source already exists, skip or restart it
 		_, stopChanExists := lh.sourceStopChans[source.Metadata.Name]
-		_, logBucketExists := lh.processedDataBuckets[source.Metadata.Name]
-		if stopChanExists && logBucketExists {
+		if stopChanExists {
 			lh.log.Debugf("source %s already exists, skipping", source.Metadata.Name)
 			lh.mu.Unlock()
 			continue
@@ -84,7 +81,6 @@ func (lh *LogHandler) Update(sources []ls.LogSource, k8sClient *api.K8sClientWra
 		stopCh := make(chan struct{})
 		lh.sourceStopChans[source.Metadata.Name] = stopCh
 
-		lh.processedDataBuckets[source.Metadata.Name] = []api.ProcessedDataItem{}
 		lh.mu.Unlock()
 
 		lh.wg.Add(1)
@@ -110,7 +106,6 @@ func (lh *LogHandler) ShutDown() {
 
 	// Clear the source maps
 	lh.sourceStopChans = make(map[string]chan struct{})
-	lh.processedDataBuckets = make(map[string][]api.ProcessedDataItem)
 
 	// Wait for all goroutines to complete
 	lh.wg.Wait()
@@ -170,30 +165,16 @@ func (lh *LogHandler) receiveLogs(sourceObj ls.LogSource, kClient *api.K8sClient
 
 			// Store the processed data in the bucket
 			lh.mu.Lock()
-			lh.processedDataBuckets[sourceObj.Metadata.Name] = append(lh.processedDataBuckets[sourceObj.Metadata.Name], data...)
+			lh.itemBucket = append(lh.itemBucket, data...)
 			lh.mu.Unlock()
 
 			lh.log.Debugf("Stored %d items in bucket for source %s, total now: %d",
-				len(data), sourceObj.Metadata.Name, len(lh.processedDataBuckets[sourceObj.Metadata.Name]))
+				len(data), sourceObj.Metadata.Name, len(lh.itemBucket))
 		}
 	}
 }
 
-func (lh *LogHandler) ReceiveLogsForSource(name string) []api.ProcessedDataItem {
-	lh.mu.Lock()
-	defer lh.mu.Unlock()
-
-	if bucket, exists := lh.processedDataBuckets[name]; exists {
-		lh.processedDataBuckets[name] = make([]api.ProcessedDataItem, 0)
-		lh.log.Debugf("Returning %d items for source %s and clearing bucket", len(bucket), name)
-		return bucket
-	}
-
-	lh.log.Debugf("No data found for source %s", name)
-	return []api.ProcessedDataItem{}
-}
-
-func (lh *LogHandler) GetItemBucket() []api.ProcessedDataItem {
+func (lh *LogHandler) ReceiveBucketContents() []api.ProcessedDataItem {
 	lh.mu.Lock()
 	defer lh.mu.Unlock()
 
@@ -201,7 +182,7 @@ func (lh *LogHandler) GetItemBucket() []api.ProcessedDataItem {
 	copy(items, lh.itemBucket)
 
 	// Clear the bucket
-	lh.itemBucket = nil
+	lh.itemBucket = make([]api.ProcessedDataItem, 0)
 
 	return items
 }
@@ -215,5 +196,5 @@ func (lh *LogHandler) AppendToItemBucket(items []api.ProcessedDataItem) {
 func (lh *LogHandler) ClearItemBucket() {
 	lh.mu.Lock()
 	defer lh.mu.Unlock()
-	lh.itemBucket = nil
+	lh.itemBucket = make([]api.ProcessedDataItem, 0)
 }

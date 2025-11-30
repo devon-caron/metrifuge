@@ -10,7 +10,7 @@ spec:
   containers:
   - image: busybox
     name: mf-log-pod
-    command: ["sh", "-c", "while true; do echo \"[$(date)] Hello World! This is a test log message, random UUID: $(cat /proc/sys/kernel/random/uuid || echo $RANDOM)\"; sleep .4; done"]
+    command: ["sh", "-c", "while true; do echo \"[$(date)] Hello World! This is a test log message, random UUID: $(cat /proc/sys/kernel/random/uuid || echo $RANDOM)\"; sleep 0.01; done"]
     resources: {}
   dnsPolicy: ClusterFirst
   restartPolicy: Always

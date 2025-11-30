@@ -78,9 +78,28 @@ func Run() {
 
 	// Then pass the combined slice
 	em = &exporter_manager.ExporterManager{}
-	if err := em.Initialize(ctx, rsc.GetExporters(), lh, log); err != nil {
+	if err := em.Initialize(ctx, rsc.GetExporters(), log); err != nil {
 		log.Fatalf("failed to initialize exporter manager: %v", err)
 	}
+
+	log.Info("allowing time for Log Handler warm up...")
+
+	time.Sleep(5 * time.Second)
+
+	log.Info("warm up complete")
+
+	go func() {
+		for {
+			items := lh.ReceiveBucketContents()
+			if len(items) > 0 {
+				em.ProcessItems(ctx, items)
+				log.Infof("processed %d items and cleared bucket", len(items))
+			} else {
+				log.Debug("no items to process, bucket empty")
+			}
+			time.Sleep(time.Duration(refresh) * time.Second)
+		}
+	}()
 
 	time.Sleep(30 * time.Minute)
 }
