@@ -14,12 +14,13 @@ spec:
     name: mf-logsource
     namespace: metrifuge
   destination:
-    type: OtelCollector
-    otelCollector:
-      # TODO: Replace with actual OTEL collector endpoint for logs
-      endpoint: "localhost:4317"
-      # TODO: Set to false when using TLS in production
-      insecure: true
+    type: honeycomb
+    honeycomb:
+      # TODO: Replace with your actual Honeycomb API key
+      apiKey: "YOUR_HONEYCOMB_API_KEY"
+      dataset: "metrifuge-logs"
+      # Optional: Specify environment for better data organization
+      environment: "development"
 
 ---
 apiVersion: metrifuge.com/v1alpha1
@@ -37,9 +38,10 @@ spec:
     name: mf-logsource
     namespace: metrifuge
   destination:
-    type: OtelCollector
-    otelCollector:
-      # TODO: Replace with actual OTEL collector endpoint for metrics
-      endpoint: "localhost:4317"
-      # TODO: Set to false when using TLS in production
-      insecure: true
+    type: honeycomb
+    honeycomb:
+      # TODO: Replace with your actual Honeycomb API key
+      apiKey: "YOUR_HONEYCOMB_API_KEY"
+      dataset: "metrifuge-metrics"
+      # Optional: Specify environment for better data organization
+      environment: "development"
