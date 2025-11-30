@@ -641,6 +641,37 @@ func marshalDestination(destMap map[string]any) (api.ExporterDestination, error)
 				Insecure: insecure,
 			},
 		}
+	case "honeycomb":
+
+		honeycombMap, ok := destMap["honeycomb"].(map[string]any)
+		if !ok {
+			return api.ExporterDestination{}, fmt.Errorf("failed to get honeycomb config: %v", destMap)
+		}
+
+		apiKey, ok := honeycombMap["apiKey"].(string)
+		if !ok {
+			return api.ExporterDestination{}, fmt.Errorf("failed to get honeycomb apiKey: %v", honeycombMap)
+		}
+
+		dataset, ok := honeycombMap["dataset"].(string)
+		if !ok {
+			return api.ExporterDestination{}, fmt.Errorf("failed to get honeycomb dataset: %v", honeycombMap)
+		}
+
+		environment, ok := honeycombMap["environment"].(string)
+		if !ok {
+			environment = "" // environment is optional
+		}
+
+		// Handle Honeycomb destination
+		destination = api.ExporterDestination{
+			Type: "honeycomb",
+			Honeycomb: &api.HoneycombConfig{
+				APIKey:      apiKey,
+				Dataset:     dataset,
+				Environment: environment,
+			},
+		}
 	default:
 		return api.ExporterDestination{}, fmt.Errorf("unsupported destination type: %s", destType)
 	}
