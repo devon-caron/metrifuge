@@ -176,6 +176,9 @@ func (lp *LogProcessor) processLog(ctx context.Context, logMsg string, rule *api
 		// processedLogMsg = ""
 		lp.log.Debugf("Discard Action No-Op")
 	case "conditional":
+		if rule.Conditional == nil {
+			return []api.ProcessedDataItem{}, fmt.Errorf("conditional action requires a conditional block, but none was provided")
+		}
 		processedLogMsg, processedDataItems, err = lp.processConditional(ctx, logMsg, values, rule, rule.Conditional)
 		if err != nil {
 			return []api.ProcessedDataItem{}, fmt.Errorf("failed to process conditional: %w", err)
@@ -390,6 +393,9 @@ func (lp *LogProcessor) processConditional(ctx context.Context, logMsg string, v
 			resultConditional = conditional.ConditionalTrue
 		} else {
 			resultConditional = conditional.ConditionalFalse
+		}
+		if resultConditional == nil {
+			return "", nil, fmt.Errorf("nested conditional action specified but no conditional block provided for result=%t", result)
 		}
 		fwdLog, extraDataItems, err = lp.processConditional(ctx, logMsg, values, rule, resultConditional)
 		if err != nil {
