@@ -27,11 +27,11 @@ func (me *MetricExporterClient) Initialize(ctx context.Context, exporters []e.Ex
 			if err := me.addOtelCollector(ctx, exporter); err != nil {
 				return fmt.Errorf("failed to add OTLP collector: %w", err)
 			}
-			// } else if exporter.GetDestinationType() == "honeycomb" {
-			// 	// Create OTLP gRPC exporter for Honeycomb collector
-			// 	if err := me.addHoneycombMetricExporter(ctx, exporter); err != nil {
-			// 		return err
-			// 	}
+		} else if exporter.GetDestinationType() == "honeycomb" {
+			// Create OTLP HTTP exporter for Honeycomb
+			if err := me.addHoneycombMetricExporter(ctx, exporter); err != nil {
+				return fmt.Errorf("failed to add Honeycomb exporter: %w", err)
+			}
 			// } else if exporter.GetDestinationType() == "prometheus" {
 			// 	// Create OTLP gRPC exporter for Prometheus collector
 			// 	if err := me.addPrometheusMetricExporter(ctx, exporter); err != nil {
@@ -92,21 +92,48 @@ func (me *MetricExporterClient) addOtelCollector(ctx context.Context, exporter e
 }
 
 func (me *MetricExporterClient) addHoneycombMetricExporter(ctx context.Context, exporter e.Exporter) error {
-	// 4. Additional OTLP HTTP exporter (e.g., for Honeycomb, New Relic, etc.)
+	// Validate Honeycomb config
+	honeycombConfig := exporter.Spec.Destination.Honeycomb
+	if honeycombConfig == nil {
+		return fmt.Errorf("honeycomb configuration is required")
+	}
+	if honeycombConfig.APIKey == "" {
+		return fmt.Errorf("honeycomb API key is required")
+	}
+	if honeycombConfig.Dataset == "" {
+		return fmt.Errorf("honeycomb dataset is required")
+	}
+
+	// Build headers for Honeycomb
+	headers := map[string]string{
+		"x-honeycomb-team":    honeycombConfig.APIKey,
+		"x-honeycomb-dataset": honeycombConfig.Dataset,
+	}
+
+	// Add environment header if specified
+	if honeycombConfig.Environment != "" {
+		headers["x-honeycomb-environment"] = honeycombConfig.Environment
+	}
+
+	// Create OTLP HTTP exporter for Honeycomb
 	honeycombExporter, err := otlpmetrichttp.New(ctx,
 		otlpmetrichttp.WithEndpoint("api.honeycomb.io"),
-		otlpmetrichttp.WithHeaders(map[string]string{
-			"x-honeycomb-team": "YOUR_HONEYCOMB_API_KEY",
-		}),
+		otlpmetrichttp.WithHeaders(headers),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create Honeycomb OTLP HTTP exporter: %w", err)
 	}
 
+	// Parse refresh interval
+	refreshInterval, err := time.ParseDuration(exporter.Spec.RefreshInterval)
+	if err != nil {
+		return fmt.Errorf("failed to parse refresh interval: %w", err)
+	}
+
 	me.destinations = append(me.destinations,
 		sdkmetric.WithReader(
 			sdkmetric.NewPeriodicReader(honeycombExporter,
-				sdkmetric.WithInterval(10*time.Second),
+				sdkmetric.WithInterval(refreshInterval),
 			)),
 	)
 	return nil

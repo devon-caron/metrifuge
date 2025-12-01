@@ -26,11 +26,11 @@ func (le *LogExporterClient) Initialize(ctx context.Context, exporters []e.Expor
 			if err := le.addOtelCollector(ctx, exporter); err != nil {
 				return fmt.Errorf("failed to add Otel collector: %v", err)
 			}
-			// } else if exporter.GetDestinationType() == "honeycomb" {
-			// 	// Create OTLP HTTP exporter for Honeycomb collector
-			// 	if err := le.addHoneycombLogExporter(ctx, exporter); err != nil {
-			// 		return err
-			// 	}
+		} else if exporter.GetDestinationType() == "honeycomb" {
+			// Create OTLP HTTP exporter for Honeycomb
+			if err := le.addHoneycombLogExporter(ctx, exporter); err != nil {
+				return fmt.Errorf("failed to add Honeycomb log exporter: %w", err)
+			}
 		} else {
 			return fmt.Errorf("unknown destination type: %s", exporter.GetDestinationType())
 		}
@@ -87,26 +87,69 @@ func (le *LogExporterClient) addOtelCollector(ctx context.Context, exporter e.Ex
 }
 
 func (le *LogExporterClient) addHoneycombLogExporter(ctx context.Context, exporter e.Exporter) error {
-	// OTLP HTTP exporter (e.g., for Honeycomb, New Relic, etc.)
+	// Validate Honeycomb config
+	honeycombConfig := exporter.Spec.Destination.Honeycomb
+	if honeycombConfig == nil {
+		return fmt.Errorf("honeycomb configuration is required")
+	}
+	if honeycombConfig.APIKey == "" {
+		return fmt.Errorf("honeycomb API key is required")
+	}
+	if honeycombConfig.Dataset == "" {
+		return fmt.Errorf("honeycomb dataset is required")
+	}
+
+	// Build headers for Honeycomb
+	headers := map[string]string{
+		"x-honeycomb-team":    honeycombConfig.APIKey,
+		"x-honeycomb-dataset": honeycombConfig.Dataset,
+	}
+
+	// Add environment header if specified
+	if honeycombConfig.Environment != "" {
+		headers["x-honeycomb-environment"] = honeycombConfig.Environment
+	}
+
+	// Create OTLP HTTP exporter for Honeycomb
 	honeycombExporter, err := otlploghttp.New(ctx,
 		otlploghttp.WithEndpoint("api.honeycomb.io"),
-		otlploghttp.WithHeaders(map[string]string{
-			"x-honeycomb-team": "YOUR_HONEYCOMB_API_KEY",
-		}),
+		otlploghttp.WithHeaders(headers),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create Honeycomb OTLP HTTP log exporter: %w", err)
 	}
 
+	// Initialize maps if needed
+	if le.loggerProviders == nil {
+		le.loggerProviders = make(map[string]map[string]*sdklog.LoggerProvider)
+	}
+	if le.loggers == nil {
+		le.loggers = make(map[string]map[string]log.Logger)
+	}
+	if le.destinations == nil {
+		le.destinations = make(map[string]map[string][]sdklog.LoggerProviderOption)
+	}
+
 	ns := exporter.GetLogSourceInfo().Namespace
+	name := exporter.GetLogSourceInfo().Name
+
+	if le.loggerProviders[ns] == nil {
+		le.loggerProviders[ns] = make(map[string]*sdklog.LoggerProvider)
+	}
+	if le.loggers[ns] == nil {
+		le.loggers[ns] = make(map[string]log.Logger)
+	}
 	if le.destinations[ns] == nil {
 		le.destinations[ns] = make(map[string][]sdklog.LoggerProviderOption)
 	}
-	le.destinations[ns][exporter.GetLogSourceInfo().Name] = append(le.destinations[ns][exporter.GetLogSourceInfo().Name],
+
+	le.destinations[ns][name] = append(le.destinations[ns][name],
 		sdklog.WithProcessor(
 			sdklog.NewBatchProcessor(honeycombExporter),
 		),
 	)
+	le.loggerProviders[ns][name] = sdklog.NewLoggerProvider(le.destinations[ns][name]...)
+	le.loggers[ns][name] = le.loggerProviders[ns][name].Logger("metrifuge")
 	return nil
 }
 

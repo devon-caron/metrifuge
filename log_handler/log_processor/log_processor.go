@@ -151,12 +151,20 @@ func (lp *LogProcessor) processLog(ctx context.Context, logMsg string, rule *api
 		return []api.ProcessedDataItem{}, err
 	}
 
+	// Check if grok actually parsed anything
+	if len(values) == 0 {
+		lp.log.Warnf("grok pattern matched 0 fields - pattern may not match log")
+		lp.log.Warnf("  Log message: %s", logMsg)
+		lp.log.Warnf("  Pattern: %s", rule.Pattern)
+	}
+
 	// debug
 	if rand.IntN(100) == 0 {
 		lp.log.Debugf("parsed log: %v", logMsg)
 		lp.log.Debugf("pattern: %v", rule.Pattern)
+		lp.log.Debugf("captured %d fields:", len(values))
 		for k, v := range values {
-			lp.log.Debugf("%v: %v", k, v)
+			lp.log.Debugf("  %v: %v", k, v)
 		}
 	}
 
@@ -176,6 +184,9 @@ func (lp *LogProcessor) processLog(ctx context.Context, logMsg string, rule *api
 		// processedLogMsg = ""
 		lp.log.Debugf("Discard Action No-Op")
 	case "conditional":
+		if rule.Conditional == nil {
+			return []api.ProcessedDataItem{}, fmt.Errorf("conditional action requires a conditional block, but none was provided")
+		}
 		processedLogMsg, processedDataItems, err = lp.processConditional(ctx, logMsg, values, rule, rule.Conditional)
 		if err != nil {
 			return []api.ProcessedDataItem{}, fmt.Errorf("failed to process conditional: %w", err)
@@ -390,6 +401,9 @@ func (lp *LogProcessor) processConditional(ctx context.Context, logMsg string, v
 			resultConditional = conditional.ConditionalTrue
 		} else {
 			resultConditional = conditional.ConditionalFalse
+		}
+		if resultConditional == nil {
+			return "", nil, fmt.Errorf("nested conditional action specified but no conditional block provided for result=%t", result)
 		}
 		fwdLog, extraDataItems, err = lp.processConditional(ctx, logMsg, values, rule, resultConditional)
 		if err != nil {
