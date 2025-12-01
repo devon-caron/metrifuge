@@ -641,7 +641,7 @@ func marshalDestination(destMap map[string]any) (api.ExporterDestination, error)
 				Insecure: insecure,
 			},
 		}
-	case "honeycomb":
+	case "Honeycomb":
 
 		honeycombMap, ok := destMap["honeycomb"].(map[string]any)
 		if !ok {

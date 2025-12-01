@@ -50,7 +50,7 @@ spec:
     - name: detect_crd_validation
       description: Detect CRD validation debug messages
       pattern: 'time="%{TIMESTAMP_ISO8601:timestamp}"\s+level=debug\s+msg="\s*%{WORD:field_name}:\s*%{GREEDYDATA:field_value}"'
-      action: conditional
+      action: Conditional
       createMetrics: true
       conditional:
         field1:

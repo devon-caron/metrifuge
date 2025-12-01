@@ -14,13 +14,13 @@ spec:
     name: mf-logsource
     namespace: metrifuge
   destination:
-    type: honeycomb
+    type: Honeycomb
     honeycomb:
       # TODO: Replace with your actual Honeycomb API key
-      apiKey: "YOUR_HONEYCOMB_API_KEY"
+      apiKey: "JIaEdZURwpoEvzBVqtSqwD"
       dataset: "metrifuge-logs"
       # Optional: Specify environment for better data organization
-      environment: "development"
+      environment: "test"
 
 ---
 apiVersion: metrifuge.com/v1alpha1
@@ -38,10 +38,10 @@ spec:
     name: mf-logsource
     namespace: metrifuge
   destination:
-    type: honeycomb
+    type: Honeycomb
     honeycomb:
       # TODO: Replace with your actual Honeycomb API key
-      apiKey: "YOUR_HONEYCOMB_API_KEY"
+      apiKey: "JIaEdZURwpoEvzBVqtSqwD"
       dataset: "metrifuge-metrics"
       # Optional: Specify environment for better data organization
-      environment: "development"
+      environment: "test"
