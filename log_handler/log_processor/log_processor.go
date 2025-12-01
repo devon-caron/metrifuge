@@ -151,12 +151,20 @@ func (lp *LogProcessor) processLog(ctx context.Context, logMsg string, rule *api
 		return []api.ProcessedDataItem{}, err
 	}
 
+	// Check if grok actually parsed anything
+	if len(values) == 0 {
+		lp.log.Warnf("grok pattern matched 0 fields - pattern may not match log")
+		lp.log.Warnf("  Log message: %s", logMsg)
+		lp.log.Warnf("  Pattern: %s", rule.Pattern)
+	}
+
 	// debug
 	if rand.IntN(100) == 0 {
 		lp.log.Debugf("parsed log: %v", logMsg)
 		lp.log.Debugf("pattern: %v", rule.Pattern)
+		lp.log.Debugf("captured %d fields:", len(values))
 		for k, v := range values {
-			lp.log.Debugf("%v: %v", k, v)
+			lp.log.Debugf("  %v: %v", k, v)
 		}
 	}
 
