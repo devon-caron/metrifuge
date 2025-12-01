@@ -1,0 +1,45 @@
+---
+apiVersion: metrifuge.com/v1alpha1
+kind: Exporter
+metadata:
+  name: mf-log-exporter
+  namespace: metrifuge
+  labels:
+    app: metrifuge
+    exporter-type: log
+spec:
+  type: Log
+  refreshInterval: 3s
+  logSource:
+    name: mf-logsource
+    namespace: metrifuge
+  destination:
+    type: OtelCollector
+    otelCollector:
+      # TODO: Replace with actual OTEL collector endpoint for logs
+      endpoint: "localhost:4317"
+      # TODO: Set to false when using TLS in production
+      insecure: true
+
+---
+apiVersion: metrifuge.com/v1alpha1
+kind: Exporter
+metadata:
+  name: mf-metric-exporter
+  namespace: metrifuge
+  labels:
+    app: metrifuge
+    exporter-type: metric
+spec:
+  type: Metric
+  refreshInterval: 3s
+  logSource:
+    name: mf-logsource
+    namespace: metrifuge
+  destination:
+    type: OtelCollector
+    otelCollector:
+      # TODO: Replace with actual OTEL collector endpoint for metrics
+      endpoint: "localhost:4317"
+      # TODO: Set to false when using TLS in production
+      insecure: true
